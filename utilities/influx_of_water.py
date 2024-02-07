@@ -4,7 +4,7 @@ from utilities.Utilities import variable_type
 import math
 from datetime import datetime
 from pandas import Timestamp
-from graphs.explore_data_analysis import PressureAvgTank
+from explorer.explore_data_analysis import PressureAvgTank
 
 # Creation of class to reach cumulate influx of water
 # Fetkovich
@@ -25,6 +25,7 @@ class Fetkovich:
         self.flow_type = flow_type
         self.width = width
         self.length = length
+        self.time_step = time_step
 
         # Check if the time list is in datetime format
         if all(isinstance(t, datetime) for t in time_step):
@@ -38,6 +39,9 @@ class Fetkovich:
             # If all elements are strings, convert to datetime and then to cumulative days
             datetime_list = [datetime.strptime(t, '%Y-%m-%d') for t in time_step]
             self.time_step = [(t - datetime_list[0]).days for t in datetime_list]
+        else:
+            # Convert dates to cumulative days using variable_types
+            self.time_step = variable_type(time_step)
 
         # Automatically influx of water data upon object creation
         self.we
@@ -93,7 +97,7 @@ class Fetkovich:
         pa = pr_array[0]
         elapsed_time = np.empty((1, 0))
         time_steps = np.array(0)
-        df = pd.DataFrame(columns=['Delta We'])
+        df_list = []
         for ip in range(len(pr_array)):
             pr_avg = (pr + pr_array[ip]) / 2
             if isinstance(delta_t, np.ndarray):
@@ -111,8 +115,12 @@ class Fetkovich:
             pr = pr_array[ip]
             cum_water_influx = cum_water_influx + we
             pa = pr_array[0] * (1 - (cum_water_influx / wei))
-            df = df._append({'Delta We': we, 'Cumulative We': cum_water_influx}, ignore_index=True)
-        df['Elapsed time'] = elapsed_time
+
+            # Creation values for each key of the list df_list that will have a dictionary
+            df_list.append({'Delta We': we, 'Cumulative We': cum_water_influx, 'Elapsed time': elapsed_time[ip]})
+
+        #Creation of the dataframe that will be return for users
+        df = pd.DataFrame(df_list)
         df = df.set_index('Elapsed time')
 
         return df
@@ -128,6 +136,7 @@ class Carter_Tracy:
         self.theta = theta
         self.aq_perm = aq_perm
         self.water_visc = water_visc
+        self.time = time
         self.pr = variable_type(pr)
 
         # Check if the time list is in datetime format
@@ -142,6 +151,9 @@ class Carter_Tracy:
             # If all elements are strings, convert to datetime and then to cumulative days
             datetime_list = [datetime.strptime(t, '%Y-%m-%d') for t in time]
             self.time = [(t - datetime_list[0]).days for t in datetime_list]
+        else:
+            # Convert dates to cumulative days using variable_types
+            self.time = variable_type(time)
 
         # Automatically influx of water data upon object creation
         self.we()
@@ -178,7 +190,7 @@ class Carter_Tracy:
         pr_drop = np.where(pr_array > 0, pr_array[0] - pr_array, 1)
 
         # Estimate the dimensionless pressure
-        pr_d = np.where(td > 100, 0.5 * (np.log(td) + 0.80907),
+        pr_d = np.where(td > 100, 0.5 * (np.log(np.maximum(td, 1e-15)) + 0.80907),
                         ((370.529 * np.sqrt(td)) + (137.582 * td) + (5.69549 * (
                                 td ** 1.5))) / (
                                 328.834 + (265.488 * np.sqrt(td)) + (45.2157 * td) +
@@ -188,14 +200,12 @@ class Carter_Tracy:
         d = (1296.86 * (td ** 0.5)) + (1204.73 * td) + \
             (618.618 * (td * 1.5)) + (538.072 * (td * 2)) + \
             (142.41 * (td ** 2.5))
-        pr_deriv = np.where(td > 100, 1 / (2 * td), e / d)
+        pr_deriv = np.where(td > 100, 1 / (2 * np.maximum(td, 1e-15)), e / np.maximum(d, 1e-15))
 
         # Calculate the cumulative water influx at any time, ti
-        df = pd.DataFrame(columns=['Cumulative water influx, bbl'])
+        df = {'Cumulative water influx, bbl': [0]}
         we = 0
-        df = df._append(
-            {'Cumulative water influx, bbl': we},
-            ignore_index=True)
+
         for i in np.arange(1, len(td)):
             a1 = td[i] - td[i - 1]
             a2 = b * pr_drop[i]
@@ -204,52 +214,11 @@ class Carter_Tracy:
             a5 = td[i - 1] * pr_deriv[i]
             cum_influx_water = we + (a1 * ((a2 - a3) / (a4 - a5)))
             we = cum_influx_water
-            df = df._append(
-                {'Cumulative water influx, bbl': we},
-                ignore_index=True)
+            df['Cumulative water influx, bbl'].append(we)
+
         df['Elapsed time, days'] = t_array
-        df = df.set_index('Elapsed time, days')
+
+        # Concatenation of the DataFrames in an unique final DataFrame
+        df = pd.concat([pd.DataFrame(df)], ignore_index=True).set_index('Elapsed time, days')
 
         return df
-
-#%%
-aq_radius = 46000
-res_radius = 9200
-aq_thickness = 100
-# -fi = 0.25
-# +phi = 0.25
-aq_por = 0.25
-ct = 0.000007
-theta = 140
-k = 200
-water_visc = 0.55
-"""
-# Metodos propios
-production_file = "../tests/data_for_tests/full_example_1/production.csv"
-pressure_file = "../tests/data_for_tests/full_example_1/pressures.csv"
-pvt_file = "../tests/data_for_tests/full_example_1/pvt.csv"
-pr = PressureAvgTank(production_file, pressure_file, pvt_file,"tank_south").data_avg()['PRESSURE_DATUM'].tolist()
-time_step = PressureAvgTank(production_file, pressure_file, pvt_file,"tank_south").data_avg()['START_DATETIME'].tolist()"""
-
-# mbal_Dataframe
-df = pd.read_csv("../PYTANk/pytank/mbal_Dataframe.csv")
-fechas = df.loc[df['Tank'] == 'tank_center', 'DATE']
-presiones = df.loc[df['Tank'] == 'tank_center', 'PRESSURE_DATUM']
-print(fechas)
-
-df = Fetkovich(aq_radius,res_radius,aq_thickness,aq_por,ct,presiones.tolist(),theta,k,water_visc,fechas.tolist()).we()
-print(df)
-
-
-#%%
-"""aq_por = 0.2
-ct = 0.000001
-res_radius = 2000
-aq_thickness = 25
-theta = 360
-aq_perm = 100
-water_visc = 0.8
-pr = [2500, 2490, 2472, 2444, 2408]
-time = [0, 182.5, 365.0, 547.5, 730.0]
-df = Carter_Tracy(aq_por, ct, res_radius,aq_thickness, theta, aq_perm, water_visc, pr, time).we()
-print(df)"""
