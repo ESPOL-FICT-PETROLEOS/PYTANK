@@ -23,21 +23,19 @@ UW_COL = "UW"
 formatter = ticker.EngFormatter()
 
 class ExploreDataAnalysis:
-    def __init__(self, production_file: str, pressure_file: str, pvt_file: str):
+    def __init__(self, production_file: pd.DataFrame, pressure_file: pd.DataFrame, pvt_file: pd.DataFrame):
         try:
             # Read CSV files into DataFrames
-            self.df_prod = pd.read_csv(production_file)
-            self.df_press = pd.read_csv(pressure_file)
-            self.df_pvt = pd.read_csv(pvt_file)
+            self.df_prod = production_file
+            self.df_press = pressure_file
+            self.df_pvt = pvt_file
 
             # Process the data automatically upon object creation
             self._process_data()
-        except FileNotFoundError as e:
-            print(f"Error: File not found. Details: {e}")
         except pd.errors.EmptyDataError:
-            print("Error: CSV file is empty.")
+            print("Error: Dataframe is empty.")
         except pd.errors.ParserError as pe:
-            print(f"Error parsing CSV file. Details: {pe}")
+            print(f"Error parsing DataFrame. Details: {pe}")
         except Exception as ex:
             print(f"Unexpected error: {ex}")
 
@@ -120,15 +118,6 @@ class ExploreDataAnalysis:
         self.df_press[UW_COL] = underground_withdrawal(self.df_press, OIL_CUM_COL, WATER_CUM_COL,
                                                        GAS_CUM_COL, OIL_FVF_COL, 1,
                                                        GAS_FVF_COL, GOR_COL, 0)
-
-    def _calculate_pressure_volumetric_avg(self):
-        # Calculate the pressure volumetric average per tank
-        avg_freq = "12MS"
-        self.df_press_avg = self.df_press.groupby(TANK_NAME_COL).apply(
-            lambda g: pressure_vol_avg(g, WELL_NAME_COL, DATE_COL, PRESS_COL, UW_COL,
-                                       avg_freq, "end")
-        ).reset_index(0)
-
 
 class RatePerWell(ExploreDataAnalysis):
     def __init__(self, production_file, pressure_file, pvt_file):
@@ -324,11 +313,19 @@ class PressurePerLiquidCumTank(ExploreDataAnalysis):
         return df
 
 class PressureAvgTank(ExploreDataAnalysis):
-    def __init__(self, production_file, pressure_file, pvt_file,tank_zone = "tank_center"):
+    def __init__(self, production_file, pressure_file, pvt_file, tank_zone='tank_center', frequency="12MS",
+                 position='end'):
         super().__init__(production_file, pressure_file, pvt_file)
+
+        # Allows the user to choose the frequency and position
+        self.frequency = frequency
+        self.position = position
 
         # Allows the user to choose the area they wish to view
         self.tank_zone = tank_zone
+
+        # Automatically calculated the pressure avg and real dates upon object creation
+        self._calculate_pressure_volumetric_avg()
 
         # Automatically plot average and real pressure upon object creation
         self.plot()
@@ -338,6 +335,13 @@ class PressureAvgTank(ExploreDataAnalysis):
 
         # Automatically average pressure data upon object creation
         self.data_avg()
+
+    def _calculate_pressure_volumetric_avg(self):
+        # Calculate the pressure volumetric average with the specific frequency and position
+        self.df_press_avg = self.df_press.groupby(TANK_NAME_COL).apply(
+            lambda g: pressure_vol_avg(g, WELL_NAME_COL, DATE_COL, PRESS_COL, UW_COL, self.frequency,
+                                       self.position)).reset_index(0)
+
     def plot(self) -> Optional[plt.Figure]:
         df_press_avg_tank = self.df_press_avg.loc[self.df_press_avg[TANK_NAME_COL] == self.tank_zone,
         [DATE_COL, PRESS_COL]]
@@ -359,10 +363,16 @@ class PressureAvgTank(ExploreDataAnalysis):
         return df
 
 # Prueba
-production_file = "../tests/data_for_tests/full_example_1/production.csv"
-pressure_file = "../tests/data_for_tests/full_example_1/pressures.csv"
-pvt_file = "../tests/data_for_tests/full_example_1/pvt.csv"
+production = "../tests/data_for_tests/full_example_1/production.csv"
+pressure = "../tests/data_for_tests/full_example_1/pressures.csv"
+pvt = "../tests/data_for_tests/full_example_1/pvt.csv"
 
+pro = pd.read_csv(production)
+pre = pd.read_csv(pressure)
+pt = pd.read_csv(pvt)
+
+df = PressureAvgTank(pro , pre, pt, 'tank_center', '12MS', 'end').data_avg()
+print(df)
 
 
 
