@@ -1,7 +1,7 @@
 # File to code pvt-related functions or classes
 import pandas as pd
 from scipy import interpolate
-from pytank import pvt_table as pv
+from functions import pvt_table as pv
 def interp_pvt_matbal(pvt:pd.DataFrame, press_col_name, prop_col_name, press_target):
     """
     :param pvt: DataFrame for pvt data
@@ -15,7 +15,7 @@ def interp_pvt_matbal(pvt:pd.DataFrame, press_col_name, prop_col_name, press_tar
     function = interpolate.interp1d(x, y, fill_value='extrapolate')
     return function(press_target)
 
-#%%
+
 df = pv.pvt_table2(2500, 150, 35, 500, 0.7, 180, 55, 5000, 500,
                 100)
 col_name = 'pressure[psia]'

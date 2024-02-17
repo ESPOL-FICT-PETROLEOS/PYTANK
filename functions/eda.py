@@ -9,9 +9,9 @@ from material_balance.material_balance import underground_withdrawal, pressure_v
 formatter = ticker.EngFormatter()
 
 # %% specify files to load
-production_file = "../../PYTANk/pytank/tests/data_for_tests/full_example_1/production.csv"
-pressure_file = "../../PYTANk/pytank/tests/data_for_tests/full_example_1/pressures.csv"
-pvt_file = "../../PYTANk/pytank/tests/data_for_tests/full_example_1/pvt.csv"
+production_file = "../tests/data_for_tests/full_example_1/production.csv"
+pressure_file = "../tests/data_for_tests/full_example_1/pressures.csv"
+pvt_file = "../tests/data_for_tests/full_example_1/pvt.csv"
 
 # %% Load data into dataframes
 df_prod = pd.read_csv(production_file)
@@ -253,3 +253,5 @@ fig_6, ax_6 = plt.subplots(1, 1)
 df_press_avg_tank.plot(x=date_col, y=press_col, ax=ax_6, style="bo", label="avg")
 df_press_tank.plot(x=date_col, y=press_col, ax=ax_6, style="ro", label="data")
 plt.show()
+
+print(df_press_avg_tank)

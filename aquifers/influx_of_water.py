@@ -68,13 +68,13 @@ class Fetkovich:
                 raise ValueError("Dimensions of pressure array and time array "
                                  "should be equal,"
                                  " please verify your input")
-        # Calculate the initial volume of water in the aquifer (Wi)
+        # Calculate the initial volume of water in the aquifers (Wi)
         wi = (math.pi / 5.615) * (self.aq_radius ** 2 - self.res_radius ** 2) * self.aq_thickness * self.aq_por
         # Calculate the maximum possible water influx (Wei)
         f = self.theta / 360
         wei = self.ct * wi * pr_array[0] * f
-        # Calculate the aquifer productivity index
-        # based on the boundary_type conditions and aquifer geometry (J)
+        # Calculate the aquifers productivity index
+        # based on the boundary_type conditions and aquifers geometry (J)
         rd = self.aq_radius / self.res_radius
 
         if self.boundary_type == "no_flow" and self.flow_type == "radial":
@@ -93,7 +93,7 @@ class Fetkovich:
         # Calculate cumulative water influx
         cum_water_influx = 0
         pr = pr_array[0]
-        # Average aquifer pressure after removing We bbl of water from the aquifer
+        # Average aquifers pressure after removing We bbl of water from the aquifers
         pa = pr_array[0]
         elapsed_time = np.empty((1, 0))
         time_steps = np.array(0)

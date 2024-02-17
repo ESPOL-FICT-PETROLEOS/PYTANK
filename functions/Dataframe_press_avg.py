@@ -5,8 +5,8 @@ from utilities.pvt_interp import interp_pvt_matbal
 import matplotlib.pyplot as plt
 
 # Load data into dataframes
-df_pressure = pd.read_csv("../../PYTANk/pytank/tests/data_for_tests/full_example_1/pressures.csv")
-df_prod = pd.read_csv("../../PYTANk/pytank/tests/data_for_tests/full_example_1/production.csv")
+df_pressure = pd.read_csv("../tests/data_for_tests/full_example_1/pressures.csv")
+df_prod = pd.read_csv("../tests/data_for_tests/full_example_1/production.csv")
 df_avg=pd.read_csv("press_avg.csv")
 df_avg['PRESSURE_DATUM']=df_avg['PRESSURE_DATUM'].interpolate(method="linear")
 #%% Casting of date data type of pressure and prod dataframes
@@ -106,7 +106,7 @@ df_north = df_mbal2[df_mbal2[tank_name_col] == "tank_north"]
 
 #%% Load of the pvt dataframe, which is the one used to interpolate and then, add
 # the pvt columns in the mbal dataframe
-df_pvt = pd.read_csv("../../PYTANk/pytank/tests/data_for_tests/full_example_1/pvt.csv")
+df_pvt = pd.read_csv("../tests/data_for_tests/full_example_1/pvt.csv")
 
 # filling the missing values of the Bg column using the ffill method
 df_pvt = df_pvt.fillna(method="ffill")
@@ -239,7 +239,7 @@ df_tanks.rename(
 
 #%% Convert the df_tanks dataframe to a csv file, which then will be imported to
 # calculate the terms F, Eo, Eg, and Efw
-mbal_tanks = df_tanks.to_csv("mbal_tanks.csv", index=False)
+mbal_tanks = df_tanks.to_csv("mbal_tanks2.csv", index=False)
 
 #%% New Dataframe with pressure avg
 

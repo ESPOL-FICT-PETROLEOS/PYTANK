@@ -4,18 +4,18 @@ import math
 import numpy as np
 import pandas as pd
 
-# File to code aquifer-related functions or classes
+# File to code aquifers-related functions or classes
 def schilthuis_aq(pi, p, k, h, uw, ra, re):
     """
-    This function calculates the aquifer water influx according to schilthuis equation
+    This function calculates the aquifers water influx according to schilthuis equation
     :param pi: Initial reservoir pressure (psi)
     :param p: Current reservoir pressure, might be scalar, list or numpy array (psi)
     :param k: effective permeability to water (mili darcy)
-    :param h: Estimated reservoir thickness in the aquifer zone (ft)
+    :param h: Estimated reservoir thickness in the aquifers zone (ft)
     :param uw: Water viscosity (cp)
-    :param ra: aquifer radius (ft)
+    :param ra: aquifers radius (ft)
     :param re: hydrocarbon zone radius (ft)
-    :return: a single or array-like value of aquifer influx (bbl)
+    :return: a single or array-like value of aquifers influx (bbl)
     """
 
     # Convert to numpy array in case the user has input a scalar or list
