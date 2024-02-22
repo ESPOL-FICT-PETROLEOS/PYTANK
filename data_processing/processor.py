@@ -2,7 +2,7 @@
 import pandas as pd
 from utilities.Utilities import days_in_month, interp_from_dates, interp_dates_row
 from scipy.interpolate import interp1d
-from material_balance.material_balance import underground_withdrawal
+from material_balance.material_balance import underground_withdrawal, pressure_vol_avg
 
 # Constants for column names
 DATE_COL = "START_DATETIME"
@@ -21,7 +21,8 @@ class _DataProcessor:
     """
     Private class that processes the data so that it can use the public methods of the Tank and Well classes.
     """
-    def __init__(self, production: pd.DataFrame, pressure: pd.DataFrame, pvt: pd.DataFrame):
+
+    def __init__(self, production: pd.DataFrame, pressure: pd.DataFrame = None, pvt: pd.DataFrame = None):
         self.df_prod = production
         self.df_press = pressure
         self.df_pvt = pvt
@@ -129,3 +130,22 @@ class _DataProcessor:
                                                        GAS_CUM_COL, OIL_FVF_COL, 1,
                                                        GAS_FVF_COL, GOR_COL, 0)
 
+    def _calculate_pressure_avg(self) -> pd.DataFrame:
+        """
+        Calculate the average pressure per tank over a specified frecuency.
+
+        Returns:
+            DataFrame containing average pressure per tank
+
+        """
+        avg_freq = "12MS"
+        df_press_avg = self.df_press.groupby(TANK_NAME_COL).apply(
+            lambda g: pressure_vol_avg(g, WELL_NAME_COL, DATE_COL, PRESS_COL, UW_COL, avg_freq, "end")
+        ).reset_index(0)
+
+        # Chose only columns
+        press_avg = df_press_avg[[TANK_NAME_COL, PRESS_COL]]
+        press_avg.columns = [TANK_NAME_COL, 'press_avg']
+        self.avg = press_avg
+
+        return self.avg
