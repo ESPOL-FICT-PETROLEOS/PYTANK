@@ -16,8 +16,8 @@ UW_COL = "UW"
 
 
 # Creation of well class
-class Well(_DataProcessor):
-    def __init__(self, production: pd.DataFrame, pressure: pd.DataFrame, pvt: pd.DataFrame):
+class Well:
+    def __init__(self, production: pd.DataFrame, pressure: pd.DataFrame):
         """
         Initialize the Well object.
 
@@ -27,8 +27,9 @@ class Well(_DataProcessor):
         pvt:
         """
         try:
-            super().__init__(production, pressure, pvt)
-            self._process_data()
+            # Class composition
+            self.processor = _DataProcessor(production, pressure)
+            self.processor._process_data()
 
         except pd.errors.EmptyDataError:
             print("Error: Dataframe is empty.")
@@ -46,23 +47,24 @@ class Well(_DataProcessor):
             DataFrame containing oil production rates.
         """
         # Group by year and well, then calculate cumulative production for each year
-        df = self.df_prod.groupby([self.df_prod[DATE_COL].dt.year, WELL_NAME_COL])[OIL_RATE_COL].sum()
+        df = self.processor.df_prod.groupby([self.processor.df_prod[DATE_COL].dt.year, WELL_NAME_COL])[OIL_CUM_COL].sum()
         df = df.groupby(level=WELL_NAME_COL).cumsum()  # Calculate the cumulative sum per well
         df = df.unstack()  # Pivot to have the wells as columns
         return df
+
 
     def rate_water(self) -> pd.DataFrame:
         """
         Calculates the water rate per well
 
         Returns:
-            DataFrame containing oli production rates.
+             DataFrame containing oli production rates.
         """
         # Group by year and well, then calculate cumulative production for each year
-        df = self.df_prod.groupby([self.df_prod[DATE_COL].dt.year, WELL_NAME_COL])[WATER_RATE_COL].sum()
+        df = self.processor.df_prod.groupby([self.processor.df_prod[DATE_COL].dt.year, WELL_NAME_COL])[WATER_CUM_COL].sum()
         df = df.groupby(level=WELL_NAME_COL).cumsum()  # Calculate the cumulative sum per well
         df = df.unstack()  # Pivot to have the wells as columns
-        return df
+        return df.reset_index()
 
     def pressure_and_liquid_accumulation(self) -> pd.DataFrame:
         """
@@ -82,14 +84,14 @@ class Well(_DataProcessor):
 
         return merged_df"""
 
-        df = self.df_press.pivot_table(PRESS_COL, index=[WELL_NAME_COL, LIQUID_VOL_COL], columns="TEST_TYPE")
+        df = self.processor.df_press.pivot_table(PRESS_COL, index=[WELL_NAME_COL, LIQUID_VOL_COL], columns="TEST_TYPE")
         df = df.reset_index()
         return df
 
 
 
-
 # Test
+
 production = "../tests/data_for_tests/full_example_1/production.csv"
 pressure = "../tests/data_for_tests/full_example_1/pressures.csv"
 pvt = "../tests/data_for_tests/full_example_1/pvt.csv"
@@ -98,6 +100,12 @@ pro = pd.read_csv(production)
 pre = pd.read_csv(pressure)
 pt = pd.read_csv(pvt)
 
-df1 = Well(pro, pre, pt).rate_oil()
+# Dataframe de production de petroleo por pozo y year
+df1 = Well(pro, pre).rate_oil()
+
+# Lista de pozos
+lista = df1.columns.tolist()
 
 print(df1)
+
+print(lista)

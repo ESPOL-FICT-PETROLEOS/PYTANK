@@ -1,7 +1,10 @@
 from utilities import pvt_correlations as pvt
 import pandas as pd
 import numpy as np
+import warnings
 
+# Disable future warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def pvt_table1(p_sep, t_sep, api, rsp, sg_sep, tres, den_sto, p_res, salinity, jump,
               units=1) -> pd.DataFrame:
