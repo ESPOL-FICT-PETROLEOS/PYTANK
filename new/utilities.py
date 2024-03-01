@@ -1,11 +1,212 @@
-import numpy as np
+from calendar import monthrange
+import datetime
 from pandera import Column, Check, DataFrameSchema
 import pandas as pd
+from pytank.vector.constants import date_col, VALID_FREQS, press_col
+import numpy as np
 
-# from new.constants import date_col, VALID_FREQS, press_col
 
-date_col = "date_col"
-VALID_FREQS = ["D", "W", "M", "Q", "A"]
+def days_in_month(date):
+    if isinstance(date, datetime.datetime):
+        return monthrange(date.year, date.month)[1]
+    else:
+        raise ValueError("Argument is not of type datetime")
+
+
+def interp_from_dates(
+    date_interp: datetime.datetime, x_dates, y_values, left=None, right=None
+):
+    """
+    Interpolation function that accepts dates as x to interpolate between y_values,
+    given a new date between x_dates
+
+    Parameters
+    ----------
+    date_interp: array-like of datetime objects
+        the new date to interpolate
+    x_dates: array-like of datetime objects
+        the x_dates values to use as regression
+    y_values: array-like
+        the y_values to use as regression
+    left: optional float or complex corresponding to y_values
+        Value to return for x < x_dates[0], default is y_values[0]
+    right: optional float or complex corresponding to y_values
+        Value to return for x > x_dates[-1], default is y_values[-1]
+    Returns
+    -------
+    float or ndarray
+        an interpolated value or values between y_values
+
+    """
+
+    # Type checking before proceeding with operations
+    permitted_arrays = (list, np.ndarray, pd.Series)
+    if isinstance(date_interp, permitted_arrays):
+        is_array = True
+        if not all(isinstance(x, datetime.datetime) for x in date_interp):
+            raise ValueError("date_interp should only contain datetime objects")
+    else:
+        is_array = False
+        if not isinstance(date_interp, datetime.datetime):
+            raise ValueError(f"{date_interp} is not a datetime object")
+
+    if isinstance(x_dates, permitted_arrays):
+        if not all(isinstance(x, datetime.datetime) for x in x_dates):
+            raise ValueError("x_dates should only contain datetime objects")
+    else:
+        raise ValueError("x_dates should be a list, numpy array or pandas Series")
+
+    if not isinstance(y_values, permitted_arrays):
+        raise ValueError("y_values should be a list, numpy array or pandas Series")
+
+    # The handling of numeric values in y_values should be handled by np itself in the
+    # interpolation function
+
+    # Get the minimum date in x_dates as the reference
+    start_date = x_dates.min()
+    # Calculate time deltas using x_dates and the start dates, then convert to seconds
+    time_deltas = pd.Series(x_dates - start_date).dt.total_seconds()
+
+    if is_array:
+        # do the same for date_interp values
+        new_time_delta = pd.Series(date_interp - start_date).dt.total_seconds()
+    else:
+        new_time_delta = (date_interp - start_date).total_seconds()
+
+    return np.interp(new_time_delta, time_deltas, y_values, left=left, right=right)
+
+
+def interp_dates_row(
+    row,
+    x_result_col,
+    df_input: pd.DataFrame,
+    x_input_col,
+    y_input_col,
+    input_cond_col_name,
+    result_cond_col_name,
+    left=None,
+    right=None,
+):
+    """
+    A helper function that works on data frame rows using the apply method.
+    This function creates an interpolation using interp_from_dates whose input values
+    would change based on a condition specified in the target data frame
+
+    Parameters
+    ----------
+    row: DataFrame
+        Usually used with apply method, axis=1
+    x_result_col: str
+        the x value col name to interpolate in the target row
+    df_input: DataFrame
+        the input data frame that will be used for regression
+    x_input_col: str
+        the x column in the input data frame
+    y_input_col: str
+        the y column in the input data frame
+    input_cond_col_name: str
+        the condition column in the input data frame
+    result_cond_col_name: str
+        the condition column in the result data frame
+    left: optional float or complex corresponding to y_values
+        Value to return for x < x_dates[0], default is y_values[0]
+    right: optional float or complex corresponding to y_values
+        Value to return for x > x_dates[-1], default is y_values[-1]
+
+    Returns
+    -------
+    float
+        returns an interpolated value of float type
+    """
+
+    # Filter the input data frame according to group name
+    df_input_filt = df_input.loc[
+        df_input[input_cond_col_name] == row[result_cond_col_name]
+    ]
+
+    if len(df_input_filt) == 0:
+        return np.nan
+    else:
+        return interp_from_dates(
+            row[x_result_col],
+            df_input_filt[x_input_col],
+            df_input_filt[y_input_col],
+            left=left,
+            right=right,
+        )
+
+
+def material_bal_var_type(data, numb_or_column):
+    """
+    Function to check the data types of the material balance equation terms
+
+    Parameters
+        ----------
+    data: Pandas Dataframe
+        Contains the production information for a single entity
+    numb_or_column: Dictionary
+        Python dictionary containing the names of some columns of the dataframe in
+        order to check their data types
+
+    Returns
+    -------
+    Pandas Dataframe:
+        Returns the original Pandas Dataframe
+    """
+    # Make a copy of the original dataframe
+    df = data.copy()
+    if not isinstance(data, pd.DataFrame):
+        raise TypeError("The input data should be a pandas dataframe")
+
+    # Define internal names for column in the DataFrame
+    for col, arg in numb_or_column.items():
+        if isinstance(arg, (int, float)):
+            df[col] = arg
+            numb_or_column[col] = col
+        elif isinstance(arg, str):
+            df.rename(columns={arg: col}, inplace=True)
+        else:
+            raise TypeError(
+                f"{arg} should be either a numeric value or string "
+                f"indicating a column in the DataFrame"
+            )
+
+    return df
+
+
+def material_bal_numerical_data(vector):
+    """
+    Function to check the numerical data types of the arguments of the material balance
+    functions
+
+    Parameters
+    ----------
+    vector: List or numpy array
+        List or array of numerical arguments for each function
+        Contains the production information for a single entity
+
+    Returns
+    -------
+    A message showing if there is presence of TypeError"""
+    for value in vector:
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"{value} should be either an int or float")
+
+
+def variable_type(obj):
+    """
+    :param obj: variable to be converted as an array, it may be a list or a float
+    :return: an array if obj is entered in the right data format
+    """
+    if isinstance(obj, np.ndarray):
+        array = obj
+    elif isinstance(obj, list):
+        array = np.array(obj)
+    elif isinstance(obj, float):
+        array = np.array(obj)
+    else:
+        raise ValueError("Please enter measured values as float, list or array")
+    return array
 
 
 def add_date_index_validation(
@@ -18,8 +219,7 @@ def add_date_index_validation(
     new_schema = base_schema.add_columns(
         {
             date_col: Column(
-                # Use a lambda function for coercion
-                lambda s: pd.to_datetime(s),
+                pd.Timestamp,
                 Check(
                     lambda s: pd.infer_freq(s) == freq,
                     name="DateTimeIndex frequency check",
@@ -35,68 +235,19 @@ def add_date_index_validation(
     return new_schema
 
 
-# Definir el vector de fechas
-date_vector = [
-    "9/8/2005",
-    "9/24/1987",
-    "9/21/2006",
-    "9/19/2006",
-    "8/9/1995",
-    "8/28/2018",
-    "8/15/1981",
-    "8/10/2011",
-    "8/1/1988",
-    "7/31/2008",
-    "7/29/2008",
-    "6/30/2018",
-    "6/22/1997",
-    "6/21/1995",
-    "6/11/2019",
-    "5/29/2019",
-    "5/27/2019",
-    "5/25/2002",
-    "5/15/2012",
-    "5/13/1993",
-    "4/9/2019",
-    "4/25/2019",
-    "4/23/2019",
-    "3/8/2019",
-    "3/8/2019",
-    "3/30/1993",
-    "3/24/2019",
-    "3/21/2019",
-    "3/14/2019",
-    "3/13/2019",
-    "3/12/1998",
-    "3/10/1998",
-    "2/9/2019",
-    "2/2/1987",
-    "2/17/2019",
-    "2/13/1996",
-    "12/5/2010",
-    "12/3/2002",
-    "12/26/2011",
-    "12/23/2006",
-    "11/6/2002",
-    "11/26/2005",
-    "11/16/2003",
-    "10/8/2018",
-    "10/6/2018",
-    "10/24/1981",
-    "1/7/2011",
-    "1/6/2019",
-    "1/30/2019",
-    "1/27/1994",
-    "1/21/2019",
-    "1/19/1984",
-    "1/18/2012",
-    "1/11/2012",
-]
+def add_pressure_validation(base_schema: DataFrameSchema) -> DataFrameSchema:
+    """Add a pressure column validation to a base schema."""
+    new_schema = base_schema.add_columns(
+        {
+            press_col: Column(
+                float,
+                Check(lambda s: s >= 0),
+                coerce=True,
+                nullable=False,
+                name=None,
+                title="Bottom hole pressure",
+            )
+        }
+    )
 
-df = pd.DataFrame({date_col: date_vector})
-base_schema = DataFrameSchema({date_col: Column(pd.Timestamp)})
-freq = "M"
-new_schema = add_date_index_validation(base_schema, freq)
-
-validated_df = new_schema.validate(df)
-print(validated_df)
+    return new_schema

@@ -1,8 +1,9 @@
 # libraries
-from utilities.Utilities import variable_type
+from old.utilities import variable_type
 import math
 import numpy as np
 import pandas as pd
+
 
 # File to code aquifers-related functions or classes
 def schilthuis_aq(pi, p, k, h, uw, ra, re):
