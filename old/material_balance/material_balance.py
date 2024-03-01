@@ -1,20 +1,20 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
-from utilities.Utilities import material_bal_var_type, material_bal_numerical_data
+from old.utilities import material_bal_var_type, material_bal_numerical_data
 import numpy as np
 
 
 def underground_withdrawal(
-        data: pd.DataFrame,
-        oil_cum_col: str,
-        water_cum_col: str,
-        gas_cum_col: str,
-        oil_fvf,
-        water_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        gas_water_rs,
+    data: pd.DataFrame,
+    oil_cum_col: str,
+    water_cum_col: str,
+    gas_cum_col: str,
+    oil_fvf,
+    water_fvf,
+    gas_fvf,
+    gas_oil_rs,
+    gas_water_rs,
 ):
     """
     Calculates the total underground withdrawal of a well using its cumulative
@@ -97,8 +97,8 @@ def underground_withdrawal(
 
     # Calculate gas withdrawal
     gas_withdrawal = (
-                             df[gas_vol_col] - df[oil_vol_col] * df[rs_col] - df[water_vol_col] * df[rsw_col]
-                     ) * df[gas_fvf_col]
+        df[gas_vol_col] - df[oil_vol_col] * df[rs_col] - df[water_vol_col] * df[rsw_col]
+    ) * df[gas_fvf_col]
 
     if sum(gas_withdrawal < 0) > 0:
         raise ArithmeticError(
@@ -110,18 +110,23 @@ def underground_withdrawal(
     gas_withdrawal.fillna(0, inplace=True)
 
     uw = (
-            df[oil_vol_col] * df[oil_fvf_col]
-            + df[water_vol_col] * df[water_fvf_col]
-            + gas_withdrawal
+        df[oil_vol_col] * df[oil_fvf_col]
+        + df[water_vol_col] * df[water_fvf_col]
+        + gas_withdrawal
     )
 
     return uw.cumsum().values
 
 
-def pressure_vol_avg(data: pd.DataFrame,
-                     entity_col, date_col,
-                     press_col, uw_col,
-                     avg_freq="1MS", position="begin") -> pd.DataFrame:
+def pressure_vol_avg(
+    data: pd.DataFrame,
+    entity_col,
+    date_col,
+    press_col,
+    uw_col,
+    avg_freq="1MS",
+    position="begin",
+) -> pd.DataFrame:
     """
 
     Parameters
@@ -171,22 +176,29 @@ def pressure_vol_avg(data: pd.DataFrame,
     mono_increase = df.groupby(entity_col)[uw_col].is_monotonic_increasing
     for well, mono in mono_increase.items():
         if not mono:
-            raise ValueError(f"Well {well} contains underground withdrawal values that "
-                             f"are not increasing with time")
+            raise ValueError(
+                f"Well {well} contains underground withdrawal values that "
+                f"are not increasing with time"
+            )
 
     POSITIONS = ["begin", "middle", "end"]
 
     # Check if position argument has the correct values
     if position not in POSITIONS:
-        raise ValueError(f"{position} is not an accepted value for 'position' "
-                         f"argument. Use any of {POSITIONS} instead.")
+        raise ValueError(
+            f"{position} is not an accepted value for 'position' "
+            f"argument. Use any of {POSITIONS} instead."
+        )
 
     # Calculate the differences in pressure and underground withdrawal per well
     delta_uw_col = "delta_uw"
     delta_press_col = "delta_press"
 
-    df[[delta_uw_col, delta_press_col]] = (df.groupby(entity_col)[[uw_col, press_col]]
-                                           .diff().fillna(df[[uw_col, press_col]]))
+    df[[delta_uw_col, delta_press_col]] = (
+        df.groupby(entity_col)[[uw_col, press_col]]
+        .diff()
+        .fillna(df[[uw_col, press_col]])
+    )
 
     gr_press = df.groupby(pd.Grouper(key=date_col, freq=avg_freq))
     result_avg_press = {date_col: [], press_col: []}
@@ -204,8 +216,9 @@ def pressure_vol_avg(data: pd.DataFrame,
         # defined equation
         g_1 = group[cond]
         if len(g_1) > 0:
-            avg_1 = ((g_1[press_col] * g_1[delta_uw_col] / g_1[delta_press_col]).sum()
-                     / (g_1[delta_uw_col] / g_1[delta_press_col]).sum())
+            avg_1 = (
+                g_1[press_col] * g_1[delta_uw_col] / g_1[delta_press_col]
+            ).sum() / (g_1[delta_uw_col] / g_1[delta_press_col]).sum()
 
         # This group has no UW and pressure changes, the average of these values will
         # be processed normally
@@ -244,7 +257,7 @@ def pressure_vol_avg(data: pd.DataFrame,
 
 
 def oil_expansion(
-        data: pd.DataFrame, oil_fvf, gas_fvf, gas_oil_rs, gas_oil_rs_init, oil_fvf_init
+    data: pd.DataFrame, oil_fvf, gas_fvf, gas_oil_rs, gas_oil_rs_init, oil_fvf_init
 ) -> pd.Series:
     """
     Calculates the oil expansion using its cumulative production
@@ -306,7 +319,7 @@ def oil_expansion(
 
 # %%
 def gas_expansion(
-        data: pd.DataFrame, oil_fvf, gas_fvf, gas_fvf_init, tot_fvf_init
+    data: pd.DataFrame, oil_fvf, gas_fvf, gas_fvf_init, tot_fvf_init
 ) -> pd.Series:
     """
     Calculates the gas expansion using its cumulative production
@@ -361,14 +374,14 @@ def gas_expansion(
 
 
 def fw_expansion(
-        data: pd.DataFrame,
-        oil_fvf,
-        p_col: str,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        pressure_init,
+    data: pd.DataFrame,
+    oil_fvf,
+    p_col: str,
+    water_sat,
+    water_comp,
+    rock_comp,
+    oil_fvf_init,
+    pressure_init,
 ) -> pd.Series:
     """
     Calculates the expansion of connate water and rock(formation) using its cumulative
@@ -420,31 +433,31 @@ def fw_expansion(
     material_bal_numerical_data(num_arg)
 
     efw = (oil_fvf_init * ((water_comp * water_sat + rock_comp) / (1 - water_sat))) * (
-            pressure_init - df[p_col]
+        pressure_init - df[p_col]
     )
 
     return efw
 
 
 def ho_terms_equation(
-        data: pd.DataFrame,
-        oil_cum_col: str,
-        water_cum_col: str,
-        gas_cum_col: str,
-        p_col: str,
-        oil_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        water_fvf,
-        gas_water_rs,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        gas_fvf_init,
-        tot_fvf_init,
-        gas_oil_rs_init,
-        pressure_init,
+    data: pd.DataFrame,
+    oil_cum_col: str,
+    water_cum_col: str,
+    gas_cum_col: str,
+    p_col: str,
+    oil_fvf,
+    gas_fvf,
+    gas_oil_rs,
+    water_fvf,
+    gas_water_rs,
+    water_sat,
+    water_comp,
+    rock_comp,
+    oil_fvf_init,
+    gas_fvf_init,
+    tot_fvf_init,
+    gas_oil_rs_init,
+    pressure_init,
 ) -> pd.DataFrame:
     """
     Calculates the terms of the Havlena and Odeh equation using the cumulative
@@ -547,27 +560,27 @@ def ho_terms_equation(
 
 
 def campbell_function(
-        data: pd.DataFrame,
-        oil_cum_col: str,
-        water_cum_col: str,
-        gas_cum_col: str,
-        p_col: str,
-        uw_col: str,
-        eo_col: str,
-        efw_col: str,
-        oil_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        water_fvf,
-        gas_water_rs,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        gas_fvf_init,
-        tot_fvf_init,
-        gas_oil_rs_init,
-        pressure_init,
+    data: pd.DataFrame,
+    oil_cum_col: str,
+    water_cum_col: str,
+    gas_cum_col: str,
+    p_col: str,
+    uw_col: str,
+    eo_col: str,
+    efw_col: str,
+    oil_fvf,
+    gas_fvf,
+    gas_oil_rs,
+    water_fvf,
+    gas_water_rs,
+    water_sat,
+    water_comp,
+    rock_comp,
+    oil_fvf_init,
+    gas_fvf_init,
+    tot_fvf_init,
+    gas_oil_rs_init,
+    pressure_init,
 ):
     """
     This function is able to plot the campbell plot for a required reservoir
@@ -670,27 +683,27 @@ def campbell_function(
 
 
 def havlena_and_odeh(
-        data: pd.DataFrame,
-        oil_cum_col: str,
-        water_cum_col: str,
-        gas_cum_col: str,
-        p_col: str,
-        uw_col: str,
-        eo_col: str,
-        eg_col: str,
-        oil_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        water_fvf,
-        gas_water_rs,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        gas_fvf_init,
-        tot_fvf_init,
-        gas_oil_rs_init,
-        pressure_init,
+    data: pd.DataFrame,
+    oil_cum_col: str,
+    water_cum_col: str,
+    gas_cum_col: str,
+    p_col: str,
+    uw_col: str,
+    eo_col: str,
+    eg_col: str,
+    oil_fvf,
+    gas_fvf,
+    gas_oil_rs,
+    water_fvf,
+    gas_water_rs,
+    water_sat,
+    water_comp,
+    rock_comp,
+    oil_fvf_init,
+    gas_fvf_init,
+    tot_fvf_init,
+    gas_oil_rs_init,
+    pressure_init,
 ):
     """
     This function is able to plot the Havlena and Odeh straight line, which is useful
