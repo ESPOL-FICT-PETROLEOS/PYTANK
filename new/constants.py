@@ -22,13 +22,6 @@ _VECTOR_VALIDATION = Column(
     nullable=False,
 )
 
-"""_PRESSURE_COL_VALIDATION = Column(
-    float,
-    Check(lambda s: s >= 0),
-    coerce=True,
-    nullable=False,
-)
-"""
 
 _PROD_SCHEMA_DICT = {
     oil_cum_col: _VECTOR_VALIDATION,
