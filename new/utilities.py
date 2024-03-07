@@ -2,7 +2,7 @@ from calendar import monthrange
 import datetime
 from pandera import Column, Check, DataFrameSchema
 import pandas as pd
-from pytank.vector.constants import date_col, VALID_FREQS, press_col
+from new.constants import DATE_COL, VALID_FREQS, PRESSURE_COL
 import numpy as np
 
 
@@ -210,7 +210,7 @@ def variable_type(obj):
 
 
 def add_date_index_validation(
-    base_schema: DataFrameSchema, freq: str
+    base_schema: DataFrameSchema, freq: str = None
 ) -> DataFrameSchema:
     """Add a date index validation to a base schema."""
     if freq not in VALID_FREQS:
@@ -218,7 +218,7 @@ def add_date_index_validation(
 
     new_schema = base_schema.add_columns(
         {
-            date_col: Column(
+            DATE_COL: Column(
                 pd.Timestamp,
                 Check(
                     lambda s: pd.infer_freq(s) == freq,
@@ -230,7 +230,7 @@ def add_date_index_validation(
                 name=None,
             )
         }
-    ).set_index([date_col])
+    ).set_index([DATE_COL])
 
     return new_schema
 
@@ -239,7 +239,7 @@ def add_pressure_validation(base_schema: DataFrameSchema) -> DataFrameSchema:
     """Add a pressure column validation to a base schema."""
     new_schema = base_schema.add_columns(
         {
-            press_col: Column(
+            PRESSURE_COL: Column(
                 float,
                 Check(lambda s: s >= 0),
                 coerce=True,
@@ -250,4 +250,5 @@ def add_pressure_validation(base_schema: DataFrameSchema) -> DataFrameSchema:
         }
     )
 
-    return new_schema
+    #return new_schema
+    pass

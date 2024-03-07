@@ -1,19 +1,20 @@
 from pandera import Column, Check, DataFrameSchema
 
 # Constants of DataFrames
-date_col = "DATE"
-press_col = "PRESSURE"
-well_col = "WELL_BORE"
-oil_cum_col = "OIL_CUM"
-water_cum_col = "WATER_CUM"
-gas_cum_col = "GAS_CUM"
-# oil_fvf_col = "Bo"
-# gas_fvf_col = "Bg"
-injection_water = "WATER_VOL"
-# influx_water = "We"
+DATE_COL = "DATE"
+PRESSURE_COL = "PRESSURE"
+WELL_COL = "WELL_BORE"
+OIL_CUM_COL = "OIL_CUM"
+WATER_CUM_COL = "WATER_CUM"
+GAS_CUM_COL = "GAS_CUM"
+LIQ_CUM = "LIQ_CUM"
+# OIL_FVF_COL = "Bo"
+# GAS_FVF_COL = "Bg"
+INJECTION_WATER = "WATER_VOL"
+# INFLUX_WATER = "We"
 
 # Frecuency's of time
-VALID_FREQS = ["D", "M", "Y"]
+VALID_FREQS = ["D", "W", "M", "MS", "Q", "Y", None]
 
 _VECTOR_VALIDATION = Column(
     float,
@@ -22,13 +23,23 @@ _VECTOR_VALIDATION = Column(
     nullable=False,
 )
 
+_PRESSURE_VALIDATION = Column(
+    float,
+    Check(lambda s: s >= 0),
+    coerce=True,
+    nullable=False,
+    required=False
+)
 
 _PROD_SCHEMA_DICT = {
-    oil_cum_col: _VECTOR_VALIDATION,
-    water_cum_col: _VECTOR_VALIDATION,
+    OIL_CUM_COL: _VECTOR_VALIDATION,
+    WATER_CUM_COL: _VECTOR_VALIDATION,
+    GAS_CUM_COL: _VECTOR_VALIDATION,
+    LIQ_CUM: _VECTOR_VALIDATION,
+    PRESSURE_COL: _PRESSURE_VALIDATION
 }
 
-_INJ_SCHEMA_DICT = {injection_water: _VECTOR_VALIDATION}
+_INJ_SCHEMA_DICT = {INJECTION_WATER: _VECTOR_VALIDATION}
 
 PROD_SCHEMA = DataFrameSchema(_PROD_SCHEMA_DICT, strict="filter")
 INJ_SCHEMA = DataFrameSchema(_INJ_SCHEMA_DICT, strict="filter")
