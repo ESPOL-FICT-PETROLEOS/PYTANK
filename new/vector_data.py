@@ -1,19 +1,20 @@
+import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Any
 from pydantic import BaseModel, validator, PrivateAttr
 from pandera import DataFrameSchema
 import pandera as pa
-from new.utilities import add_date_index_validation, add_pressure_validation
+from new.utilities import add_date_index_validation, days_in_month
 import matplotlib.pyplot as plt
-import numpy as np
 from new.constants import (
-    well_col,
-    oil_cum_col,
-    water_cum_col,
-    gas_cum_col,
-    press_col,
-    injection_water,
+    DATE_COL,
+    WELL_COL,
+    OIL_CUM_COL,
+    WATER_CUM_COL,
+    GAS_CUM_COL,
+    PRESSURE_COL,
+    INJECTION_WATER,
     PROD_SCHEMA,
     INJ_SCHEMA,
 )
@@ -23,7 +24,7 @@ class VectorData(BaseModel):
     is_result: bool = False
     data_schema: DataFrameSchema = DataFrameSchema()
     freq: str
-    use_pressure: bool = False
+    # use_pressure: bool = False
     data: Any
     _start_date: datetime = PrivateAttr(None)
     _end_date: datetime = PrivateAttr(None)
@@ -35,8 +36,8 @@ class VectorData(BaseModel):
     def validate_data(cls, v, values):
         new_schema = add_date_index_validation(values["data_schema"], values["freq"])
 
-        if values["use_pressure"]:
-            new_schema = add_pressure_validation(new_schema)
+        """if values["use_pressure"]:
+            new_schema = add_pressure_validation(new_schema)"""
 
         cls.data_schema = new_schema
         return new_schema.validate(v)
@@ -86,7 +87,7 @@ class VectorData(BaseModel):
                 return VectorData(
                     data_schema=self.data_schema,
                     freq=self.freq,
-                    use_pressure=self.use_pressure,
+                    # use_pressure=self.use_pressure,
                     data=new_data,
                 )
             elif self.equal_date_index(other):
@@ -117,7 +118,7 @@ class VectorData(BaseModel):
                 return VectorData(
                     data_schema=pa.infer_schema(new_data),
                     freq=self.freq,
-                    use_pressure=self.use_pressure,
+                    # use_pressure=self.use_pressure,
                     data=new_data,
                 )
             else:
@@ -129,7 +130,7 @@ class VectorData(BaseModel):
             return VectorData(
                 data_schema=self.data_schema,
                 freq=self.freq,
-                use_pressure=self.use_pressure,
+                # use_pressure=self.use_pressure,
                 data=new_data,
             )
         elif isinstance(other, pd.Series):
@@ -138,28 +139,35 @@ class VectorData(BaseModel):
                 return VectorData(
                     data_schema=self.data_schema,
                     freq=self.freq,
-                    use_pressure=self.use_pressure,
+                    # use_pressure=self.use_pressure,
                     data=new_data,
                 )
 
     def _radd_(self, other):
-        return self._add_(other)
+        return self.add(other)
 
 
 class ProdVector(VectorData):
     data_schema: DataFrameSchema = PROD_SCHEMA
 
     def get_well_name(self) -> pd.Series:
-        return self.data[well_col]
+        return self.data[WELL_COL]
 
     def get_oil_cum(self) -> pd.Series:
-        return self.data[oil_cum_col]
+        return self.data[OIL_CUM_COL]
 
     def get_water_cum(self) -> pd.Series:
-        return self.data[water_cum_col]
+        return self.data[WATER_CUM_COL]
 
     def get_gas_cum(self) -> pd.Series:
-        return self.data[gas_cum_col]
+        return self.data[GAS_CUM_COL]
+
+    def calculete_rate_oil(self):
+        ind = self.data.index
+        days = ind.to_series().map(lambda date: days_in_month(date))
+        cum_prod = self.data[OIL_CUM_COL].diff().fillna(self.data[OIL_CUM_COL])
+        rate = cum_prod / days
+        return rate
 
     def plot_oil_cum(self, ax=None, **kwards):
         if ax is None:
@@ -169,17 +177,6 @@ class ProdVector(VectorData):
         ax.set_ylabel("Oil Cumulative (STB)")
         ax.set_xlabel("Date")
 
-    def calculate_rates_oil(self):
-        dates = self.data.index
-        cumulative_production = self.data[oil_cum_col].diff()
-
-        # changes in dates
-        time_change = dates.to_series().diff() / timedelta(days=1)
-
-        # Calculate oil rate
-        rate = cumulative_production / time_change
-
-        return rate
 
     def plot_water_cum(self, ax=None, **kwards):
         if ax is None:
@@ -193,10 +190,10 @@ class ProdVector(VectorData):
 
 
 class PressVector(VectorData):
-    data_schema: DataFrameSchema = press_col
+    data_schema: DataFrameSchema = PRESSURE_COL
 
     def get_pressure_datum(self) -> pd.Series:
-        return self.data[press_col]
+        return self.data[PRESSURE_COL]
 
     def plot_pressure_vs_date(self, ax=None, **kwargs):
         if ax is None:
@@ -211,7 +208,7 @@ class InjVector(VectorData):
     data_schema: DataFrameSchema = INJ_SCHEMA
 
     def get_well_inj_name(self) -> pd.Series:
-        return self.data[well_col]
+        return self.data[WELL_COL]
 
     def get_water_volume(self) -> pd.Series:
-        return self.data[injection_water]
+        return self.data[INJECTION_WATER]
