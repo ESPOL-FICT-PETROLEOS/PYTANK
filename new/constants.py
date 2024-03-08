@@ -12,6 +12,7 @@ LIQ_CUM = "LIQ_CUM"
 # GAS_FVF_COL = "Bg"
 INJECTION_WATER = "WATER_VOL"
 # INFLUX_WATER = "We"
+TANK_COL = "TANK"
 
 # Frecuency's of time
 VALID_FREQS = ["D", "W", "M", "MS", "Q", "Y", None]
@@ -24,11 +25,7 @@ _VECTOR_VALIDATION = Column(
 )
 
 _PRESSURE_VALIDATION = Column(
-    float,
-    Check(lambda s: s >= 0),
-    coerce=True,
-    nullable=False,
-    required=False
+    float, Check(lambda s: s >= 0), coerce=True, nullable=False, required=False
 )
 
 _PROD_SCHEMA_DICT = {
@@ -36,7 +33,7 @@ _PROD_SCHEMA_DICT = {
     WATER_CUM_COL: _VECTOR_VALIDATION,
     GAS_CUM_COL: _VECTOR_VALIDATION,
     LIQ_CUM: _VECTOR_VALIDATION,
-    PRESSURE_COL: _PRESSURE_VALIDATION
+    PRESSURE_COL: _PRESSURE_VALIDATION,
 }
 
 _INJ_SCHEMA_DICT = {INJECTION_WATER: _VECTOR_VALIDATION}

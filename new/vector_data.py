@@ -36,9 +36,6 @@ class VectorData(BaseModel):
     def validate_data(cls, v, values):
         new_schema = add_date_index_validation(values["data_schema"], values["freq"])
 
-        """if values["use_pressure"]:
-            new_schema = add_pressure_validation(new_schema)"""
-
         cls.data_schema = new_schema
         return new_schema.validate(v)
 
@@ -176,7 +173,6 @@ class ProdVector(VectorData):
         self.get_oil_cum().plot(ax=ax, **kwards)
         ax.set_ylabel("Oil Cumulative (STB)")
         ax.set_xlabel("Date")
-
 
     def plot_water_cum(self, ax=None, **kwards):
         if ax is None:
