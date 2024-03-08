@@ -4,7 +4,6 @@ from new.constants import OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM
 from new.vector_data import ProdVector
 from new.well import ProdWell
 
-
 # Data to process
 df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/prueba.csv")
 df_production["START_DATETIME"] = pd.to_datetime(df_production["START_DATETIME"])
