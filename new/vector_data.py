@@ -1,6 +1,5 @@
-import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 from pydantic import BaseModel, validator, PrivateAttr
 from pandera import DataFrameSchema
@@ -8,7 +7,6 @@ import pandera as pa
 from new.utilities import add_date_index_validation, days_in_month
 import matplotlib.pyplot as plt
 from new.constants import (
-    DATE_COL,
     WELL_COL,
     OIL_CUM_COL,
     WATER_CUM_COL,
@@ -159,7 +157,7 @@ class ProdVector(VectorData):
     def get_gas_cum(self) -> pd.Series:
         return self.data[GAS_CUM_COL]
 
-    def calculete_rate_oil(self):
+    def calculate_rate_oil(self):
         ind = self.data.index
         days = ind.to_series().map(lambda date: days_in_month(date))
         cum_prod = self.data[OIL_CUM_COL].diff().fillna(self.data[OIL_CUM_COL])

@@ -1,7 +1,7 @@
 from pandera import Column, Check, DataFrameSchema
 
 # Constants of DataFrames
-DATE_COL = "DATE"
+DATE_COL = "START_DATETIME"
 PRESSURE_COL = "PRESSURE"
 WELL_COL = "WELL_BORE"
 OIL_CUM_COL = "OIL_CUM"

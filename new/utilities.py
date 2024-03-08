@@ -209,32 +209,45 @@ def variable_type(obj):
     return array
 
 
+
 def add_date_index_validation(
     base_schema: DataFrameSchema, freq: str = None
 ) -> DataFrameSchema:
     """Add a date index validation to a base schema."""
     if freq not in VALID_FREQS:
         raise ValueError(f"freq must be one of {VALID_FREQS}, not {freq}")
+    if freq in VALID_FREQS:
+        if freq is None:
+            new_schema = base_schema.add_columns(
+                {
+                    DATE_COL: Column(
+                        pd.Timestamp,
+                        coerce=True,
+                        nullable=False,
+                        name=None,
+                    )
+                }
+            ).set_index([DATE_COL])
 
-    new_schema = base_schema.add_columns(
-        {
-            DATE_COL: Column(
-                pd.Timestamp,
-                Check(
-                    lambda s: pd.infer_freq(s) == freq,
-                    name="DateTimeIndex frequency check",
-                    error=f"DateTimeIndex must have frequency '{freq}'",
-                ),
-                coerce=True,
-                nullable=False,
-                name=None,
-            )
-        }
-    ).set_index([DATE_COL])
+            return new_schema
+        else:
+            new_schema = base_schema.add_columns(
+                {
+                    DATE_COL: Column(
+                        pd.Timestamp,
+                        Check(
+                            lambda s: pd.infer_freq(s) == freq,
+                            name="DateTimeIndex frequency check",
+                            error=f"DateTimeIndex must have frequency '{freq}'",
+                        ),
+                        coerce=True,
+                        nullable=False,
+                        name=None,
+                    )
+                }
+            ).set_index([DATE_COL])
 
-    return new_schema
-
-
+        return new_schema
 def add_pressure_validation(base_schema: DataFrameSchema) -> DataFrameSchema:
     """Add a pressure column validation to a base schema."""
     new_schema = base_schema.add_columns(
@@ -250,5 +263,5 @@ def add_pressure_validation(base_schema: DataFrameSchema) -> DataFrameSchema:
         }
     )
 
-    #return new_schema
+    return new_schema
     pass
