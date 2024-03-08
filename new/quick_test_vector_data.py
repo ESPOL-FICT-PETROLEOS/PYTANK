@@ -7,7 +7,7 @@ from new.constants import (
     LIQ_CUM,
     PRESSURE_COL,
     DATE_COL,
-    INJECTION_WATER
+    INJECTION_WATER,
 )
 
 # %% Create a sample pandas dataframe with 2 columns and a DateTimeIndex with MS
@@ -21,13 +21,9 @@ df_prod = (
             GAS_CUM_COL: [100, 200, 300, 400, 500],
             DATE_COL: date_index_prod,
         }
-    ).set_index(DATE_COL)
-    .assign(
-        **{
-            LIQ_CUM: lambda x: x[OIL_CUM_COL]
-            + x[WATER_CUM_COL]
-        }
     )
+    .set_index(DATE_COL)
+    .assign(**{LIQ_CUM: lambda x: x[OIL_CUM_COL] + x[WATER_CUM_COL]})
 )
 # %% Create sample df for injection
 date_index_inj = pd.date_range("2020-01-01", periods=5, freq="D")
@@ -41,4 +37,4 @@ df_inj = pd.DataFrame(
 prod_vector_data = ProdVector(freq="MS", data=df_prod)
 oil_cum = prod_vector_data
 water_cum = prod_vector_data
-print(prod_vector_data.cal_day())
+print(prod_vector_data.calculete_rate_oil())

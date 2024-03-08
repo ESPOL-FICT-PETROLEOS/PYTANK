@@ -8,8 +8,8 @@ class WellBase(BaseModel):
 
 
 class ProdWell(WellBase):
-    vector_data = ProdVector
+    vector_data: ProdVector
 
 
 class InjWell(WellBase):
-    vector_data = InjVector
+    vector_data: InjVector
