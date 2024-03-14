@@ -21,7 +21,7 @@ from new.constants import (
 class VectorData(BaseModel):
     is_result: bool = False
     data_schema: DataFrameSchema = DataFrameSchema()
-    freq: str
+    freq: str | None
     # use_pressure: bool = False
     data: Any
     _start_date: datetime = PrivateAttr(None)
