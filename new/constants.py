@@ -25,7 +25,11 @@ _VECTOR_VALIDATION = Column(
 )
 
 _PRESSURE_VALIDATION = Column(
-    float, Check(lambda s: s >= 0), coerce=True, nullable=False, required=False
+    float,
+    Check(lambda s: s >= 0),
+    coerce=True,
+    nullable=False,
+    required=False
 )
 
 _PROD_SCHEMA_DICT = {
