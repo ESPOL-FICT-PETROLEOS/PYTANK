@@ -1,13 +1,15 @@
 from pydantic import BaseModel
-import pandas as pd
-from new.vector_data import VectorData, ProdVector
+from new.vector_data import VectorData, ProdVector, InjVector
 
 
-class Well(BaseModel):
+class WellBase(BaseModel):
     name: str
     vector_data: VectorData
 
 
+class ProdWell(WellBase):
+    vector_data: ProdVector
 
 
-
+class InjWell(WellBase):
+    vector_data: InjVector

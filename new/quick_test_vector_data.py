@@ -37,5 +37,4 @@ df_inj = pd.DataFrame(
 prod_vector_data = ProdVector(freq="MS", data=df_prod)
 oil_cum = prod_vector_data
 water_cum = prod_vector_data
-print(prod_vector_data.calculate_rate_oil())
-
+print(prod_vector_data.calculete_rate_oil())

@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from datetime import datetime
 from typing import Any
@@ -158,10 +157,10 @@ class ProdVector(VectorData):
     def get_gas_cum(self) -> pd.Series:
         return self.data[GAS_CUM_COL]
 
-    def calculate_rate(self, liquid: str) -> pd.Series:
+    def calculate_rate_oil(self):
         ind = self.data.index
         days = ind.to_series().map(lambda date: days_in_month(date))
-        cum_prod = self.data[liquid].diff().fillna(self.data[liquid])
+        cum_prod = self.data[OIL_CUM_COL].diff().fillna(self.data[OIL_CUM_COL])
         rate = cum_prod / days
         return rate
 
