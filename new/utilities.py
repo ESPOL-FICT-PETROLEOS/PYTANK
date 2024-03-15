@@ -4,6 +4,7 @@ from pandera import Column, Check, DataFrameSchema
 import pandas as pd
 from new.constants import DATE_COL, VALID_FREQS, PRESSURE_COL
 import numpy as np
+from typing import Union, Optional, Sequence
 
 
 def days_in_month(date):
@@ -265,3 +266,96 @@ def add_pressure_validation(base_schema: DataFrameSchema) -> DataFrameSchema:
 
     return new_schema
     pass
+
+def normalize_date_freq(
+    df: Union[pd.DataFrame, pd.Series],
+    freq: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    cols_fill_na: Optional[Sequence[str]] = None,
+    method_no_cols: Optional[str] = None,
+    fill_na: Union[int, float] = 0,
+):
+    """
+    Returns a new dataframe with a new DateTimeIndex which has a predefined frequency.
+    Using this function will ensure there is always a frequency associated to the index
+    of this dataframe.
+
+    Parameters
+    ----------
+    df: pandas DataFrame or Series
+        A pandas DataFrame or Series whose index is of type DateTimeIndex
+    freq: str
+        A string representing the target frequency for the dataframe.
+    start_date
+        Specify the start date to reindex the dates. If not specified, the earliest date
+        in the index will be used
+    end_date
+        Specify the end date to reindex the dates. If not specified, the latest date
+        in the index will be used
+    cols_fill_na
+        Data Frame columns to fill with values specified in the argument fill_na
+    method_no_cols
+        {None, ‘backfill’/’bfill’, ‘pad’/’ffill’, ‘nearest’}
+        The method to use with other columns not specified in cols_fill_na. The options
+        are passed to the pandas.reindex method.
+    fill_na: scalar, default np.nan
+        Value to use for missing values after the reindexing.
+
+    Returns
+    -------
+    Series/DataFrame with changed index based on the new frequency. The new dataframe
+    will be sorted by its index.
+    """
+
+    if isinstance(df, (pd.DataFrame, pd.Series)):
+        if isinstance(df.index, pd.DatetimeIndex):
+            # Check for duplicate values in index
+            if len(df.index) != len(set(df.index)):
+                error_message = f"""
+                The DateTimeIndex contains duplicate values\n
+                Please, provide dates that are unique for each production information\n
+                Printing the first rows of the dataframe:\n
+                {df.head()}
+                """
+                raise IndexError(error_message)
+            # First we need to sort the dataframe based on its index to get the start
+            # and end dates, just in case.
+            sorted_df: pd.DataFrame = df.sort_index()
+            start_date_n = (
+                sorted_df.index[0] if start_date is None else pd.to_datetime(start_date)
+            )
+            end_date_n = (
+                sorted_df.index[-1] if end_date is None else pd.to_datetime(end_date)
+            )
+        else:
+            raise IndexError(
+                "The index in the DataFrame or Series should be a "
+                "DateTimeIndex object"
+            )
+    else:
+        raise TypeError("First argument should be a pandas DataFrame or Series")
+
+    new_index = pd.date_range(start_date_n, end_date_n, freq=freq, name=df.index.name)
+    if cols_fill_na is not None:
+        # First reindex the columns that are specified in the cols_fill_na argument
+        # These columns will default to nan where new dates appear, and will be replaced
+        # with the fill_na value
+        df_cols = (
+            sorted_df[cols_fill_na].reindex(new_index, fill_value=fill_na).reset_index()
+        )
+        # Reindex the remaining columns, this time by using the method_co_cols argument
+        # as input argument to reindex 'method' argument.
+        df_no_cols = (
+            sorted_df[sorted_df.columns.difference(cols_fill_na)]
+            .reindex(new_index, method=method_no_cols)
+            .reset_index(drop=True)
+        )
+
+        df_concat = pd.concat([df_cols, df_no_cols], axis=1)
+        df_concat.set_index(df.index.name, inplace=True)
+        # Use the same column order as the original dataframe
+        df_concat = df_concat[df.columns]
+        return df_concat
+    else:
+        return sorted_df.reindex(new_index, fill_value=fill_na)
