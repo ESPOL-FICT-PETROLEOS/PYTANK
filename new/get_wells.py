@@ -3,9 +3,10 @@ import pandas as pd
 from new.constants import OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM
 from new.vector_data import ProdVector
 from new.well import Well
+from new.utilities import normalize_date_freq
 
 # Data to process
-df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/prueba.csv")
+df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/production.csv")
 df_production["START_DATETIME"] = pd.to_datetime(df_production["START_DATETIME"])
 
 df_production.set_index(df_production["START_DATETIME"], inplace=True)
@@ -24,9 +25,13 @@ for name, group in df_production.groupby("ITEM_NAME"):
     )
     group[LIQ_CUM] = group[OIL_CUM_COL] + group[WATER_CUM_COL]
 
+    df_inter_date = normalize_date_freq(
+        group[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]],
+        "MS"
+    )
     prod_vector = ProdVector(
         freq=None,
-        data=group[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]],
+        data=df_inter_date
     )
 
     # Create rates colums
@@ -34,6 +39,7 @@ for name, group in df_production.groupby("ITEM_NAME"):
     water_rates = prod_vector.calculate_rate(WATER_CUM_COL)
     prod_vector.data["OIL_RATE"] = oil_rates
     prod_vector.data["WATER_RATE"] = water_rates
+
 
     # Create the well
     prod_well = Well(
