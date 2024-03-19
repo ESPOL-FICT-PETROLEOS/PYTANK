@@ -25,13 +25,9 @@ for name, group in df_production.groupby("ITEM_NAME"):
     )
     group[LIQ_CUM] = group[OIL_CUM_COL] + group[WATER_CUM_COL]
 
-    df_inter_date = normalize_date_freq(
-        group[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]],
-        "MS"
-    )
     prod_vector = ProdVector(
         freq=None,
-        data=df_inter_date
+        data=group
     )
 
     # Create rates colums
@@ -40,6 +36,16 @@ for name, group in df_production.groupby("ITEM_NAME"):
     prod_vector.data["OIL_RATE"] = oil_rates
     prod_vector.data["WATER_RATE"] = water_rates
 
+    # Interpolated dates
+    date_interpo = normalize_date_freq(prod_vector.data,
+                                       "MS",
+                                       cols_fill_na=["OIL_RATE", "WATER_RATE"],
+                                       method_no_cols="ffill")
+    prod_vector.data = date_interpo
+
+    # Calculate new rates based on interpolated dates
+    prod_vector.data["OIL_RATE"] = prod_vector.calculate_rate(OIL_CUM_COL)
+    prod_vector.data["WATER_RATE"] = prod_vector.calculate_rate(WATER_CUM_COL)
 
     # Create the well
     prod_well = Well(
