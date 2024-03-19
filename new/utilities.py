@@ -274,7 +274,7 @@ def normalize_date_freq(
     end_date: Optional[str] = None,
     cols_fill_na: Optional[Sequence[str]] = None,
     method_no_cols: Optional[str] = None,
-    fill_na: Union[int, float] = 0,
+    fill_na: Union[int, float] = np.nan,
 ):
     """
     Returns a new dataframe with a new DateTimeIndex which has a predefined frequency.
