@@ -1,9 +1,10 @@
 # %%
 import pandas as pd
-from new.constants import OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM
-from new.vector_data import ProdVector
+from new.constants import OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, PRESSURE_COL
+from new.vector_data import ProdVector, PressVector
 from new.well import Well
 from new.utilities import normalize_date_freq
+from old.utilities import interp_dates_row
 
 # Data to process
 df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/production.csv")
@@ -14,7 +15,7 @@ prod_wells = []
 
 # Group data by well name and apply the function to create ProdWell objects
 for name, group in df_production.groupby("ITEM_NAME"):
-    print(f"Creating well {name}")
+    #print(f"Creating well {name}")
 
     group = group.rename(
         columns={
@@ -54,4 +55,31 @@ for name, group in df_production.groupby("ITEM_NAME"):
     )
     prod_wells.append(prod_well)
 
-print(prod_wells)
+
+df_pressures = pd.read_csv("../old/tests/data_for_tests/full_example_1/pressures.csv")
+df_pressures.rename(columns={"DATE":"START_DATETIME"}, inplace=True)
+df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
+
+df_pressures.set_index(df_pressures["START_DATETIME"], inplace=True)
+pressures_wells = []
+
+
+for name, group in df_pressures.groupby("WELLBORE"):
+    print(f"Creating well pressures {name}")
+    group = group.rename(
+        columns={
+            PRESSURE_COL: PRESSURE_COL
+        }
+    )
+    press_vector = PressVector(
+        freq=None,
+        data=group
+    )
+
+    press_well = Well(
+        name=name,
+        vector_data=press_vector
+    )
+    pressures_wells.append(press_well)
+
+print(pressures_wells)
