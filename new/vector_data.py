@@ -14,6 +14,7 @@ from new.constants import (
     PRESSURE_COL,
     INJECTION_WATER,
     PROD_SCHEMA,
+    PRESS_SCHEMA,
     INJ_SCHEMA,
 )
 
@@ -184,7 +185,7 @@ class ProdVector(VectorData):
 
 
 class PressVector(VectorData):
-    data_schema: DataFrameSchema = PRESSURE_COL
+    data_schema: DataFrameSchema = PRESS_SCHEMA
 
     def get_pressure_datum(self) -> pd.Series:
         return self.data[PRESSURE_COL]
