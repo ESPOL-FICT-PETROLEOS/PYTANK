@@ -1,11 +1,12 @@
 # %%
 import pandas as pd
 from new.constants import OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, PRESSURE_COL
-from new.vector_data import ProdVector, PressVector
+from new.vector_data import ProdVector, PressVector, VectorData
 from new.well import Well
 from new.utilities import normalize_date_freq
 from old.utilities import interp_dates_row
 
+# Work pressure info
 # Data to process
 df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/production.csv")
 df_production["START_DATETIME"] = pd.to_datetime(df_production["START_DATETIME"])
@@ -56,6 +57,8 @@ for name, group in df_production.groupby("ITEM_NAME"):
     prod_wells.append(prod_well)
 
 
+# Work pressure info
+# Data to process
 df_pressures = pd.read_csv("../old/tests/data_for_tests/full_example_1/pressures.csv")
 df_pressures.rename(columns={"DATE":"START_DATETIME"}, inplace=True)
 df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
@@ -65,7 +68,7 @@ pressures_wells = []
 
 
 for name, group in df_pressures.groupby("WELLBORE"):
-    print(f"Creating well pressures {name}")
+    #print(f"Creating well pressures {name}")
     group = group.rename(
         columns={
             PRESSURE_COL: PRESSURE_COL
@@ -82,4 +85,33 @@ for name, group in df_pressures.groupby("WELLBORE"):
     )
     pressures_wells.append(press_well)
 
-print(pressures_wells)
+unified_wells = []
+
+for prod_well in prod_wells:
+    # Search the well in the list
+    found = False
+    for press_well in pressures_wells:
+        if prod_well.name.strip() == press_well.name.strip():
+            # Both df
+            unified_data = pd.merge(prod_well.vector_data.data, press_well.vector_data.data, how='outer',
+                                    left_index=True, right_index=True)
+
+            unified_vector_data = VectorData(freq=None,
+                                             data=unified_data)
+
+            # Create a new object
+            unified_well = Well(name=prod_well.name,
+                                vector_data=unified_vector_data)
+
+            # Agg the new object to a list
+            unified_wells.append(unified_well)
+            found = True
+            break
+
+    if not found:
+        # Si el pozo de producción no tiene un equivalente en los datos de presión, agregarlo sin modificar sus datos
+        unified_wells.append(prod_well)
+
+for well in unified_wells:
+    print(well.name)
+    print(well.vector_data)
