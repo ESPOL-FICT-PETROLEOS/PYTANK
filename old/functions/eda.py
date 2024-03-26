@@ -11,9 +11,9 @@ from old.material_balance.material_balance import (
 formatter = ticker.EngFormatter()
 
 # %% specify files to load
-production_file = "../tests/data_for_tests/full_example_1/production.csv"
-pressure_file = "../tests/data_for_tests/full_example_1/pressures.csv"
-pvt_file = "../tests/data_for_tests/full_example_1/pvt.csv"
+production_file = "C:/Users/CompuMundo/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/production.csv"
+pressure_file = "C:/Users/CompuMundo/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/pressures.csv"
+pvt_file = "C:/Users/CompuMundo/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/pvt.csv"
 
 # %% Load data into dataframes
 df_prod = pd.read_csv(production_file)
@@ -83,7 +83,9 @@ gas_fvf_interp = interp1d(df_pvt["Pressure"], df_pvt["Bg"], fill_value="extrapol
 df_press[oil_fvf_col] = oil_fvf_interp(df_press[press_col])
 df_press[gas_oil_rs_col] = gas_oil_rs_interp(df_press[press_col])
 df_press[gas_fvf_col] = gas_fvf_interp(df_press[press_col])
-
+print(oil_fvf_interp)
+print(gas_fvf_interp)
+print(gas_oil_rs_interp)
 # %% Interpolate oil, gas and water cumulatives into the pressure data frame
 for col in cols_input:
     df_press[col] = df_press.apply(
@@ -95,7 +97,7 @@ for col in cols_input:
     # For wells not available in the production data frame, fill nans with 0
     df_press[col].fillna(0, inplace=True)
 
-print(df_press["Bg"])
+presscsv = df_press.to_csv("interpolado.csv")
 # %% Calculate underground withdrawal for each well
 uw_col = "UW"
 
