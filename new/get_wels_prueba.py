@@ -123,3 +123,63 @@ for prod_well in prod_wells:
             break
 
 a=prod_wells[0].vector_data.data
+
+# Work pressure info
+# Data to process
+df_pressures = pd.read_csv("../old/tests/data_for_tests/full_example_1/pressures.csv")
+df_pressures.rename(columns={"DATE":"START_DATETIME"}, inplace=True)
+df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
+
+df_pressures.set_index(df_pressures["START_DATETIME"], inplace=True)
+pressures_wells = []
+
+
+for name, group in df_pressures.groupby("WELLBORE"):
+    #print(f"Creating well pressures {name}")
+    group = group.rename(
+        columns={
+            PRESSURE_COL: PRESSURE_COL
+        }
+    )
+    press_vector = PressVector(
+        freq=None,
+        data=group
+    )
+
+    press_well = Well(
+        name=name,
+        vector_data=press_vector
+    )
+    pressures_wells.append(press_well)
+
+unified_wells = []
+
+for prod_well in prod_wells:
+    # Search the well in the list
+    found = False
+    for press_well in pressures_wells:
+        if prod_well.name.strip() == press_well.name.strip():
+            # Both df
+            unified_data = pd.merge(prod_well.vector_data.data, press_well.vector_data.data, how='outer',
+                                    left_index=True, right_index=True)
+
+            unified_vector_data = VectorData(freq=None,
+                                             data=unified_data)
+
+            # Create a new object
+            unified_well = Well(name=prod_well.name,
+                                vector_data=unified_vector_data)
+
+            # Agg the new object to a list
+            unified_wells.append(unified_well)
+            found = True
+            break
+
+    if not found:
+        # Si el pozo de producción no tiene un equivalente en los datos de presión, agregarlo sin modificar sus datos
+        unified_wells.append(prod_well)
+
+for well in unified_wells:
+    print(well.name)
+    print(well.vector_data)
+
