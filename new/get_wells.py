@@ -8,19 +8,18 @@ from old.utilities import interp_dates_row
 from collections import defaultdict
 
 # Data to process with production info
-df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/production.csv")
+df_production = pd.read_csv("C:/Users/ksls2/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/production.csv")
 df_production["START_DATETIME"] = pd.to_datetime(df_production["START_DATETIME"])
 df_production.set_index(df_production["START_DATETIME"], inplace=True)
 
 # Data to process with pressure info
-df_pressures = pd.read_csv("../old/tests/data_for_tests/full_example_1/pressures.csv")
+df_pressures = pd.read_csv("C:/Users/ksls2/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/pressures.csv")
 df_pressures.rename(columns={"DATE": "START_DATETIME", "WELLLBORE": "ITEM_NAME"}, inplace=True)
 df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
 df_pressures.set_index(df_pressures["START_DATETIME"], inplace=True)
 
 # Empty list for the different wells
 prod_wells = []
-
 # Empty dictionary for the different tanks
 tank_wells = defaultdict(list)
 
@@ -37,12 +36,17 @@ for name, group in df_production.groupby("ITEM_NAME"):
     )
     group[LIQ_CUM] = group[OIL_CUM_COL] + group[WATER_CUM_COL]
 
-    group_norm = normalize_date_freq(group,
+    group = group[[OIL_CUM_COL,WATER_CUM_COL,GAS_CUM_COL,LIQ_CUM]]
+    group_norm = normalize_date_freq(df=group,
                                      freq="MS",
-                                     method_no_cols="ffill"
-                                    )
+                                     cols_fill_na=[OIL_CUM_COL,WATER_CUM_COL,GAS_CUM_COL,LIQ_CUM]
+                                )
+    # Por ahora esta es la única manera que encontre, porque no esta trabajando correctamente el normaliza_date_freq
+    # al rellenar los valores
+
+    group_norm.ffill(inplace=True)
     prod_vector = ProdVector(
-        freq="MS",
+        freq=None,
         data=group_norm
     )
 
@@ -52,5 +56,4 @@ for name, group in df_production.groupby("ITEM_NAME"):
     )
     prod_wells.append(prod_well)
 
-
-
+print(prod_wells[6])
