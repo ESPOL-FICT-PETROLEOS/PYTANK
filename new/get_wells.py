@@ -8,15 +8,15 @@ from old.utilities import interp_dates_row
 from collections import defaultdict
 
 # Data to process with production info
-df_production = pd.read_csv("C:/Users/ksls2/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/production.csv")
+df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/production.csv")
 df_production["START_DATETIME"] = pd.to_datetime(df_production["START_DATETIME"])
 df_production.set_index(df_production["START_DATETIME"], inplace=True)
 
 # Data to process with pressure info
-df_pressures = pd.read_csv("C:/Users/ksls2/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/pressures.csv")
+df_pressures = pd.read_csv("../old/tests/data_for_tests/full_example_1/pressures.csv")
 df_pressures.rename(columns={"DATE": "START_DATETIME", "WELLLBORE": "ITEM_NAME"}, inplace=True)
 df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
-df_pressures.set_index(df_pressures["START_DATETIME"], inplace=True)
+#df_pressures.set_index(df_pressures["START_DATETIME"], inplace=True)
 
 # Empty list for the different wells
 prod_wells = []
@@ -24,36 +24,57 @@ prod_wells = []
 tank_wells = defaultdict(list)
 
 # Group data by well name and apply the function to create ProdWell objects
-for name, group in df_production.groupby("ITEM_NAME"):
+for name, group_prod in df_production.groupby("ITEM_NAME"):
     print(f"Creating well {name}")
 
-    group = group.rename(
+    group_prod = group_prod.rename(
         columns={
             OIL_CUM_COL: OIL_CUM_COL,
             WATER_CUM_COL: WATER_CUM_COL,
-            GAS_CUM_COL: GAS_CUM_COL
+            GAS_CUM_COL: GAS_CUM_COL,
+            TANK_COL: TANK_COL
         }
     )
-    group[LIQ_CUM] = group[OIL_CUM_COL] + group[WATER_CUM_COL]
+    group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[WATER_CUM_COL]
 
-    group = group[[OIL_CUM_COL,WATER_CUM_COL,GAS_CUM_COL,LIQ_CUM]]
-    group_norm = normalize_date_freq(df=group,
+    group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
+    group_prod_norm = normalize_date_freq(df=group_prod,
                                      freq="MS",
-                                     cols_fill_na=[OIL_CUM_COL,WATER_CUM_COL,GAS_CUM_COL,LIQ_CUM]
-                                )
-    # Por ahora esta es la única manera que encontre, porque no esta trabajando correctamente el normaliza_date_freq
-    # al rellenar los valores
+                                     cols_fill_na=[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
+                                     )
 
-    group_norm.ffill(inplace=True)
+    # Fill the NAN values with values from the previous row "ffill"
+    group_prod_norm.ffill(inplace=True)
+
     prod_vector = ProdVector(
         freq=None,
-        data=group_norm
+        data=group_prod_norm
     )
+    # In case where wells dont have pressure info
+    press_vector = None
+    # Check if there's pressure data available for this well
+    if name in df_pressures["WELLBORE"].unique():
+        group_press = df_pressures[df_pressures["WELLBORE"] == name]
 
-    prod_well = Well(
+        # Renaming columns of pressure data
+        group_press = group_press.rename(
+            columns={
+                PRESSURE_COL: PRESSURE_COL
+            }
+        )
+        group_press.set_index("START_DATETIME", inplace=True)
+
+        press_vector = PressVector(
+            freq=None,
+            data=group_press
+        )
+
+    # Creating Well object with both production and pressure data
+    info_well = Well(
         name=name,
-        prod_data=prod_vector
+        prod_data=prod_vector,
+        press_data=press_vector
     )
-    prod_wells.append(prod_well)
+    prod_wells.append(info_well)
 
-print(prod_wells[6])
+
