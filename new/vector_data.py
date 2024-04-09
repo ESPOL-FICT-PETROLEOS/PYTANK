@@ -23,7 +23,7 @@ class VectorData(BaseModel):
     is_result: bool = False
     data_schema: DataFrameSchema = DataFrameSchema()
     freq: str | None
-    # use_pressure: bool = False
+    use_pressure: bool = False
     data: Any
     _start_date: datetime = PrivateAttr(None)
     _end_date: datetime = PrivateAttr(None)
