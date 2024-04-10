@@ -5,7 +5,7 @@ from pydantic import BaseModel, validator, PrivateAttr
 from pandera import DataFrameSchema
 import pandera as pa
 from new.utilities import add_date_index_validation, days_in_month
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from new.constants import (
     WELL_COL,
     OIL_CUM_COL,
@@ -165,7 +165,7 @@ class ProdVector(VectorData):
         rate = cum_prod / days
         return rate
 
-    def plot_oil_cum(self, ax=None, **kwards):
+    """def plot_oil_cum(self, ax=None, **kwards):
         if ax is None:
             ax = plt.gca()
 
@@ -179,7 +179,7 @@ class ProdVector(VectorData):
 
         self.get_water_cum().plot(ax=ax, **kwards)
         ax.set_ylabel("Water Cumulative (STB)")
-        ax.set_xlabel("Date")
+        ax.set_xlabel("Date")"""
 
     # Dentro de esta clase, tambien se ponen las columnas que nosotros esperamos obtener?
 
@@ -190,13 +190,13 @@ class PressVector(VectorData):
     def get_pressure_datum(self) -> pd.Series:
         return self.data[PRESSURE_COL]
 
-    def plot_pressure_vs_date(self, ax=None, **kwargs):
+    """def plot_pressure_vs_date(self, ax=None, **kwargs):
         if ax is None:
             ax = plt.gca()
 
         self.get_pressure_datum().plot(ax=ax, **kwargs)
         ax.set_ylabel("Pressure (PSI)")
-        ax.set_xlabel("Date")
+        ax.set_xlabel("Date")"""
 
 
 class InjVector(VectorData):

@@ -1,4 +1,5 @@
-from pandera import Column, Check, DataFrameSchema
+import pandera
+from pandera import Column, Check, DataFrameSchema, String
 
 # Constants of DataFrames
 DATE_COL = "START_DATETIME"
@@ -33,15 +34,20 @@ _PRESSURE_VALIDATION = Column(
     required=False
 )
 
+#_TANK_VALIDATION = Column(String, required=True)
+
 _PROD_SCHEMA_DICT = {
     OIL_CUM_COL: _VECTOR_VALIDATION,
     WATER_CUM_COL: _VECTOR_VALIDATION,
     GAS_CUM_COL: _VECTOR_VALIDATION,
     LIQ_CUM: _VECTOR_VALIDATION,
+    #TANK_COL: _TANK_VALIDATION
+
 }
 
 _PRESS_SCHEMA_DICT = {
     PRESSURE_COL: _PRESSURE_VALIDATION,
+    #TANK_COL: _TANK_VALIDATION
                       }
 
 _INJ_SCHEMA_DICT = {INJECTION_WATER: _VECTOR_VALIDATION}
