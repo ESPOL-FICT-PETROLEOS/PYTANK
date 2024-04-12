@@ -17,10 +17,6 @@ df_production.set_index(df_production[DATE_COL], inplace=True)
 df_pressures = pd.read_csv("../old/tests/data_for_tests/full_example_1/pressures.csv")
 df_pressures.rename(columns={"DATE": "START_DATETIME", "WELLLBORE": "ITEM_NAME"}, inplace=True)
 df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
-#df_pressures.set_index(df_pressures["START_DATETIME"], inplace=True)
-
-# Empty list for the different wells
-#prod_wells = []
 
 # Empty dictionary for the different tanks
 tank_wells = defaultdict(list)
@@ -74,11 +70,10 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
     # Creating Well object with both production and pressure data
     info_well = Well(
         name=name,
-        tank=group_prod_norm[TANK_COL].iloc[0],
         prod_data=prod_vector,
         press_data=press_vector
     )
 
-    tank_wells[info_well.tank].append(info_well)
+    tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
 
-print(tank_wells.keys())
+print(tank_wells)

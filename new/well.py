@@ -6,7 +6,6 @@ from typing import Optional
 
 class Well(BaseModel):
     name: str
-    tank: str
     prod_data: ProdVector
     press_data: Optional[PressVector] = None
 
