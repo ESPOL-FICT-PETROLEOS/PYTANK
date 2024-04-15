@@ -70,10 +70,11 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
     # Creating Well object with both production and pressure data
     info_well = Well(
         name=name,
+        #tank=group_prod_norm[TANK_COL].iloc[0],
         prod_data=prod_vector,
         press_data=press_vector
     )
 
+    #tank_wells[info_well.tank].append(info_well)
     tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
 
-print(tank_wells)
