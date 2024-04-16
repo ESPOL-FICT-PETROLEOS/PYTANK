@@ -37,15 +37,16 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
 
     group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
     group_prod_norm = normalize_date_freq(df=group_prod,
-                                     freq="MS",
-                                     cols_fill_na=[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
-                                     )
+                                          freq="MS",
+                                          cols_fill_na=[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
+                                          )
 
     # Fill the NAN values with values from the previous row "ffill"
     group_prod_norm.ffill(inplace=True)
+    group_prod_norm.bfill(inplace=True)
 
     prod_vector = ProdVector(
-        freq=None,
+        freq="MS",
         data=group_prod_norm
     )
     # In case where wells dont have pressure info
@@ -70,11 +71,12 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
     # Creating Well object with both production and pressure data
     info_well = Well(
         name=name,
-        #tank=group_prod_norm[TANK_COL].iloc[0],
+        # tank=group_prod_norm[TANK_COL].iloc[0],
         prod_data=prod_vector,
         press_data=press_vector
     )
 
-    #tank_wells[info_well.tank].append(info_well)
+    # tank_wells[info_well.tank].append(info_well)
     tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
 
+print(tank_wells["tank_center"])

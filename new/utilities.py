@@ -336,6 +336,11 @@ def normalize_date_freq(
     else:
         raise TypeError("First argument should be a pandas DataFrame or Series")
 
+    if len(sorted_df) < 3:
+        # If
+        start_date_n -= datetime.timedelta(days=31)
+        end_date_n += datetime.timedelta(days=31)
+
     new_index = pd.date_range(start_date_n, end_date_n, freq=freq, name=df.index.name)
     if cols_fill_na is not None:
         # First reindex the columns that are specified in the cols_fill_na argument
