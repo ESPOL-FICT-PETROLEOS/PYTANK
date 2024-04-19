@@ -7,6 +7,7 @@ from new.well import Well
 from new.utilities import normalize_date_freq
 from old.utilities import interp_dates_row
 from collections import defaultdict
+from pandera.errors import SchemaError
 
 # Data to process with production info
 df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/production.csv")
@@ -21,6 +22,7 @@ df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
 # Empty dictionary for the different tanks
 tank_wells = defaultdict(list)
 
+EXPECTED_FREQ = "MS"
 # Group data by well name and apply the function to create ProdWell objects
 for name, group_prod in df_production.groupby("ITEM_NAME"):
     print(f"Creating well {name}")
@@ -37,19 +39,26 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
 
     group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
     group_prod_norm = normalize_date_freq(df=group_prod,
-                                          freq="MS",
-                                          cols_fill_na=[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
+                                          freq=EXPECTED_FREQ,
+                                          method_no_cols="ffill",
                                           )
 
-    # Fill the NAN values with values from the previous row "ffill"
-    group_prod_norm.ffill(inplace=True)
-    group_prod_norm.bfill(inplace=True)
+    try:
+        prod_vector = ProdVector(
+            freq=EXPECTED_FREQ,
+            data=group_prod_norm
+        )
+    except SchemaError as e:
+        expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
+        if str(e) == expected_error_msg:
+            # group_prod_norm = group_prod_norm.asfreq(EXPECTED_FREQ)
+            group_prod_norm.index.freq = EXPECTED_FREQ
+            prod_vector = ProdVector(
+                freq=None,
+                data=group_prod_norm
+            )
 
-    prod_vector = ProdVector(
-        freq="MS",
-        data=group_prod_norm
-    )
-    # In case where wells dont have pressure info
+    # In case where wells don't have pressure info
     press_vector = None
     # Check if there's pressure data available for this well
     if name in df_pressures["WELLBORE"].unique():
