@@ -1,7 +1,7 @@
 # %%
 import pandas as pd
 from old.utilities import interp_dates_row
-from old.utilities import interp_pvt_matbal
+from old.utilities.pvt_interp import interp_pvt_matbal
 import matplotlib.pyplot as plt
 
 # Load data into dataframes
