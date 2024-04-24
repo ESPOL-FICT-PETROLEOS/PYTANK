@@ -44,14 +44,3 @@ class FluidModel(BaseModel):
     def get_rs_at_press(self, pressure):
         pass
 
-# Data to process with pressure info
-df_pressures = pd.read_csv("../old/tests/data_for_tests/full_example_1/pressures.csv")
-# Data to process with pvt info
-df_pvt = pd.read_csv("../old/tests/data_for_tests/full_example_1/pvt.csv")
-group_press_pvt = FluidModel(
-            data_pvt=df_pvt,
-            data_press=df_pressures
-)
-group_press_pvt.interp_table()
-
-print(group_press_pvt)
