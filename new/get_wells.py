@@ -19,6 +19,7 @@ from new.utilities import normalize_date_freq
 from old.utilities import interp_dates_row
 from collections import defaultdict
 from pandera.errors import SchemaError
+from new.uw import underground_widrawal
 
 # Data to process with production info
 df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/production.csv")
@@ -118,4 +119,17 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
 
     tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
 
-print(tank_wells["tank_center"])
+#print(tank_wells["tank_center"])
+
+for tank, wells in tank_wells.items():
+    for well in wells:
+        prod_vector = well.prod_data
+        press_vector = well.press_data
+        try:
+            total_withdrawal = underground_widrawal(prod_vector, press_vector)
+            print(f"Total Underground withdrawal for {well.name}", total_withdrawal)
+
+        except Exception as e:
+            print(e)
+
+

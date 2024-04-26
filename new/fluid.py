@@ -2,7 +2,6 @@ import pandas as pd
 from pydantic import BaseModel
 from old.utilities.pvt_interp import interp_pvt_matbal
 from scipy.interpolate import interp1d
-from well import Well
 from new.vector_data import VectorData, ProdVector, InjVector, PressVector
 from typing import Optional
 
