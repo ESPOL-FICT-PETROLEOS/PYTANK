@@ -1,21 +1,26 @@
 import pandas as pd
+from typing import Optional
 from datetime import datetime
 from typing import Any
 from pydantic import BaseModel, validator, PrivateAttr
 from pandera import DataFrameSchema
 import pandera as pa
 from new.utilities import add_date_index_validation, days_in_month
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from new.constants import (
     WELL_COL,
     OIL_CUM_COL,
     WATER_CUM_COL,
     GAS_CUM_COL,
     PRESSURE_COL,
+    OIL_FVF_COL,
+    GAS_FVF_COL,
+    RS_COL,
     INJECTION_WATER,
     PROD_SCHEMA,
     PRESS_SCHEMA,
     INJ_SCHEMA,
+    PVT_TABLE_SCHEMA,
 )
 
 
@@ -207,3 +212,15 @@ class InjVector(VectorData):
 
     def get_water_volume(self) -> pd.Series:
         return self.data[INJECTION_WATER]
+
+
+class PvtVector(VectorData):
+    data_schema: DataFrameSchema = PVT_TABLE_SCHEMA
+    def get_bo_col(self) -> pd.Series:
+        return self.data[OIL_FVF_COL]
+
+    def get_bg_col(self) -> pd.Series:
+        return self.data[GAS_FVF_COL]
+
+    def get_gor_col(self) -> pd.Series:
+        return self.data[RS_COL]
