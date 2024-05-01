@@ -32,6 +32,8 @@ class FluidModel(BaseModel):
 
 df_pvt = pd.read_csv("../old/tests/data_for_tests/full_example_1/pvt.csv").fillna(0)
 
+
+# Quicktest
 pvt = FluidModel(
     freq=None,
     data_pvt=df_pvt

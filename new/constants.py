@@ -37,7 +37,6 @@ _PRESSURE_VALIDATION = Column(
     required=False
 )
 
-
 # Schemas dictionaries
 _PROD_SCHEMA_DICT = {
     PRESSURE_COL: _PRESSURE_VALIDATION,
@@ -55,6 +54,7 @@ _INJ_SCHEMA_DICT = {
     INJECTION_WATER: _VECTOR_VALIDATION,
 }
 
+# Validations for data pvt
 _PVT_TABLE_SCHEMA_DICT = {
     Column(PRESSURE_PVT_COL): float,
     Column(RS_COL): float,

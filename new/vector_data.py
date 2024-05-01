@@ -214,6 +214,7 @@ class InjVector(VectorData):
         return self.data[INJECTION_WATER]
 
 
+# PVT VECTOR?
 class PvtVector(VectorData):
     data_schema: DataFrameSchema = PVT_TABLE_SCHEMA
     def get_bo_col(self) -> pd.Series:
