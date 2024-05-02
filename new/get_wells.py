@@ -7,19 +7,13 @@ from new.constants import (OIL_CUM_COL,
                            LIQ_CUM,
                            PRESSURE_COL,
                            TANK_COL,
-                           DATE_COL,
-                           WELL_COL,
-                           OIL_FVF_COL,
-                           GAS_FVF_COL,
-                           RS_COL)
+                           DATE_COL)
 from new.vector_data import ProdVector, PressVector
 from new.well import Well
-from new.fluid import FluidModel
 from new.utilities import normalize_date_freq
-from old.utilities import interp_dates_row
 from collections import defaultdict
 from pandera.errors import SchemaError
-from new.uw import underground_widrawal
+from uw import underground_widrawal
 
 # Data to process with production info
 df_production = pd.read_csv("../old/tests/data_for_tests/full_example_1/production.csv")
@@ -30,23 +24,6 @@ df_production.set_index(df_production[DATE_COL], inplace=True)
 df_pressures = pd.read_csv("../old/tests/data_for_tests/full_example_1/pressures.csv")
 df_pressures.rename(columns={"DATE": "START_DATETIME", "WELLLBORE": "ITEM_NAME"}, inplace=True)
 df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
-
-# Data to process with pvt info
-df_pvt = pd.read_csv("../old/tests/data_for_tests/full_example_1/pvt.csv")
-
-# Apply Fluid CLass to Pressure Data
-pvt = FluidModel(
-    data_pvt=df_pvt,
-    data_press=df_pressures
-)
-group_press_pvt = pvt.interp_table()
-
-# Fill with 0 in NaN values for avoid errors in the validation of pandera o pydantic
-group_press_pvt[[OIL_FVF_COL,
-                 GAS_FVF_COL,
-                 RS_COL]] = group_press_pvt[[OIL_FVF_COL,
-                                             GAS_FVF_COL,
-                                             RS_COL]].fillna(0)
 
 # Empty dictionary for the different tanks
 tank_wells = defaultdict(list)
@@ -90,17 +67,13 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
     # In case where wells don't have pressure info
     press_vector = None
     # Check if there's pressure data available for this well
-    if name in group_press_pvt["WELLBORE"].unique():
-        group_press = group_press_pvt[group_press_pvt["WELLBORE"] == name]
-        group_press = group_press
+    if name in df_pressures["WELLBORE"].unique():
+        group_press = df_pressures[df_pressures["WELLBORE"] == name]
 
         # Renaming columns of pressure data
         group_press = group_press.rename(
             columns={
-                PRESSURE_COL: PRESSURE_COL,
-                OIL_FVF_COL: OIL_FVF_COL,
-                GAS_FVF_COL: GAS_FVF_COL,
-                RS_COL: RS_COL
+                PRESSURE_COL: PRESSURE_COL
             }
         )
         group_press.set_index("START_DATETIME", inplace=True)
@@ -119,7 +92,7 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
 
     tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
 
-#print(tank_wells["tank_center"])
+print(tank_wells["tank_center"])
 
 for tank, wells in tank_wells.items():
     for well in wells:
@@ -131,5 +104,3 @@ for tank, wells in tank_wells.items():
 
         except Exception as e:
             print(e)
-
-

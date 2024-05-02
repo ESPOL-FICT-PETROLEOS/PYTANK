@@ -1,6 +1,6 @@
 import pandas as pd
 from pydantic import BaseModel
-from new.vector_data import VectorData, ProdVector, InjVector, PressVector
+from new.vector_data import ProdVector, PressVector
 from typing import Optional
 
 

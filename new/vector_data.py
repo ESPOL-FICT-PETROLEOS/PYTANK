@@ -16,6 +16,7 @@ from new.constants import (
     PROD_SCHEMA,
     PRESS_SCHEMA,
     INJ_SCHEMA,
+    PVT_TABLE_SCHEMA,
 )
 
 
@@ -207,3 +208,8 @@ class InjVector(VectorData):
 
     def get_water_volume(self) -> pd.Series:
         return self.data[INJECTION_WATER]
+
+
+class PvtVector(VectorData):
+    data_schema: DataFrameSchema = PVT_TABLE_SCHEMA
+    pass
