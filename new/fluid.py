@@ -17,6 +17,7 @@ class FluidModel(BaseModel):
         arbitrary_types_allowed = True
 
     def interp_table(self) -> pd.DataFrame:
+        # Preguntar que iria aqui
         pass
 
     def get_bo_at_press(self, pressure) -> float:
