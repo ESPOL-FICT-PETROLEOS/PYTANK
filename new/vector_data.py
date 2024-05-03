@@ -16,7 +16,7 @@ from new.constants import (
     PROD_SCHEMA,
     PRESS_SCHEMA,
     INJ_SCHEMA,
-    PVT_TABLE_SCHEMA,
+    #PVT_TABLE_SCHEMA,
 )
 
 
@@ -210,6 +210,8 @@ class InjVector(VectorData):
         return self.data[INJECTION_WATER]
 
 
-class PvtVector(VectorData):
+"""class PvtVector(VectorData):
     data_schema: DataFrameSchema = PVT_TABLE_SCHEMA
+    # Peguntar que podria ir aqui
     pass
+    """
