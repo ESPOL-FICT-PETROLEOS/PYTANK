@@ -1,18 +1,16 @@
 from new.vector_data import ProdVector,PressVector
-from new.constants import OIL_CUM_COL,WATER_CUM_COL,GAS_CUM_COL,PRESSURE_COL
+from new.constants import OIL_CUM_COL,WATER_CUM_COL,GAS_CUM_COL,PRESSURE_COL,OIL_FVF_COL,GAS_FVF_COL,RS_COL
 
 def underground_widrawal(
-        prod_vector: ProdVector,
         press_vector: PressVector
 ):
-    oil_vol = prod_vector.data[OIL_CUM_COL].diff().fillna(prod_vector.data[OIL_CUM_COL])
-    water_vol = prod_vector.data[WATER_CUM_COL].diff().fillna(prod_vector.data[WATER_CUM_COL])
-    gas_vol = prod_vector.data[GAS_CUM_COL].diff().fillna(prod_vector.data[GAS_CUM_COL])
+    oil_vol = press_vector.data[OIL_CUM_COL].diff().fillna(press_vector.data[OIL_CUM_COL])
+    water_vol = press_vector.data[WATER_CUM_COL].diff().fillna(press_vector.data[WATER_CUM_COL])
+    gas_vol = press_vector.data[GAS_CUM_COL].diff().fillna(press_vector.data[GAS_CUM_COL])
 
-    pressure = press_vector.data[PRESSURE_COL]
-    bo = press_vector.data["Bo"]
-    bg = press_vector.data["Bg"]
-    gor = press_vector.data["GOR"]
+    bo = press_vector.data[OIL_FVF_COL]
+    bg = press_vector.data[GAS_FVF_COL]
+    gor = press_vector.data[RS_COL]
 
     #modificar tomando en cuenta la ecuación real, faltan datos como rsw_col, water_fvf_col
     gas_withdrawal = (gas_vol - oil_vol * gor) * bg
