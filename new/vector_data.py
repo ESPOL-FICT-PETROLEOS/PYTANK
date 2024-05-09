@@ -1,11 +1,11 @@
 import pandas as pd
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, validator, PrivateAttr
+from pydantic import BaseModel, field_validator, PrivateAttr
 from pandera import DataFrameSchema
 import pandera as pa
 from new.utilities import add_date_index_validation, days_in_month
-#import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from new.constants import (
     WELL_COL,
     OIL_CUM_COL,
@@ -16,7 +16,6 @@ from new.constants import (
     PROD_SCHEMA,
     PRESS_SCHEMA,
     INJ_SCHEMA,
-    #PVT_TABLE_SCHEMA,
 )
 
 
@@ -32,7 +31,7 @@ class VectorData(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    @validator("data")
+    @field_validator("data")
     def validate_data(cls, v, values):
         new_schema = add_date_index_validation(values["data_schema"], values["freq"])
 
@@ -208,10 +207,3 @@ class InjVector(VectorData):
 
     def get_water_volume(self) -> pd.Series:
         return self.data[INJECTION_WATER]
-
-
-"""class PvtVector(VectorData):
-    data_schema: DataFrameSchema = PVT_TABLE_SCHEMA
-    # Peguntar que podria ir aqui
-    pass
-    """
