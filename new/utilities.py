@@ -340,7 +340,9 @@ def normalize_date_freq(
         # These columns will default to nan where new dates appear, and will be replaced
         # with the fill_na value
         df_cols = (
-            sorted_df[cols_fill_na].reindex(new_index, fill_value=fill_na).fillna(method=method_no_cols).reset_index()
+            sorted_df[cols_fill_na].reindex(new_index, fill_value=fill_na)
+            .fillna(method=method_no_cols)
+            .reset_index()
         )
         # Reindex the remaining columns, this time by using the method_co_cols argument
         # as input argument to reindex 'method' argument.
