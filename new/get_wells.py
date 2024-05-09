@@ -35,8 +35,9 @@ df_pvt = pd.read_csv("../old/tests/data_for_tests/full_example_1/pvt.csv")
 
 # Empty dictionary for the different tanks
 tank_wells = defaultdict(list)
-
+cols_fills_na = [OIL_CUM_COL,WATER_CUM_COL,GAS_CUM_COL,LIQ_CUM,TANK_COL]
 EXPECTED_FREQ = "MS"
+lista_n = []
 # Group data by well name and apply the function to create ProdWell objects
 for name, group_prod in df_production.groupby("ITEM_NAME"):
     print(f"Creating well {name}")
@@ -54,57 +55,15 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
     group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
     group_prod_norm = normalize_date_freq(df=group_prod,
                                           freq=EXPECTED_FREQ,
-                                          method_no_cols="bfill",
+                                          cols_fill_na=cols_fills_na,
+                                          method_no_cols="ffill",
                                           )
-
     try:
         prod_vector = ProdVector(
             freq=EXPECTED_FREQ,
             data=group_prod_norm
         )
         # In case where wells don't have pressure info
-        press_vector = None
-        # Check if there's pressure data available for this well
-        if name in df_pressures["WELLBORE"].unique():
-            group_press = df_pressures[df_pressures["WELLBORE"] == name]
-
-            # Interpolated pvt properties
-            pvt = FluidModel(
-                data_pvt=df_pvt
-            )
-
-            # Create a copy of group_press to avoid warnings
-            group_press = group_press.copy()
-
-            # Add columns of pvt properties
-            group_press[OIL_FVF_COL] = pvt.get_bo_at_press(group_press[PRESSURE_COL])
-            group_press[GAS_FVF_COL] = pvt.get_bg_at_press(group_press[PRESSURE_COL])
-            group_press[RS_COL] = pvt.get_rs_at_press(group_press[PRESSURE_COL])
-
-            # Renaming columns of pressure data
-            group_press = group_press.rename(
-                columns={
-                    PRESSURE_COL: PRESSURE_COL,
-                    OIL_FVF_COL: OIL_FVF_COL,
-                    GAS_FVF_COL: GAS_FVF_COL,
-                    RS_COL: RS_COL,
-                }
-            )
-            group_press.set_index("START_DATETIME", inplace=True)
-
-            press_vector = PressVector(
-                freq=None,
-                data=group_press
-            )
-
-        # Creating Well object with both production and pressure data
-        info_well = Well(
-            name=name,
-            prod_data=prod_vector,
-            press_data=press_vector
-        )
-
-        tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
 
     except SchemaError as e:
         expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
@@ -115,10 +74,52 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
                 freq=None,
                 data=group_prod_norm
             )
+    press_vector = None
+    # Check if there's pressure data available for this well
+    if name in df_pressures["WELLBORE"].unique():
+        group_press = df_pressures[df_pressures["WELLBORE"] == name]
+
+        # Interpolated pvt properties
+        pvt = FluidModel(
+            data_pvt=df_pvt
+        )
+
+        # Create a copy of group_press to avoid warnings
+        group_press = group_press.copy()
+
+        # Add columns of pvt properties
+        group_press[OIL_FVF_COL] = pvt.get_bo_at_press(group_press[PRESSURE_COL])
+        group_press[GAS_FVF_COL] = pvt.get_bg_at_press(group_press[PRESSURE_COL])
+        group_press[RS_COL] = pvt.get_rs_at_press(group_press[PRESSURE_COL])
+
+        # Renaming columns of pressure data
+        group_press = group_press.rename(
+            columns={
+                PRESSURE_COL: PRESSURE_COL,
+                OIL_FVF_COL: OIL_FVF_COL,
+                GAS_FVF_COL: GAS_FVF_COL,
+                RS_COL: RS_COL,
+            }
+        )
+        group_press.set_index("START_DATETIME", inplace=True)
+
+        press_vector = PressVector(
+            freq=None,
+            data=group_press
+        )
+
+    # Creating Well object with both production and pressure data
+    info_well = Well(
+        name=name,
+        prod_data=prod_vector,
+        press_data=press_vector
+    )
+
+    tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
 
 
-
-lista_v = []
+print(tank_wells["tank_south"])
+"""lista_v = []
 lista_n = []
 
 "Underground Withdrawal"
@@ -127,7 +128,7 @@ for tank, wells in tank_wells.items():
         press_vector = well.press_data
         prod_vector = well.prod_data
         if press_vector is not None:
-            for col in [OIL_CUM_COL,WATER_CUM_COL,GAS_CUM_COL]:
+            for col in [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]:
                 prod_vector.data[DATE_COL] = prod_vector.data.index
                 prod_vector.data[WELL_COL] = well.name
                 press_vector.data[DATE_COL] = press_vector.data.index
@@ -138,16 +139,16 @@ for tank, wells in tank_wells.items():
                     ),
                     axis=1,
                 )
-                press_vector.data[col].fillna(0,inplace=True)
+                press_vector.data[col].fillna(0, inplace=True)
                 prod_vector.data.drop([DATE_COL, WELL_COL], axis=1, inplace=True)
-                press_vector.data.drop([DATE_COL,WELL_COL], axis=1, inplace=True)
+                press_vector.data.drop([DATE_COL, WELL_COL], axis=1, inplace=True)
 
             press_vector.data["UW"] = underground_widrawal(press_vector)
 
             lista_v.append(well.name)
-            
+
         else:
             lista_n.append(well.name)
 
 print(lista_v)
-print(lista_n)
+print(lista_n)"""
