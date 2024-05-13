@@ -1,5 +1,6 @@
-"""from fluid import FullFluidModel, OilFluidModel
+from fluid import FullFluidModel, OilFluidModel
 import pandas as pd
+from old.utilities.pvt_correlations import RS_bw
 from get_wells import tank_wells
 
 #%% Read fluid data
@@ -24,4 +25,4 @@ tank_center = Tank(wells=[well_1, well_2], fluid=full_fluid)
 tank_center.plot_avg_pressure(freq="6MS")
 tank_center.initialize_mbal_with_data(freq="6MS", stoiip, porosity, swi, bsw, fluid_density, fluid_compressibility, fluid_viscosity)
 
-tank_center.plot_campbell_plot()"""
+tank_center.plot_campbell_plot()

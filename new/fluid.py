@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import Optional
+from typing import Optional, Callable
 from pydantic import BaseModel, field_validator
 from scipy.interpolate import interp1d
 from constants import (PRESSURE_PVT_COL,
@@ -57,7 +57,7 @@ class FluidModel(BaseModel):
 df_pvt_inv = pd.DataFrame({
     PRESSURE_PVT_COL: [100.0, 200, 300],
     OIL_FVF_COL: [10, 20, 30],
-    GAS_FVF_COL: [-1, 2, 45],
+    GAS_FVF_COL: [1, 2, 45],
     RS_COL: [10.3, 34, 50],
 })
 
@@ -74,9 +74,9 @@ fluid = FluidModel(
     temperature=25
 )
 
-print(f"Bo is: {fluid.get_bo_at_press(1700)}")
-print(f"Bg is: {fluid.get_bg_at_press(1700)}")
-print(f"GOR is: {fluid.get_rs_at_press(1700)}")
+#print(f"Bo is: {fluid.get_bo_at_press(np.array([100,200,300]))}")
+#print(f"Bg is: {fluid.get_bg_at_press(100)}")
+#print(f"GOR is: {fluid.get_rs_at_press(100)}")
 
 
 # %%
@@ -96,18 +96,30 @@ class OilFluidModel(FluidModel):
     def get_rs_at_press(self, pressure) -> float:
         pass
 
-
-class WaterFluidModel(FluidModel):
-    salinity: float
-    correlations: str
+from old.utilities.pvt_correlations import RS_bw, Bo_bw
+class WaterFluidModel(BaseModel):
+    salinity: float = 3000
+    correlation: Callable
+    temperature: float = 220
+    #unit: Optional[int] = 1
 
     def interp_table(self) -> pd.DataFrame:
         pass
 
-    def get_bw_at_press(self, pressure) -> float:
-        pass
+    def get_bw_at_press(self, pressure: float, temperature: float, salinity: float, unit: int = 1) -> float:
+        bw = self.correlation(pressure, temperature, salinity, unit)
+        return bw
 
+    def get_rs_at_press(self, pressure: float,temperature: float, salinity: float, unit: int = 1) -> float:
+        rs = self.correlation(pressure, temperature, salinity, unit)
+        return rs
+
+from get_wells import tank_wells
+tankc = tank_wells["tank_center"][0]
+water = WaterFluidModel(correlation=Bo_bw)
+print(water.get_bw_at_press(tankc.press_data.data,250,3000,unit=1))
 
 class FullFluidModel(BaseModel):
     oil: OilFluidModel
     water: WaterFluidModel
+
