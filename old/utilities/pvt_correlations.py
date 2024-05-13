@@ -1662,12 +1662,12 @@ def comp_bw_nogas(P, T, salinity, unit=1):
 API=35
 SGsep=0.75
 Den_sto=0.85
-P=3000
+P=np.array([200,100,150,50])
 Pres=2000
 Tres=80
 Psep=1500
 Tsep=70
 Rsp=100
 Units=1
-dos = Spec_grav_st_ValkoMcCain2(API, SGsep, Psep, Tsep, Rsp, Units=2)
+dos = RS_bw(200,250,3000,1)
 print("solucion:",dos)

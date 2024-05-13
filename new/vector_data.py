@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, field_validator, PrivateAttr
+from pydantic import BaseModel, field_validator, PrivateAttr, validator
 from pandera import DataFrameSchema
 import pandera as pa
 from new.utilities import add_date_index_validation, days_in_month
@@ -31,7 +31,7 @@ class VectorData(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    @field_validator("data")
+    @validator("data")
     def validate_data(cls, v, values):
         new_schema = add_date_index_validation(values["data_schema"], values["freq"])
 

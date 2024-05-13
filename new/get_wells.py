@@ -8,6 +8,7 @@ from new.constants import (OIL_CUM_COL,
                            PRESSURE_COL,
                            TANK_COL,
                            DATE_COL,
+                           WELL_COL
                            )
 from new.vector_data import ProdVector, PressVector
 from new.well import Well
@@ -98,12 +99,8 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
 
     tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
 
-print(tank_wells["tank_south"])
-"""lista_v = []
-lista_n = []
-
 "Underground Withdrawal"
-for tank, wells in tank_wells.items():
+"""for tank, wells in tank_wells.items():
     for well in wells:
         press_vector = well.press_data
         prod_vector = well.prod_data
