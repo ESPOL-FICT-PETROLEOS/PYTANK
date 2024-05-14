@@ -99,33 +99,3 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
 
     tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
 
-"Underground Withdrawal"
-"""for tank, wells in tank_wells.items():
-    for well in wells:
-        press_vector = well.press_data
-        prod_vector = well.prod_data
-        if press_vector is not None:
-            for col in [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]:
-                prod_vector.data[DATE_COL] = prod_vector.data.index
-                prod_vector.data[WELL_COL] = well.name
-                press_vector.data[DATE_COL] = press_vector.data.index
-                press_vector.data[WELL_COL] = well.name
-                press_vector.data[col] = press_vector.data.apply(
-                    lambda x: interp_dates_row(
-                        x, DATE_COL, prod_vector.data, DATE_COL, col, WELL_COL, WELL_COL, left=0.0
-                    ),
-                    axis=1,
-                )
-                press_vector.data[col].fillna(0, inplace=True)
-                prod_vector.data.drop([DATE_COL, WELL_COL], axis=1, inplace=True)
-                press_vector.data.drop([DATE_COL, WELL_COL], axis=1, inplace=True)
-
-            press_vector.data["UW"] = underground_widrawal(press_vector)
-
-            lista_v.append(well.name)
-
-        else:
-            lista_n.append(well.name)
-
-print(lista_v)
-print(lista_n)"""

@@ -1670,4 +1670,4 @@ Tsep=70
 Rsp=100
 Units=1
 dos = RS_bw(200,250,3000,1)
-print("solucion:",dos)
+#print("solucion:",dos)

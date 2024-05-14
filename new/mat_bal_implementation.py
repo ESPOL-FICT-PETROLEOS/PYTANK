@@ -1,7 +1,8 @@
-from fluid import FullFluidModel, OilFluidModel
+from fluid import FullFluidModel, OilFluidModel, WaterFluidModel
 import pandas as pd
 from old.utilities.pvt_correlations import RS_bw
 from get_wells import tank_wells
+
 
 #%% Read fluid data
 df_pvt = pd.read_csv("data/pvt.csv")
@@ -10,7 +11,7 @@ black_oil = OilFluidModel(
 )
 brine_model = WaterFluidModel(
     salinity=30000.0,
-    correlations="Spivey"
+    correlations=RS_bw
 )
 
 # create full fluid for tank
