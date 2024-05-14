@@ -96,11 +96,11 @@ class OilFluidModel(FluidModel):
     def get_rs_at_press(self, pressure) -> float:
         pass
 
-from old.utilities.pvt_correlations import RS_bw, Bo_bw
+
 class WaterFluidModel(BaseModel):
-    salinity: float = 3000
+    #salinity: float = 3000
     correlation: Callable
-    temperature: float = 220
+    #temperature: float = 220
     #unit: Optional[int] = 1
 
     def interp_table(self) -> pd.DataFrame:
@@ -113,11 +113,6 @@ class WaterFluidModel(BaseModel):
     def get_rs_at_press(self, pressure: float,temperature: float, salinity: float, unit: int = 1) -> float:
         rs = self.correlation(pressure, temperature, salinity, unit)
         return rs
-
-from get_wells import tank_wells
-tankc = tank_wells["tank_center"][0]
-water = WaterFluidModel(correlation=Bo_bw)
-print(water.get_bw_at_press(tankc.press_data.data,250,3000,unit=1))
 
 class FullFluidModel(BaseModel):
     oil: OilFluidModel

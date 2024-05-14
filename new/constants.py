@@ -18,6 +18,8 @@ GAS_FVF_COL = "Bg"
 RS_COL = "GOR"
 INJECTION_WATER = "WATER_VOL"
 INFLUX_WATER = "We"
+RS_W_COL = "RS_bw"
+WATER_FVF_COL = "Bw"
 
 # Frecuency's of time
 VALID_FREQS = ["D", "W", "M", "MS", "Q", "Y", None]
@@ -48,6 +50,7 @@ _PROD_SCHEMA_DICT = {
 
 _PRESS_SCHEMA_DICT = {
     PRESSURE_COL: _PRESSURE_VALIDATION,
+
 }
 
 _INJ_SCHEMA_DICT = {
