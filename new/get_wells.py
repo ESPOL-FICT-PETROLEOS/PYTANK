@@ -12,10 +12,9 @@ from new.constants import (OIL_CUM_COL,
                            )
 from new.vector_data import ProdVector, PressVector
 from new.well import Well
-from new.utilities import normalize_date_freq, interp_dates_row
+from new.utilities import normalize_date_freq
 from collections import defaultdict
 from pandera.errors import SchemaError
-from uw import underground_widrawal
 import warnings
 
 # Avoid warnings
@@ -38,7 +37,7 @@ EXPECTED_FREQ = "MS"
 lista_n = []
 # Group data by well name and apply the function to create ProdWell objects
 for name, group_prod in df_production.groupby("ITEM_NAME"):
-    print(f"Creating well {name}")
+    #print(f"Creating well {name}")
 
     group_prod = group_prod.rename(
         columns={
