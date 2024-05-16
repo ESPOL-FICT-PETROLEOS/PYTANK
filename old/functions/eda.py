@@ -112,6 +112,7 @@ df_press[uw_col] = underground_withdrawal(
     gas_oil_rs_col,
     0,
 )
+print(df_press)
 # %% Calculate the pressure volumetric average per tank
 avg_freq = "12MS"
 df_press_avg = (

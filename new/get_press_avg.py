@@ -36,4 +36,4 @@ for tank,wells in tank_wells.items():
                 press_vector.data.drop([DATE_COL, WELL_COL], axis=1, inplace=True)
             press_vector.data["UW"] = underground_widrawal(press_vector)
 
-print(tank_wells["tank_center"])
+print(tank_wells["tank_center"][0])
