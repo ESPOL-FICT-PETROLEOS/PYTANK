@@ -34,45 +34,54 @@ df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
 tank_wells = defaultdict(list)
 cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
 EXPECTED_FREQ = "MS"
-lista_n = []
-# Group data by well name and apply the function to create ProdWell objects
-for name, group_prod in df_production.groupby("ITEM_NAME"):
-    #print(f"Creating well {name}")
 
-    group_prod = group_prod.rename(
-        columns={
-            OIL_CUM_COL: OIL_CUM_COL,
-            WATER_CUM_COL: WATER_CUM_COL,
-            GAS_CUM_COL: GAS_CUM_COL,
-            TANK_COL: TANK_COL
-        }
-    )
-    group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[WATER_CUM_COL]
+# Create a set with all well names from both DataFrames
+all_wells = set(df_production["ITEM_NAME"]).union(df_pressures["WELLBORE"])
 
-    group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
-    group_prod_norm = normalize_date_freq(df=group_prod,
-                                          freq=EXPECTED_FREQ,
-                                          cols_fill_na=cols_fills_na,
-                                          method_no_cols="ffill",
-                                          )
-    try:
-        prod_vector = ProdVector(
-            freq=EXPECTED_FREQ,
-            data=group_prod_norm
+for name in all_wells:
+    # Initialize production and pressure vectors as None
+    prod_vector = None
+    press_vector = None
+
+    # If the well has production data, process it
+    if name in df_production["ITEM_NAME"].unique():
+        group_prod = df_production[df_production["ITEM_NAME"] == name]
+
+        group_prod = group_prod.rename(
+            columns={
+                OIL_CUM_COL:OIL_CUM_COL,
+                WATER_CUM_COL:WATER_CUM_COL,
+                GAS_CUM_COL:GAS_CUM_COL,
+                TANK_COL:TANK_COL
+            }
         )
-        # In case where wells don't have pressure info
+        group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[WATER_CUM_COL]
+        group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
 
-    except SchemaError as e:
-        expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
-        if str(e) == expected_error_msg:
-            # group_prod_norm = group_prod_norm.asfreq(EXPECTED_FREQ)
-            group_prod_norm.index.freq = EXPECTED_FREQ
+        group_prod_norm = normalize_date_freq(df=group_prod,
+                                              freq=EXPECTED_FREQ,
+                                              cols_fill_na=cols_fills_na,
+                                              method_no_cols="ffill",
+                                              )
+        try:
             prod_vector = ProdVector(
-                freq=None,
+                freq=EXPECTED_FREQ,
                 data=group_prod_norm
             )
-    press_vector = None
-    # Check if there's pressure data available for this well
+            # In case where wells don't have pressure info
+
+        except SchemaError as e:
+            expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
+            if str(e) == expected_error_msg:
+                # group_prod_norm = group_prod_norm.asfreq(EXPECTED_FREQ)
+                group_prod_norm.index.freq = EXPECTED_FREQ
+                prod_vector = ProdVector(
+                    freq=None,
+                    data=group_prod_norm
+                )
+        tank_name = group_prod_norm[TANK_COL].iloc[0]
+
+    # If the well has pressure data, process it
     if name in df_pressures["WELLBORE"].unique():
         group_press = df_pressures[df_pressures["WELLBORE"] == name]
 
@@ -83,18 +92,23 @@ for name, group_prod in df_production.groupby("ITEM_NAME"):
             }
         )
         group_press.set_index("START_DATETIME", inplace=True)
-
         press_vector = PressVector(
             freq=None,
             data=group_press
         )
 
-    # Creating Well object with both production and pressure data
+        # If there is no production data, get the tank name from the pressure data
+        if prod_vector is None and TANK_COL in group_press.columns:
+            tank_name = group_press[TANK_COL].iloc[0]
+
+        # Creating Well object with both production and pressure data
     info_well = Well(
         name=name,
         prod_data=prod_vector,
         press_data=press_vector
     )
 
-    tank_wells[group_prod_norm[TANK_COL].iloc[0]].append(info_well)
+    # Add the well to the tank dictionary
+    tank_wells[tank_name].append(info_well)
 
+#print(tank_wells["tank_center"])

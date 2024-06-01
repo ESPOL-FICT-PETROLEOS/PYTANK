@@ -114,9 +114,11 @@ class Tank(BaseModel):
             uw = (oil_vol * bo + water_vol * bw + gas_withdrawal)
 
             press_vector.data["UW"] = uw.cumsum().values
-        return press_vector
 
-    def pressure_vol_avg(self, avg_freq:str):
+            return press_vector.data
+
+
+    """def pressure_vol_avg(self, avg_freq:str):
         press_vector = self.calc_uw()
         for well in self.wells:
             df_press_avg = pressure_vol_avg(
@@ -127,12 +129,13 @@ class Tank(BaseModel):
                 press_vector.data["UW"],
                 avg_freq,
                 "end"
-                    )
-        return df_press_avg
+                    ).reset_index()
+        return df_press_avg"""
 
 # Quicktest
 df_pvt = pd.read_csv("../old/tests/data_for_tests/full_example_1/pvt.csv")
-tank = list(tank_wells.keys())[0]
+tank_dict = tank_wells
+tank_name = list(tank_wells.keys())[0]
 oil_model = OilModel(
     data_pvt=df_pvt,
     temperature=25,
@@ -147,16 +150,12 @@ water_model = WaterModel(
 )
 
 uw = Tank(
-    name=tank,
-    wells=tank_wells[tank],
+    name=tank_name,
+    wells=tank_dict[tank_name],
     oil_model=oil_model,
     water_model=water_model
-).pressure_vol_avg("12MS")
+).calc_uw()
 
 
-print(uw)
-"""
-print(tank_wells["tank_north"][0])
-print(tank_wells["tank_south"][0])
-print(tank_wells["No_tank"][0])
-"""
+print(tank_wells["tank_center"][0])
+
