@@ -98,6 +98,7 @@ for col in cols_input:
     df_press[col].fillna(0, inplace=True)
 
 presscsv = df_press.to_csv("interpolado.csv")
+#print(df_press.columns)
 # %% Calculate underground withdrawal for each well
 uw_col = "UW"
 
@@ -112,7 +113,7 @@ df_press[uw_col] = underground_withdrawal(
     gas_oil_rs_col,
     0,
 )
-print(df_press.columns)
+print(df_press)
 # %% Calculate the pressure volumetric average per tank
 avg_freq = "12MS"
 df_press_avg = (
