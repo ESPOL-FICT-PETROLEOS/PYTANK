@@ -58,15 +58,15 @@ for name in all_wells:
         group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[WATER_CUM_COL]
         group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
 
-        group_prod_norm = normalize_date_freq(df=group_prod,
+        """group_prod_norm = normalize_date_freq(df=group_prod,
                                               freq=EXPECTED_FREQ,
                                               cols_fill_na=cols_fills_na,
                                               method_no_cols="ffill",
-                                              )
+                                              )"""
         try:
             prod_vector = ProdVector(
-                freq=EXPECTED_FREQ,
-                data=group_prod_norm
+                freq=None,
+                data=group_prod
             )
             # In case where wells don't have pressure info
 
@@ -74,12 +74,12 @@ for name in all_wells:
             expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
             if str(e) == expected_error_msg:
                 # group_prod_norm = group_prod_norm.asfreq(EXPECTED_FREQ)
-                group_prod_norm.index.freq = EXPECTED_FREQ
+                group_prod.index.freq = EXPECTED_FREQ
                 prod_vector = ProdVector(
                     freq=None,
-                    data=group_prod_norm
+                    data=group_prod
                 )
-        tank_name = group_prod_norm[TANK_COL].iloc[0]
+        tank_name = group_prod[TANK_COL].iloc[0]
 
     # If the well has pressure data, process it
     if name in df_pressures["WELLBORE"].unique():
@@ -111,4 +111,3 @@ for name in all_wells:
     # Add the well to the tank dictionary
     tank_wells[tank_name].append(info_well)
 
-#print(tank_wells["tank_center"])

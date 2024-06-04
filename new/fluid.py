@@ -63,9 +63,6 @@ fluid = OilModel(
     temperature=25
 )
 
-print(f"Bo is: {fluid.get_bo_at_press(np.array([100,200,300]))}")
-print(f"Bg is: {fluid.get_bg_at_press(100)}")
-print(f"GOR is: {fluid.get_rs_at_press(100)}")
 
 #%%
 class WaterModel(BaseModel):
@@ -91,3 +88,8 @@ class FluidModel(BaseModel):
     oil: OilModel
     water: WaterModel
 
+#%% Test
+"""print(f"Bo is: {fluid.get_bo_at_press(np.array([100,200,300]))}")
+print(f"Bg is: {fluid.get_bg_at_press(100)}")
+print(f"GOR is: {fluid.get_rs_at_press(100)}")
+"""
