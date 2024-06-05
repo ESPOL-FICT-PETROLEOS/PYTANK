@@ -36,7 +36,7 @@ cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
 EXPECTED_FREQ = "MS"
 
 # Create a set with all well names from both DataFrames
-all_wells = set(df_production["ITEM_NAME"]).union(df_pressures["WELLBORE"])
+all_wells = sorted(set(df_production["ITEM_NAME"]).union(df_pressures["WELLBORE"]))
 
 for name in all_wells:
     # Initialize production and pressure vectors as None

@@ -10,15 +10,12 @@ from old.material_balance.material_balance import (
 
 formatter = ticker.EngFormatter()
 
-# %% specify files to load
-production_file = "C:/Users/User/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/production.csv"
-pressure_file = "C:/Users/User/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/pressures.csv"
-pvt_file = "C:/Users/User/PycharmProjects/PYTANK/old/tests/data_for_tests/full_example_1/pvt.csv"
+
 
 # %% Load data into dataframes
-df_prod = pd.read_csv(production_file)
-df_press = pd.read_csv(pressure_file)
-df_pvt = pd.read_csv(pvt_file)
+df_prod = pd.read_csv("../tests/data_for_tests/full_example_1/production.csv")
+df_press = pd.read_csv("../tests/data_for_tests/full_example_1/pressures.csv")
+df_pvt = pd.read_csv("../tests/data_for_tests/full_example_1/pvt.csv")
 
 # %% Cast date column to date
 date_col = "START_DATETIME"
@@ -65,7 +62,8 @@ press_col = "PRESSURE_DATUM"
 press_type_col = "TEST_TYPE"
 
 # %% 1.- #Interpolate PC information
-
+#df_prod = df_prod.sort_values(by=[well_name_col,date_col])
+#df_press = df_press.sort_values(by=[well_name_col,date_col])
 # Define the fluid properties column names for the df pressure
 oil_fvf_col = "Bo"
 gas_oil_rs_col = "Rs"
@@ -83,9 +81,7 @@ gas_fvf_interp = interp1d(df_pvt["Pressure"], df_pvt["Bg"], fill_value="extrapol
 df_press[oil_fvf_col] = oil_fvf_interp(df_press[press_col])
 df_press[gas_oil_rs_col] = gas_oil_rs_interp(df_press[press_col])
 df_press[gas_fvf_col] = gas_fvf_interp(df_press[press_col])
-###
-#df_prod = df_prod.sort_values(by = [well_name_col,date_col])
-#df_press = df_press.sort_values(by=[well_name_col,date_col])
+
 # %% Interpolate oil, gas and water cumulatives into the pressure data frame
 for col in cols_input:
     df_press[col] = df_press.apply(
@@ -114,8 +110,8 @@ df_press[uw_col] = underground_withdrawal(
     0,
 )
 print(df_press)
-df_press.to_csv("PRUEBA.CSV",index=False)
-df_prod.to_csv("prod_2.csv",index=False)
+#df_press.to_csv("PRUEBA.CSV",index=False)
+#df_prod.to_csv("prod_2.csv",index=False)
 # %% Calculate the pressure volumetric average per tank
 avg_freq = "12MS"
 df_press_avg = (
@@ -128,3 +124,4 @@ df_press_avg = (
     .reset_index(0)
 )
 #press_avg = df_press_avg.to_csv("press_avg.csv", index=False)
+print(df_press_avg)
