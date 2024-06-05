@@ -1,7 +1,5 @@
 import pandas as pd
 from pydantic import BaseModel
-from well import Well
-from typing import Optional, List
 from new.constants import (OIL_FVF_COL,
                            GAS_FVF_COL,
                            RS_COL,
@@ -12,125 +10,159 @@ from new.constants import (OIL_FVF_COL,
                            DATE_COL,
                            WELL_COL,
                            WATER_FVF_COL,
-                           RS_W_COL
-                           )
+                           RS_W_COL,
+                           TANK_COL,
+                           LIQ_CUM,
+                           UW_COL)
 from fluid import OilModel, WaterModel
 from new.utilities import interp_dates_row
 from old.utilities.pvt_correlations import RS_bw, Bo_bw
 from get_wells import tank_wells
-from old.material_balance import pressure_vol_avg
+from old.material_balance import underground_withdrawal, pressure_vol_avg
+
 
 class Tank(BaseModel):
+    tanks: dict
     name: str
     wells: list
     oil_model: OilModel
     water_model: WaterModel
 
-    def __init__(self, name: str, wells: list, oil_model: OilModel, water_model: WaterModel):
-        super().__init__(name=name, wells=wells, oil_model=oil_model, water_model=water_model)
+    def __init__(self, tanks: dict, name: str, wells: list, oil_model: OilModel, water_model: WaterModel):
+        super().__init__(tanks=tanks, name=name, wells=wells, oil_model=oil_model, water_model=water_model)
 
-    def _press_pvt(self, press_vector):
+    def _press_df_int(self):
         """
         Private method that internally manages the pressure vector for use in the UW method
 
         Parameters
         ----------
-        press_vector: Pressure vector from the well class
 
         Returns
         -------
-        A pressure vector with PVT properties
+        A pressure DataFrame with properties PVT of oil and water
         """
-        if press_vector is not None:
-            press_vector.data[OIL_FVF_COL] = self.oil_model.get_bo_at_press(press_vector.data[PRESSURE_COL])
-            press_vector.data[GAS_FVF_COL] = self.oil_model.get_bg_at_press(press_vector.data[PRESSURE_COL])
-            press_vector.data[RS_COL] = self.oil_model.get_rs_at_press(press_vector.data[PRESSURE_COL])
-            press_vector.data[WATER_FVF_COL] = self.water_model.get_bw_at_press(press_vector.data[PRESSURE_COL])
-            press_vector.data[RS_W_COL] = self.water_model.get_rs_at_press(press_vector.data[PRESSURE_COL])
-        return press_vector
+        df_press = pd.DataFrame()
+        for tank_name, wells in self.tanks.items():
+            for well in wells:
+                press_vector = well.press_data
+                if press_vector is not None:
+                    well_name = well.name
+                    well_date = press_vector.data.index
+                    well_oil_fvf = self.oil_model.get_bo_at_press(press_vector.data[PRESSURE_COL])
+                    well_gas_fvf = self.oil_model.get_bg_at_press(press_vector.data[PRESSURE_COL])
+                    well_rs = self.oil_model.get_rs_at_press(press_vector.data[PRESSURE_COL])
 
-    def _press_prod(self, well, press_vector, prod_vector):
+                    # In case properties are calculated using correlations
+                    if (self.water_model.correlation_bw and self.water_model.correlation_rs
+                            and self.water_model.salinity is not None
+                            and self.water_model.temperature is not None
+                            and self.water_model.unit is not None):
+                        well_bw = self.water_model.get_bw_at_press(press_vector.data[PRESSURE_COL])
+                        well_rs_w = self.water_model.get_rs_at_press(press_vector.data[PRESSURE_COL])
+
+                    # In case there are default values for Bw and Rs_w
+                    else:
+                        well_bw = self.water_model.get_default_bw()
+                        well_rs_w = self.water_model.get_default_rs()
+
+                    # Create a copy of data from press_vector
+                    temp_df_press = press_vector.data.copy()
+
+                    # Add columns to DataFrame
+                    temp_df_press[WELL_COL] = well_name
+                    temp_df_press[DATE_COL] = well_date
+                    temp_df_press[OIL_FVF_COL] = well_oil_fvf
+                    temp_df_press[GAS_FVF_COL] = well_gas_fvf
+                    temp_df_press[RS_COL] = well_rs
+                    temp_df_press[WATER_FVF_COL] = well_bw
+                    temp_df_press[RS_W_COL] = well_rs_w
+                    temp_df_press[TANK_COL] = tank_name
+
+                    df_press = pd.concat([df_press, temp_df_press], ignore_index=True)
+        return df_press
+
+    def _prod_df_int(self):
         """
-        Private method that internally manages the pressure and production vector for use in the UW method
+        Private method that internally manages production vector for use in the UW method
 
         Parameters
         ----------
-        well: name of each of the wells from the Well class
-        press_vector: Pressure vector from the well clas
-        prod_vector: Production vector from the well clas
 
         Returns
         -------
-        A modified pressure vector with production interpolation according to the pressures
+        A production DataFrame
 
         """
-        if press_vector is None or prod_vector is None:
-            return
+        df_prod = pd.DataFrame()
+        for tank_name, wells in self.tanks.items():
+            for well in wells:
+                prod_vector = well.prod_data
+                if prod_vector is not None:
+                    well_name = well.name
+                    well_date = prod_vector.data.index
+                    well_oil_cum = prod_vector.data[OIL_CUM_COL]
+                    well_water_cum = prod_vector.data[WATER_CUM_COL]
+                    well_gas_cum = prod_vector.data[GAS_CUM_COL]
+                    well_liq_cum = prod_vector.data[LIQ_CUM]
 
+                    # Create a copy of data from prod_vector
+                    temp_df_prod = prod_vector.data.copy()
+
+                    temp_df_prod[WELL_COL] = well_name
+                    temp_df_prod[DATE_COL] = well_date
+                    temp_df_prod[OIL_CUM_COL] = well_oil_cum
+                    temp_df_prod[WATER_CUM_COL] = well_water_cum
+                    temp_df_prod[GAS_CUM_COL] = well_gas_cum
+                    temp_df_prod[LIQ_CUM] = well_liq_cum
+
+                    df_prod = pd.concat([df_prod, temp_df_prod], ignore_index=True)
+        return df_prod
+
+    def calc_uw(self) -> pd.DataFrame:
+        df_press = self._press_df_int()
+        df_prod = self._prod_df_int()
+
+        # Calculate the accumulated production in the pressure dataframe, based on the production dataframe
         for col in [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]:
-            prod_vector.data[DATE_COL] = prod_vector.data.index
-            prod_vector.data[WELL_COL] = well.name
-            press_vector.data[DATE_COL] = press_vector.data.index
-            press_vector.data[WELL_COL] = well.name
-            press_vector.data[col] = press_vector.data.apply(
+            df_press[col] = df_press.apply(
                 lambda x: interp_dates_row(
-                    x, DATE_COL, prod_vector.data, DATE_COL, col, WELL_COL, WELL_COL, left=0.0
+                    x, DATE_COL, df_prod, DATE_COL, col, WELL_COL, WELL_COL, left=0.0
                 ),
                 axis=1,
             )
-            press_vector.data[col].fillna(0, inplace=True)
-            prod_vector.data.drop([DATE_COL, WELL_COL], axis=1, inplace=True)
-            press_vector.data.drop([DATE_COL, WELL_COL], axis=1, inplace=True)
-        return press_vector
+            # For wells not available in the production data frame, fill nans with 0
+            df_press[col].fillna(0, inplace=True)
 
-    def calc_uw(self):
+        df_press[UW_COL] = underground_withdrawal(
+            df_press,
+            OIL_CUM_COL,
+            WATER_CUM_COL,
+            GAS_CUM_COL,
+            OIL_FVF_COL,
+            WATER_FVF_COL,
+            GAS_FVF_COL,
+            RS_COL,
+            RS_W_COL,
+        )
+        return df_press
 
-        for well in self.wells:
-            press_vector = well.press_data
-            prod_vector = well.prod_data
-
-            press_vector = self._press_pvt(press_vector)
-            press_vector = self._press_prod(well, press_vector, prod_vector)
-
-            if press_vector is None:
-                continue
-
-            oil_vol = press_vector.data[OIL_CUM_COL].diff().fillna(press_vector.data[OIL_CUM_COL])
-            water_vol = press_vector.data[WATER_CUM_COL].diff().fillna(press_vector.data[WATER_CUM_COL])
-            gas_vol = press_vector.data[GAS_CUM_COL].diff().fillna(press_vector.data[GAS_CUM_COL])
-
-            bo = press_vector.data[OIL_FVF_COL]
-            bg = press_vector.data[GAS_FVF_COL]
-            gor = press_vector.data[RS_COL]
-            bw = press_vector.data[WATER_FVF_COL]
-            rs_w = press_vector.data[RS_W_COL]
-            gas_withdrawal = (gas_vol - oil_vol * gor - water_vol * rs_w) * bg
-
-            if sum(gas_withdrawal < 0) > 0:
-                raise ArithmeticError("Gas withdrawal results in negative values")
-
-            gas_withdrawal.fillna(0, inplace=True)
-
-            uw = (oil_vol * bo + water_vol * bw + gas_withdrawal)
-
-            press_vector.data["UW"] = uw.cumsum().values
-
-            return press_vector.data
-
-
-    """def pressure_vol_avg(self, avg_freq:str):
-        press_vector = self.calc_uw()
-        for well in self.wells:
-            df_press_avg = pressure_vol_avg(
-                press_vector.data,
-                well,
-                press_vector.data.index,
-                press_vector.data[PRESSURE_COL],
-                press_vector.data["UW"],
-                avg_freq,
-                "end"
-                    ).reset_index()
-        return df_press_avg"""
+    def pressure_vol_avg(self, avg_freq: str, position: str) -> pd.DataFrame:
+        df_press = self.calc_uw()
+        df_press_avg = (
+            df_press.groupby(TANK_COL).apply(
+                lambda g: pressure_vol_avg(
+                    g,
+                    WELL_COL,
+                    DATE_COL,
+                    PRESSURE_COL,
+                    UW_COL,
+                    avg_freq,
+                    position
+                )
+            ).reset_index(0)
+        )
+        return df_press_avg
 
 # Quicktest
 df_pvt = pd.read_csv("../old/tests/data_for_tests/full_example_1/pvt.csv")
@@ -149,13 +181,29 @@ water_model = WaterModel(
     unit=1
 )
 
+# Uw calc
 uw = Tank(
+    tanks=tank_dict,
     name=tank_name,
     wells=tank_dict[tank_name],
     oil_model=oil_model,
     water_model=water_model
 ).calc_uw()
 
+print(uw)
 
-print(tank_wells["tank_center"][0])
+# Average Pressure
+avg = Tank(
+    tanks=tank_dict,
+    name=tank_name,
+    wells=tank_dict[tank_name],
+    oil_model=oil_model,
+    water_model=water_model
+).pressure_vol_avg(
+    avg_freq="12MS",
+    position="end"
+)
 
+#tanque = "tank_center"
+#tank_center = avg[avg[TANK_COL] == tanque]
+print(avg)

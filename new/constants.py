@@ -20,6 +20,7 @@ INJECTION_WATER = "WATER_VOL"
 INFLUX_WATER = "We"
 RS_W_COL = "RS_bw"
 WATER_FVF_COL = "Bw"
+UW_COL = "UW"
 
 # Frecuency's of time
 VALID_FREQS = ["D", "W", "M", "MS", "Q", "Y", None]

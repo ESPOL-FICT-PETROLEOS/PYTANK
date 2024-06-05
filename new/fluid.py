@@ -41,55 +41,39 @@ class OilModel(BaseModel):
         return self._interpolated_column_at_pressure(RS_COL, pressure)
 
 
-# %%
-# Quicktest for validation
-df_pvt_inv = pd.DataFrame({
-    PRESSURE_PVT_COL: [100.0, 200, 300],
-    OIL_FVF_COL: [10, 20, 30],
-    GAS_FVF_COL: [1, 2, 45],
-    RS_COL: [10.3, 34, 50],
-})
-
-validation = OilModel(
-    data_pvt=df_pvt_inv,
-    temperature=25
-)
-
-# %%
-# Quicktest for some method
-df_pvt = pd.read_csv("../old/tests/data_for_tests/full_example_1/pvt.csv")
-fluid = OilModel(
-    data_pvt=df_pvt,
-    temperature=25
-)
-
-
 #%%
 class WaterModel(BaseModel):
-    correlation_bw: Callable
-    correlation_rs: Callable
-    salinity: float
-    temperature: float
-    unit: float
-
-    def interp_table(self) -> pd.DataFrame:
-        pass
+    correlation_bw: Callable = None
+    correlation_rs: Callable = None
+    salinity: float = None
+    temperature: float = None
+    unit: float = None
 
     def get_bw_at_press(self, pressure: float) -> float:
-        bw = self.correlation_bw(pressure, self.temperature, self.salinity, self.unit)
-        return bw
+        if (self.correlation_bw and self.salinity is not None
+                and self.temperature is not None
+                and self.unit is not None):
+            bw = self.correlation_bw(pressure, self.temperature, self.salinity, self.unit)
+            return bw
+        else:
+            raise ValueError("Missing correlation function or parameters for Bw")
 
     def get_rs_at_press(self, pressure: float) -> float:
-        rs = self.correlation_rs(pressure, self.temperature, self.salinity, self.unit)
-        return rs
+        if (self.correlation_rs and self.salinity is not None
+                and self.temperature is not None
+                and self.unit is not None):
+            rs = self.correlation_rs(pressure, self.temperature, self.salinity, self.unit)
+            return rs
+        else:
+            raise ValueError("Missing correlation function or parameters for Rs")
+
+    def get_default_bw(self) -> float:
+        return 1
+
+    def get_default_rs(self) -> float:
+        return 0
 
 
 class FluidModel(BaseModel):
     oil: OilModel
     water: WaterModel
-
-#%% Test
-"""print(f"Bo is: {fluid.get_bo_at_press(np.array([100,200,300]))}")
-print(f"Bg is: {fluid.get_bg_at_press(100)}")
-print(f"GOR is: {fluid.get_rs_at_press(100)}")
-"""
