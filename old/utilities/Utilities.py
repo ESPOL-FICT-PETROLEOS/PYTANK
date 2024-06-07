@@ -15,12 +15,12 @@ def interp_from_dates(date_interp: datetime.datetime, x_dates, y_values,
                       left=None, right=None):
     """
     Interpolation function that accepts dates as x to interpolate between y_values,
-    given a new date between x_dates
+    given a pytank date between x_dates
 
     Parameters
     ----------
     date_interp: array-like of datetime objects
-        the new date to interpolate
+        the pytank date to interpolate
     x_dates: array-like of datetime objects
         the x_dates values to use as regression
     y_values: array-like
@@ -160,7 +160,7 @@ def material_bal_var_type(data, numb_or_column):
 def material_bal_numerical_data(vector):
     """
     Function to check the numerical data types of the arguments of the material balance
-    functions
+    daraframes
 
     Parameters
     ----------
