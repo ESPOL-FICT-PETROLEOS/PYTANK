@@ -134,17 +134,22 @@ class Tank(BaseModel):
             # For wells not available in the production data frame, fill nans with 0
             df_press[col].fillna(0, inplace=True)
 
-        df_press[UW_COL] = underground_withdrawal(
-            df_press,
-            OIL_CUM_COL,
-            WATER_CUM_COL,
-            GAS_CUM_COL,
-            OIL_FVF_COL,
-            WATER_FVF_COL,
-            GAS_FVF_COL,
-            RS_COL,
-            RS_W_COL,
-        )
+        uw_well = []
+        for well, group in df_press.groupby(WELL_COL):
+            group[UW_COL] = underground_withdrawal(
+                group,
+                OIL_CUM_COL,
+                WATER_CUM_COL,
+                GAS_CUM_COL,
+                OIL_FVF_COL,
+                WATER_FVF_COL,
+                GAS_FVF_COL,
+                RS_COL,
+                RS_W_COL,
+            )
+            uw_well.append(group)
+
+        df_press = pd.concat(uw_well, ignore_index=True)
         return df_press
 
     def pressure_vol_avg(self, avg_freq: str, position: str) -> pd.DataFrame:
@@ -192,6 +197,7 @@ uw = Tank(
 ).calc_uw()
 
 print(uw)
+uw.to_csv("uw_tank.csv", index=False)
 
 # Average Pressure
 avg = Tank(
@@ -205,6 +211,4 @@ avg = Tank(
     position="end"
 )
 
-# tanque = "tank_center"
-# tank_center = avg[avg[TANK_COL] == tanque]
 print(avg)

@@ -5,12 +5,8 @@ from pytank.functions.pvt_interp import interp_pvt_matbal
 import matplotlib.pyplot as plt
 
 # Load data into dataframes
-df_pressure = pd.read_csv(
-    "../../pytank/resources/data_csv/pressures.csv"
-)
-df_prod = pd.read_csv(
-    "../../pytank/resources/data_csv/production.csv"
-)
+df_prod = pd.read_csv("production.csv")
+df_pressure = pd.read_csv("pressures.csv")
 df_avg = pd.read_csv("press_avg.csv")
 df_avg["PRESSURE_DATUM"] = df_avg["PRESSURE_DATUM"].interpolate(method="linear")
 # %% Casting of date data type of pressure and prod dataframes
@@ -118,7 +114,7 @@ df_north = df_mbal[df_mbal[tank_name_col] == "tank_north"]
 
 # %% Load of the pvt dataframe, which is the one used to interpolate and then, add
 # the pvt columns in the mbal dataframe
-df_pvt = pd.read_csv("../../pytank/resources/data_csv/pvt.csv")
+df_pvt = pd.read_csv("pvt.csv")
 
 # filling the missing values of the Bg column using the ffill method
 df_pvt = df_pvt.fillna(method="ffill")

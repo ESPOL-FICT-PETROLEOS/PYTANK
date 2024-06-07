@@ -13,6 +13,7 @@ from pytank.vector_data.vector_data import ProdVector, PressVector
 from pytank.well.well import Well
 from collections import defaultdict
 from pandera.errors import SchemaError
+from pytank.functions.utilities import normalize_date_freq
 import warnings
 
 # Avoid warnings
@@ -34,7 +35,7 @@ cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
 EXPECTED_FREQ = "MS"
 
 # Create a set with all well names from both DataFrames
-all_wells = sorted(set(df_production["ITEM_NAME"]).union(df_pressures["WELLBORE"]))
+all_wells = set(df_production["ITEM_NAME"]).union(df_pressures["WELLBORE"])
 
 for name in all_wells:
     # Initialize production and pressure vectors as None
@@ -56,15 +57,15 @@ for name in all_wells:
         group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[WATER_CUM_COL]
         group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
 
-        """group_prod_norm = normalize_date_freq(df=group_prod,
+        group_prod_norm = normalize_date_freq(df=group_prod,
                                               freq=EXPECTED_FREQ,
                                               cols_fill_na=cols_fills_na,
                                               method_no_cols="ffill",
-                                              )"""
+                                              )
         try:
             prod_vector = ProdVector(
-                freq=None,
-                data=group_prod
+                freq=EXPECTED_FREQ,
+                data=group_prod_norm
             )
             # In case where wells don't have pressure info
 
@@ -72,12 +73,12 @@ for name in all_wells:
             expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
             if str(e) == expected_error_msg:
                 # group_prod_norm = group_prod_norm.asfreq(EXPECTED_FREQ)
-                group_prod.index.freq = EXPECTED_FREQ
+                group_prod_norm.index.freq = EXPECTED_FREQ
                 prod_vector = ProdVector(
                     freq=None,
-                    data=group_prod
+                    data=group_prod_norm
                 )
-        tank_name = group_prod[TANK_COL].iloc[0]
+        tank_name = group_prod_norm[TANK_COL].iloc[0]
 
     # If the well has pressure data, process it
     if name in df_pressures["WELLBORE"].unique():

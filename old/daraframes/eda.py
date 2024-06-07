@@ -3,19 +3,19 @@ from old.utilities import days_in_month
 from old.utilities import interp_dates_row
 import matplotlib.ticker as ticker
 from scipy.interpolate import interp1d
-from pytank.functions.material_balance import (
-    underground_withdrawal,
-    pressure_vol_avg,
-)
+from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg
+
 
 formatter = ticker.EngFormatter()
 
 
 
 # %% Load data into dataframes
-df_prod = pd.read_csv("../../pytank/resources/data_csv/production.csv")
-df_press = pd.read_csv("../../pytank/resources/data_csv/pressures.csv")
-df_pvt = pd.read_csv("../../pytank/resources/data_csv/pvt.csv")
+df_prod = pd.read_csv("production.csv")
+df_press = pd.read_csv("pressures.csv")
+df_pvt = pd.read_csv("pvt.csv")
+
+print(df_prod)
 
 # %% Cast date column to date
 date_col = "START_DATETIME"
@@ -96,22 +96,23 @@ for col in cols_input:
 
 #print(df_press.columns)
 # %% Calculate underground withdrawal for each well
-
 uw_col = "UW"
-df_press[uw_col] = underground_withdrawal(
-    df_press,
-    oil_cum_col,
-    water_cum_col,
-    gas_cum_col,
-    oil_fvf_col,
-    1,
-    gas_fvf_col,
-    gas_oil_rs_col,
-    0,
-)
+uw_well = []
+for well, group in df_press.groupby(well_name_col):
+    group[uw_col] = underground_withdrawal(
+        group,
+        oil_cum_col,
+        water_cum_col,
+        gas_cum_col,
+        oil_fvf_col,
+        1,
+        gas_fvf_col,
+        gas_oil_rs_col,
+        0)
+    uw_well.append(group)
+df_press = pd.concat(uw_well, ignore_index=True)
 print(df_press)
-#df_press.to_csv("PRUEBA.CSV",index=False)
-#df_prod.to_csv("prod_2.csv",index=False)
+df_press.to_csv("uw_eda.csv",index=False)
 # %% Calculate the pressure volumetric average per tank
 avg_freq = "12MS"
 df_press_avg = (
@@ -124,4 +125,4 @@ df_press_avg = (
     .reset_index(0)
 )
 #press_avg = df_press_avg.to_csv("press_avg.csv", index=False)
-print(df_press_avg)
+#print(df_press_avg)

@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.optimize import fsolve
 import math
-from old.utilities import interp_pvt_matbal
-from old.utilities import Bo_bw, comp_bw_nogas
+from pytank.functions.pvt_interp import interp_pvt_matbal
+from pytank.functions.pvt_correlations import Bo_bw, comp_bw_nogas
 
 
 # %%
