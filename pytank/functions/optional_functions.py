@@ -2,7 +2,7 @@
 import numpy as np
 
 
-# File to code aquifers-related daraframes or classes
+# File to code aquifers-related dataframes or classes
 def schilthuis_aq(pi, p, k, h, uw, ra, re):
     """
     This function calculates the aquifers water influx according to schilthuis equation

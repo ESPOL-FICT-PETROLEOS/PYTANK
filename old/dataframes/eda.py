@@ -77,7 +77,7 @@ gas_oil_rs_interp = interp1d(
 
 gas_fvf_interp = interp1d(df_pvt["Pressure"], df_pvt["Bg"], fill_value="extrapolate")
 
-# 2.- Apply the daraframes to the pressure df
+# 2.- Apply the dataframes to the pressure df
 df_press[oil_fvf_col] = oil_fvf_interp(df_press[press_col])
 df_press[gas_oil_rs_col] = gas_oil_rs_interp(df_press[press_col])
 df_press[gas_fvf_col] = gas_fvf_interp(df_press[press_col])
