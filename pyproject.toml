@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "pytank"
+version = "0.1.0"
+description = ""
+authors = ["ErickVillarroel <evillarr@espol.edu.ec>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.1.4"
+scipy = "^1.11.4"
+numpy = "^1.26.3"
+matplotlib = "^3.8.2"
+pytest = "^7.4.4"
+pandera = "^0.18.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
