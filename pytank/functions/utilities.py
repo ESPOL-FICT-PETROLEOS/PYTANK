@@ -178,7 +178,7 @@ def material_bal_var_type(data, numb_or_column):
 def material_bal_numerical_data(vector):
     """
     Function to check the numerical data types of the arguments of the material balance
-    daraframes
+    dataframes
 
     Parameters
     ----------

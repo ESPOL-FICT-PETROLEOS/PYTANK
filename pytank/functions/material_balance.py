@@ -521,7 +521,7 @@ def ho_terms_equation(
     ]
     material_bal_numerical_data(num_arg)
 
-    # Call the daraframes of the havlena and odeh equation
+    # Call the dataframes of the havlena and odeh equation
     f = underground_withdrawal(
         data,
         oil_cum_col,

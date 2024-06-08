@@ -126,7 +126,7 @@ class ExploreDataAnalysis:
             self.df_pvt["Pressure"], self.df_pvt[GAS_FVF_COL], fill_value="extrapolate"
         )
 
-        # Apply the daraframes to the pressure DataFrame
+        # Apply the dataframes to the pressure DataFrame
         self.df_press[OIL_FVF_COL] = oil_fvf_interp(self.df_press[PRESS_COL])
         self.df_press[GOR_COL] = gas_oil_rs_interp(self.df_press[PRESS_COL])
         self.df_press[GAS_FVF_COL] = gas_fvf_interp(self.df_press[PRESS_COL])

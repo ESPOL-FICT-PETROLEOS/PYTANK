@@ -1,4 +1,4 @@
-# File to code pvt-related daraframes or classes
+# File to code pvt-related dataframes or classes
 import pandas as pd
 from scipy import interpolate
 
@@ -20,7 +20,7 @@ def interp_pvt_matbal(pvt:pd.DataFrame, press_col_name, prop_col_name, press_tar
 
 
 """
-from daraframes import pvt_table as pv
+from dataframes import pvt_table as pv
 df = pv.pvt_table2(2500, 150, 35, 500, 0.7, 180, 55, 5000, 500,
                 100)
 col_name = 'pressure[psia]'
