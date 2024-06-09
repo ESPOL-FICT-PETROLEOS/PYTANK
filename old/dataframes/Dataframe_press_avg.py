@@ -57,10 +57,10 @@ df_tanks.rename(
 )
 
 # %% Plot Oil Cumulative
-df_tanks.pivot_table(oil_cum_col, datep_col, tank_name_col).fillna(
+"""df_tanks.pivot_table(oil_cum_col, datep_col, tank_name_col).fillna(
     method="ffill"
 ).plot()
-plt.show()
+plt.show()"""
 # df_tanks.pivot(datep_col, tank_name_col, oil_cum_col).fillna(method="ffill").plot()
 # plt.show()
 
@@ -254,4 +254,4 @@ df_tanks.rename(
 
 #print("DataFrame df_mbal2:")
 #print(df_avg)
-print(df_tanks.columns)
+print(df_tanks.loc[df_tanks[tank_name_col] == "tank_center"])

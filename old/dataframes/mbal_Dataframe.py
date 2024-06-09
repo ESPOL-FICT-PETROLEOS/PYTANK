@@ -57,10 +57,10 @@ df_tanks.rename(
 )
 
 # %% Plot Oil Cumulative
-df_tanks.pivot_table(oil_cum_col, datep_col, tank_name_col).fillna(
+"""df_tanks.pivot_table(oil_cum_col, datep_col, tank_name_col).fillna(
     method="ffill"
 ).plot()
-plt.show()
+plt.show()"""
 # df_tanks.pivot(datep_col, tank_name_col, oil_cum_col).fillna(method="ffill").plot()
 # plt.show()
 
@@ -182,7 +182,6 @@ df_mbal.rename(
 # %% Convert the mbal dataframe to a csv file, which then will be imported to calculate
 # the terms F, Eo, Eg, and Efw
 #mbal = df_mbal.to_csv("mbal_Dataframe.csv", index=False)
-print(df_mbal)
 
 # %% Using the interp_dates_row function to add the pressure column to the df_tanks
 # Dataframe
@@ -249,5 +248,5 @@ df_tanks.rename(
 # %% Convert the df_tanks dataframe to a csv file, which then will be imported to
 # calculate the terms F, Eo, Eg, and Efw
 #mbal_tanks = df_tanks.to_csv("mbal_tanks.csv", index=False)
-print(df_tanks.columns)
+print(df_tanks.loc[df_tanks[tank_name_col] == "tank_center"])
 # %% New Dataframe with pressure avg
