@@ -13,9 +13,11 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         RS_W_COL,
                                         TANK_COL,
                                         LIQ_CUM,
-                                        UW_COL)
+                                        UW_COL,
+                                        PRESSURE_PVT_COL)
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.functions.utilities import interp_dates_row
+from pytank.functions.pvt_interp import interp_pvt_matbal
 from pytank.functions.pvt_correlations import RS_bw, Bo_bw
 from pytank.notebooks.get_wells import tank_wells
 from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg
@@ -82,7 +84,7 @@ class Tank(BaseModel):
                     df_press = pd.concat([df_press, temp_df_press], ignore_index=True)
         return df_press
 
-    def _prod_df_int(self):
+    def _prod_df_int(self) -> pd.DataFrame:
         """
         Private method that internally manages production vector for use in the UW method
 
@@ -115,6 +117,7 @@ class Tank(BaseModel):
                     temp_df_prod[WATER_CUM_COL] = well_water_cum
                     temp_df_prod[GAS_CUM_COL] = well_gas_cum
                     temp_df_prod[LIQ_CUM] = well_liq_cum
+                    temp_df_prod[TANK_COL] = tank_name
 
                     df_prod = pd.concat([df_prod, temp_df_prod], ignore_index=True)
         return df_prod
@@ -122,6 +125,8 @@ class Tank(BaseModel):
     def calc_uw(self) -> pd.DataFrame:
         df_press = self._press_df_int()
         df_prod = self._prod_df_int()
+        df_press = df_press.loc[df_press[TANK_COL]==self.name]
+        #df_prod = df_prod.loc[df_prod[TANK_COL]==self.name]
 
         # Calculate the accumulated production in the pressure dataframe, based on the production dataframe
         for col in [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]:
@@ -169,11 +174,79 @@ class Tank(BaseModel):
         )
         return df_press_avg
 
+    def mat_bal_df(self,avg_freq: str, position: str) -> pd.DataFrame:
+        """
+        Obtain material balance parameters at a certain frequency
+
+        Parameters
+        ----------
+        avg_freq: str
+            Frequency for averaging
+        position: str
+            Position for averaging
+
+        Returns
+        -------
+        pd.DataFrame
+
+            Dataframe with data to calculate material balance
+
+        """
+        avg = self.pressure_vol_avg(avg_freq, position)
+        prod = self._prod_df_int()
+
+        avg[PRESSURE_COL] = avg[PRESSURE_COL].interpolate(method="linear")
+
+        cols_input = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]
+        cols_output = ["oil_vol", "water_vol", "gas_vol"]
+        prod[cols_output] = (prod.groupby(WELL_COL)[cols_input]).diff().fillna(prod[cols_input])
+        cols_group = [DATE_COL, TANK_COL,"oil_vol", "water_vol", "gas_vol"]
+        df_tank = (
+            prod[cols_group]
+            .groupby(cols_group[0:2])
+            .sum()
+            .groupby(TANK_COL)
+            .cumsum()
+            .reset_index()
+        )
+
+        df_tank.rename(columns={
+            "oil_vol": OIL_CUM_COL,
+            "water_vol": WATER_CUM_COL,
+            "gas_vol": GAS_CUM_COL
+        }, inplace=True)
+
+        oil_cum_per_tank = OIL_CUM_COL + "_TANK"
+        water_cum_per_tank = WATER_CUM_COL + "_TANK"
+        gas_cum_per_tank = GAS_CUM_COL + "_TANK"
+
+        for col, cum_col in zip ([oil_cum_per_tank, water_cum_per_tank, gas_cum_per_tank],
+                                 [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]):
+            avg[col] = avg.apply(
+                lambda g: interp_dates_row(
+                    g, DATE_COL, df_tank, DATE_COL, cum_col, TANK_COL, TANK_COL
+                ),
+                axis=1
+            )
+
+        df_mbal = avg.sort_values(DATE_COL)
+
+        for col, prop in zip([OIL_FVF_COL, GAS_FVF_COL, RS_COL],
+                             [OIL_FVF_COL, GAS_FVF_COL, RS_COL]):
+            df_mbal[col] = df_mbal[PRESSURE_COL].apply(
+                lambda press: interp_pvt_matbal(df_pvt, PRESSURE_PVT_COL, prop, press)
+            )
+
+        df_mbal = pd.concat([df_mbal, df_mbal[OIL_FVF_COL], df_mbal[GAS_FVF_COL], df_mbal[RS_COL]], axis=1).sort_values(DATE_COL)
+
+        df_mbal["Time_Step"] = (df_mbal[DATE_COL] - df_mbal[DATE_COL].shift()).dt.days.cumsum()
+
+        return df_mbal
 
 # Quicktest
 df_pvt = pd.read_csv("../resources/data_csv/pvt.csv")
 tank_dict = tank_wells
-tank_name = list(tank_wells.keys())[0]
+tank_name = "tank_south"
 oil_model = OilModel(
     data_pvt=df_pvt,
     temperature=25,
@@ -196,7 +269,7 @@ uw = Tank(
     water_model=water_model
 ).calc_uw()
 
-print(uw)
+#print(uw)
 uw.to_csv("uw_tank.csv", index=False)
 
 # Average Pressure
@@ -211,4 +284,15 @@ avg = Tank(
     position="end"
 )
 
-print(avg)
+#print(avg)
+avg.to_csv("avg_tank.csv",index=False)
+tank = Tank(
+    tanks=tank_dict,
+    name=tank_name,
+    wells=tank_dict[tank_name],
+    oil_model=oil_model,
+    water_model=water_model
+)
+
+mbal = tank.mat_bal_df("12MS", "end")
+mbal.to_csv("mbal_tank.csv", index=False)

@@ -124,5 +124,5 @@ df_press_avg = (
     )
     .reset_index(0)
 )
-#press_avg = df_press_avg.to_csv("press_avg.csv", index=False)
+press_avg = df_press_avg.to_csv("press_avg.csv", index=False)
 #print(df_press_avg)
