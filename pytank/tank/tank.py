@@ -239,7 +239,8 @@ class Tank(BaseModel):
 
         df_mbal = df_mbal.sort_values(DATE_COL)
 
-        df_mbal["Time_Step"] = (df_mbal[DATE_COL] - df_mbal[DATE_COL].fillna(0).shift()).dt.days.cumsum()
+        df_mbal["Time_Step"] = 365.0
+        df_mbal["Time_Step"].iloc[1:] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
 
         return df_mbal
 
