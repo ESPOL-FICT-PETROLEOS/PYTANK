@@ -237,9 +237,9 @@ class Tank(BaseModel):
                 lambda press: interp_pvt_matbal(df_pvt, PRESSURE_PVT_COL, prop, press)
             )
 
-        df_mbal = pd.concat([df_mbal, df_mbal[OIL_FVF_COL], df_mbal[GAS_FVF_COL], df_mbal[RS_COL]], axis=1).sort_values(DATE_COL)
+        df_mbal = df_mbal.sort_values(DATE_COL)
 
-        df_mbal["Time_Step"] = (df_mbal[DATE_COL] - df_mbal[DATE_COL].shift()).dt.days.cumsum()
+        df_mbal["Time_Step"] = (df_mbal[DATE_COL] - df_mbal[DATE_COL].fillna(0).shift()).dt.days.cumsum()
 
         return df_mbal
 
