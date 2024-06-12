@@ -66,8 +66,18 @@ def EBM(press, np, bo, cf, cw, sw0, boi, name, we, date, p2, F):
 
 # def uwater2(p,T):
 #     return math.exp(1)
-
-df_ta = pd.read_csv("mbal_Dataframe3.csv")
+from pytank.tank.tank import mbal
+f_ta = mbal.rename(columns={
+    "START_DATETIME": "Date",
+    "PRESSURE_DATUM": "Pressure",
+    "OIL_CUM_TANK": "oil_prod_cum",
+    "WATER_CUM_TANK": "water_prod_cum",
+    "GAS_CUM_TANK": "gas_prod_cum",
+    "Bo": "oil_fvf",
+    "Bg": "gas_fvf",
+    "GOR": "gas_oil_rs_col",
+    "Time_Step": "time_step"
+})
 df_ta2 = df_ta[df_ta["Tank"] == "tank_center"]
 # nueva_fila = pd.DataFrame({'DATE': '1987-09-01', 'Tank': 'tank_center', 'Pressure': 3700.00, 'oil_fvf': 1.1},
 #                           index=[0])

@@ -296,4 +296,48 @@ tank = Tank(
 )
 
 mbal = tank.mat_bal_df("12MS", "end")
-mbal.to_csv("mbal_tank.csv", index=False)
+#mbal.to_csv("mbal_tank.csv", index=False)
+
+from pytank.functions.function2 import G_method
+from pytank.aquifer.influx_of_water import Fetkovich
+
+
+cf = 0.00000362
+swo = 0.15
+boi = 0.86
+pi = 3000
+t = 200
+salinity = 30000
+
+pr = mbal["PRESSURE_DATUM"].tolist()
+ts = mbal["Time_Step"].tolist()
+
+df_we = Fetkovich(
+    aq_radius=46000,
+    res_radius=9200,
+    aq_thickness=100,
+    aq_por=0.25,
+    ct=0.000007,
+    pr=pr,
+    theta=140,
+    k=200,
+    water_visc=0.55,
+    time_step=ts,
+).we()
+we = df_we["Cumulative We"]
+print(we)
+
+poes = G_method(
+    pr=mbal[PRESSURE_COL],
+    np=mbal["OIL_CUM_TANK"],
+    wp=mbal["WATER_CUM_TANK"],
+    bo=mbal[OIL_FVF_COL],
+    cf=cf,
+    sw0=swo,
+    boi=boi,
+    we=we,
+    pi=pi,
+    t=t,
+    salinity=salinity
+)
+print(poes)
