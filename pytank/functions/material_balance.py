@@ -311,9 +311,7 @@ def oil_expansion(
     material_bal_numerical_data(num_arg)
 
     tot_fvf_col = df[oil_fvf_col] + ((df[rs_col] - gas_oil_rs_init) * df[gas_fvf_col])
-
     eo = tot_fvf_col - oil_fvf_init
-
     return eo
 
 

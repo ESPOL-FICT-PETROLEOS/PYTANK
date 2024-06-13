@@ -4,7 +4,6 @@ from old.utilities import variable_type
 import math
 from datetime import datetime
 from pandas import Timestamp
-from explorer.explore_data_analysis import PressureAvgTank
 
 
 # Creation of class to reach cumulate influx of water
@@ -165,7 +164,7 @@ class Fetkovich:
 
         # Creation of the dataframe that will be return for users
         df = pd.DataFrame(df_list)
-        df = df.set_index("Elapsed time")
+        #df = df.set_index("Elapsed time")
 
         return df
 
