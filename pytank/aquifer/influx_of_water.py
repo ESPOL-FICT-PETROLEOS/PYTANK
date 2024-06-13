@@ -289,5 +289,3 @@ class Carter_Tracy:
         )
 
         return df
-
-

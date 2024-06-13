@@ -37,13 +37,14 @@ def Campbell(p, np, wp, bo, cf, sw0, boi, date, pi, t, salinity):
     data = pd.DataFrame({"Date": x, "F/Eo+Efw": y})
     return data
 
-
+# funcion de nosotros
 def G_method(uw,We,Eo,Efw):
     y = uw - We
     x = Eo + Efw
     df = pd.DataFrame({"F-We": y, "Eo + Efw": x})
     return df
 
+# funcion de elllos:
 def G_method2(pr, np, wp, bo, cf, sw0, boi, we, pi, t, salinity):
     Bw = bw(pr, t, salinity)["Bw"]
     Cw = cw(pr, t, salinity)["Cw"]

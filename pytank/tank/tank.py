@@ -377,6 +377,8 @@ plt.legend()
 plt.show()
 
 
+# Ellos
+
 """we = df_we["Cumulative We"]
 
 poes = G_method2(
