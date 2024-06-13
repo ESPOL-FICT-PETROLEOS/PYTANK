@@ -5,6 +5,9 @@ from scipy.optimize import fsolve
 import math
 from pytank.functions.pvt_interp import interp_pvt_matbal
 from pytank.functions.pvt_correlations import Bo_bw, comp_bw_nogas
+from pytank.constants.constants import (OIL_FVF_COL,
+                                        PRESSURE_COL,
+                                        DATE_COL)
 
 
 # %%
@@ -78,7 +81,7 @@ f_ta = mbal.rename(columns={
     "GOR": "gas_oil_rs_col",
     "Time_Step": "time_step"
 })
-df_ta2 = df_ta[df_ta["Tank"] == "tank_center"]
+df_ta2 = pd.read_csv("../tank/mbal_tank.csv")
 # nueva_fila = pd.DataFrame({'DATE': '1987-09-01', 'Tank': 'tank_center', 'Pressure': 3700.00, 'oil_fvf': 1.1},
 #                           index=[0])
 # df_ta2 = pd.concat([nueva_fila, df_ta2]).reset_index(drop=True)
@@ -87,7 +90,7 @@ df_ta2 = df_ta[df_ta["Tank"] == "tank_center"]
 # fecha= pd.to_datetime("1987-09-01")
 # df_ta2['DATE2'] = (df_ta2['DATE']-fecha).dt.days
 # time=df_ta2['DATE2'].to_numpy()
-df_pvt = pd.read_csv("../../PYTANk/pytank/tests/data_for_tests/full_example_1/pvt.csv")
+df_pvt = pd.read_csv("../resources/data_csv/pvt.csv")
 df_pvt = df_pvt.fillna(method="ffill")
 # time_step = time
 ppvt_col = "Pressure"
@@ -185,12 +188,12 @@ cum = 0
 pi = 3700
 sw0 = 0.25
 boi = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, 3700)
-N = 72e6
+N = 72e+6
 x0 = 3600
 P_calculada = [pi]
-for i in range(len(df_ta2["Pressure"])):
-    Np = df_ta2["oil_prod_cum"][i]
-    wp = df_ta2["water_prod_cum"][i]
+for i in range(len(df_ta2[PRESSURE_COL])):
+    Np = df_ta2["OIL_CUM_TANK"][i]
+    wp = df_ta2["WATER_CUM_TANK"][i]
     p_anterior = P_calculada[i]
     # Calculate current reservoir pressure given all other material balance variables through numeric solving.
     presion = fsolve(
@@ -301,15 +304,15 @@ for i in range(len(df_ta2["Pressure"])):
 #                             p_anterior, cum, pi)
 # %%
 nueva_fila = pd.DataFrame(
-    {"Date": "1987-09-01", "Pressure": 3700.00, "oil_fvf": 1.1}, index=[0]
+    {DATE_COL: "1987-09-01", PRESSURE_COL: 4000.00, OIL_FVF_COL: 1.1}, index=[0]
 )
 df_ta2 = pd.concat([nueva_fila, df_ta2]).reset_index(drop=True)
-df_ta2["Date"] = pd.to_datetime(df_ta2["Date"])
+df_ta2[DATE_COL] = pd.to_datetime(df_ta2[DATE_COL])
 df_ta2.iloc[0] = df_ta2.iloc[0].fillna(0)
 # %%
 fig, ax = plt.subplots(figsize=(15, 10))
-ax.scatter(df_ta2["Date"].dt.year, df_ta2["Pressure"], label="Presion Observada")
-plt.plot(df_ta2["Date"].dt.year, P_calculada, c="g", label="Presion Calculada")
+ax.scatter(df_ta2[DATE_COL].dt.year, df_ta2[PRESSURE_COL], label="Presion Observada")
+plt.plot(df_ta2[DATE_COL].dt.year, P_calculada, c="g", label="Presion Calculada")
 # plt.plot(df_ta2['Date'], P4, c='r', label='Presion Calculada')
 plt.title("Gráfico P vs t ", fontsize=15)
 plt.xlabel("Tiempo (Años)", fontsize=15)

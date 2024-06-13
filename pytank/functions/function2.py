@@ -38,16 +38,11 @@ def Campbell(p, np, wp, bo, cf, sw0, boi, date, pi, t, salinity):
     return data
 
 
-def G_method(pr, np, wp, bo, cf, sw0, boi, we, pi, t, salinity):
-    Bw = bw(pr, t, salinity)["Bw"]
-    Cw = cw(pr, t, salinity)["Cw"]
-    Eo = bo - boi
-    Efw = boi * (((Cw * sw0) + cf) / (1 - sw0)) * (pi - pr)
-    F = (np * bo) + (wp * Bw)
-    y = F / (Eo + Efw)
-    x = (we * Bw) / (Eo + Efw)
-    data = pd.DataFrame({"We*Bw/Et": x, "F/Eo+Efw": y})
-    return data
+def G_method(uw,We,Eo,Efw):
+    y = uw - We
+    x = Eo + Efw
+    df = pd.DataFrame({"F-We": y, "Eo + Efw": x})
+    return df
 
 
 def EBM(p, pi, Np, wp, bo, cf, cw, sw0, boi, N, we, bw):
