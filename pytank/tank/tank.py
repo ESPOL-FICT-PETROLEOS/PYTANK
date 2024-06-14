@@ -170,8 +170,7 @@ class Tank(BaseModel):
                     UW_COL,
                     avg_freq,
                     position
-                ),
-                include_groups=False
+                )
             ).reset_index(0)
         )
         return df_press_avg
@@ -297,7 +296,7 @@ tank = Tank(
 
 mbal = tank.mat_bal_df("12MS", "end")
 
-from pytank.functions.function2 import G_method
+from pytank.functions.function2 import G_method, G_method2
 from pytank.aquifer.influx_of_water import Fetkovich
 
 cf = 0.00000362
@@ -344,3 +343,90 @@ mbal.to_csv("mbal_tank.csv", index=False)
 
 ho = G_method(mbal[UW_COL],mbal["We"],mbal["Eo"],mbal["Efw"])
 print(ho)
+
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from scipy import stats
+plt.scatter(ho["Eo + Efw"],ho["F-We"],)
+
+x=ho[["Eo + Efw"]]
+x1=ho["Eo + Efw"]
+y=ho["F-We"]
+
+model = LinearRegression()
+model.fit(x,y)
+
+pendiente = model.coef_[0]
+intercepto = model.intercept_
+slope, intercept, r, p, se = stats.linregress(x1, y)
+print(f'Pendiente: {pendiente/1000000}')
+print(f'Intercepto: {intercepto}')
+print(f"N [MMStb]: {intercepto / 1000000:.4f}")
+print(f"N [MMStb]: {intercept / 1000000:.4f}")
+
+
+y_pred = model.predict(x)
+
+plt.scatter(ho["Eo + Efw"],ho["F-We"], color='blue', label='Datos')
+plt.plot(ho["Eo + Efw"], y_pred, color='red', label='Recta de regresión')
+
+
+plt.title("HAVLENA")
+plt.legend()
+
+plt.show()
+
+
+# Ellos
+
+"""we = df_we["Cumulative We"]
+
+poes = G_method2(
+    pr=mbal[PRESSURE_COL],
+    np=mbal["OIL_CUM_TANK"],
+    wp=mbal["WATER_CUM_TANK"],
+    bo=mbal[OIL_FVF_COL],
+    cf=cf,
+    sw0=swo,
+    boi=boi,
+    we=we,
+    pi=pi,
+    t=t,
+    salinity=salinity
+)
+print(poes)
+
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from scipy import stats
+plt.scatter(poes["We*Bw/Et"],poes["F/Eo+Efw"],)
+
+x=poes[["We*Bw/Et"]]
+x1=poes["We*Bw/Et"]
+y=poes["F/Eo+Efw"]
+
+model = LinearRegression()
+model.fit(x,y)
+
+# Obtener la pendiente (coeficiente) y el intercepto
+pendiente = model.coef_[0]
+intercepto = model.intercept_
+slope, intercept, r, p, se = stats.linregress(x1, y)
+print(f'Pendiente: {pendiente}')
+print(f'Intercepto: {intercepto}')
+print(f"N [MMStb]: {intercepto / 1000000:.4f}")
+print(f"N [MMStb]: {intercept / 1000000:.4f}")
+
+# Generar los valores predichos para la recta de regresión
+y_pred = model.predict(x)
+
+# Graficar los puntos y la recta de regresión
+plt.scatter(poes["We*Bw/Et"],poes["F/Eo+Efw"], color='blue', label='Datos')
+plt.plot(poes["We*Bw/Et"], y_pred, color='red', label='Recta de regresión')
+
+# Añadir etiquetas y título
+plt.title("HAVLENA")
+plt.legend()
+
+# Mostrar el gráfico
+plt.show()"""
