@@ -22,7 +22,7 @@ from pytank.functions.pvt_correlations import RS_bw, Bo_bw
 from pytank.notebooks.get_wells import tank_wells
 from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg, gas_expansion, oil_expansion, \
     fw_expansion
-
+from pytank.aquifer.we import Aquifer
 
 class Tank(BaseModel):
     tanks: dict
@@ -321,9 +321,23 @@ df_we = Fetkovich(
     water_visc=0.55,
     time_step=ts,
 ).we()
-we = df_we["Cumulative We"]
+we = df_we
+print(we)
+df_we1 = Aquifer(
 
-mbal["We"] = we
+    aq_por=0.25,
+    ct=0.000007,
+    res_radius=920,
+    aq_thickness=100,
+    theta=140,
+    aq_perm=200,
+    water_visc=0.55,
+    pr=pr,
+    time_step=ts
+).fetkovich(4600)
+print(df_we1)
+
+"""mbal["We"] = we
 # Calculate new UW
 mbal[RS_W_COL] = water_model.get_rs_at_press(mbal[PRESSURE_COL])
 mbal[WATER_FVF_COL] = water_model.get_bw_at_press(mbal[PRESSURE_COL])
@@ -377,7 +391,7 @@ plt.legend()
 plt.show()
 
 
-# Ellos
+# Ellos"""
 
 """we = df_we["Cumulative We"]
 
