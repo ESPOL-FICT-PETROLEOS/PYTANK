@@ -669,7 +669,7 @@ def campbell_function(
         pressure_init,
     )
 
-    vertical_axis = df[uw_col] / df[eo_col] + df[efw_col]
+    vertical_axis = df[uw_col] / (df[eo_col] + df[efw_col])
 
     # Build the campbell plot
     fig, ax1 = plt.subplots()

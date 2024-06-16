@@ -1,4 +1,5 @@
 import pandas as pd
+from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from pytank.constants.constants import (OIL_FVF_COL,
                                         GAS_FVF_COL,
@@ -7,6 +8,9 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         OIL_CUM_COL,
                                         GAS_CUM_COL,
                                         WATER_CUM_COL,
+                                        OIL_CUM_TANK,
+                                        WATER_CUM_TANK,
+                                        GAS_CUM_TANK,
                                         DATE_COL,
                                         WELL_COL,
                                         WATER_FVF_COL,
@@ -14,25 +18,27 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         TANK_COL,
                                         LIQ_CUM,
                                         UW_COL,
-                                        PRESSURE_PVT_COL)
+                                        PRESSURE_PVT_COL,
+                                        OIL_EXP,
+                                        RES_EXP
+                                        )
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.functions.utilities import interp_dates_row
 from pytank.functions.pvt_interp import interp_pvt_matbal
 from pytank.functions.pvt_correlations import RS_bw, Bo_bw
 from pytank.notebooks.get_wells import tank_wells
 from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg, gas_expansion, oil_expansion, \
-    fw_expansion
+    fw_expansion, campbell_function
 from pytank.aquifer.we import Aquifer
+from pytank.functions.pvt_correlations import comp_bw_nogas
+
 
 class Tank(BaseModel):
-    tanks: dict
+    tanks:  dict
     name: str
     wells: list
     oil_model: OilModel
     water_model: WaterModel
-
-    def __init__(self, tanks: dict, name: str, wells: list, oil_model: OilModel, water_model: WaterModel):
-        super().__init__(tanks=tanks, name=name, wells=wells, oil_model=oil_model, water_model=water_model)
 
     def _press_df_int(self):
         """
@@ -123,11 +129,10 @@ class Tank(BaseModel):
                     df_prod = pd.concat([df_prod, temp_df_prod], ignore_index=True)
         return df_prod
 
-    def calc_uw(self) -> pd.DataFrame:
+    def _calc_uw(self) -> pd.DataFrame:
         df_press = self._press_df_int()
         df_prod = self._prod_df_int()
         df_press = df_press.loc[df_press[TANK_COL] == self.name]
-        #df_prod = df_prod.loc[df_prod[TANK_COL]==self.name]
 
         # Calculate the accumulated production in the pressure dataframe, based on the production dataframe
         for col in [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]:
@@ -158,8 +163,8 @@ class Tank(BaseModel):
         df_press = pd.concat(uw_well, ignore_index=True)
         return df_press
 
-    def pressure_vol_avg(self, avg_freq: str, position: str) -> pd.DataFrame:
-        df_press = self.calc_uw()
+    def _pressure_vol_avg(self, avg_freq: str, position: str) -> pd.DataFrame:
+        df_press = self._calc_uw()
         df_press_avg = (
             df_press.groupby(TANK_COL).apply(
                 lambda g: pressure_vol_avg(
@@ -193,7 +198,7 @@ class Tank(BaseModel):
             Dataframe with data to calculate material balance
 
         """
-        avg = self.pressure_vol_avg(avg_freq, position)
+        avg = self._pressure_vol_avg(avg_freq, position)
         prod = self._prod_df_int()
 
         avg[PRESSURE_COL] = avg[PRESSURE_COL].interpolate(method="linear")
@@ -217,9 +222,9 @@ class Tank(BaseModel):
             "gas_vol": GAS_CUM_COL
         }, inplace=True)
 
-        oil_cum_per_tank = OIL_CUM_COL + "_TANK"
-        water_cum_per_tank = WATER_CUM_COL + "_TANK"
-        gas_cum_per_tank = GAS_CUM_COL + "_TANK"
+        oil_cum_per_tank = OIL_CUM_TANK
+        water_cum_per_tank = WATER_CUM_TANK
+        gas_cum_per_tank = GAS_CUM_TANK
 
         for col, cum_col in zip([oil_cum_per_tank, water_cum_per_tank, gas_cum_per_tank],
                                 [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]):
@@ -237,13 +242,29 @@ class Tank(BaseModel):
             df_mbal[col] = df_mbal[PRESSURE_COL].apply(
                 lambda press: interp_pvt_matbal(df_pvt, PRESSURE_PVT_COL, prop, press)
             )
-
-        df_mbal = df_mbal.sort_values(DATE_COL)
+        df_mbal[RS_W_COL] = water_model.get_rs_at_press(df_mbal[PRESSURE_COL])
+        df_mbal[WATER_FVF_COL] = water_model.get_bw_at_press(df_mbal[PRESSURE_COL])
 
         df_mbal["Time_Step"] = 365.0
         df_mbal.loc[df_mbal.index[1:], "Time_Step"] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
 
         return df_mbal
+
+    def initializa_mbal_with_data(self, avg_freq: str, position: str, swo: float, cw, cf):
+        mbal = self.mat_bal_df(avg_freq, position)
+        mbal[UW_COL] = underground_withdrawal(mbal, OIL_CUM_TANK,
+                                              WATER_CUM_TANK,
+                                              GAS_CUM_TANK,
+                                              OIL_FVF_COL,
+                                              WATER_FVF_COL,
+                                              GAS_FVF_COL,
+                                              RS_COL,
+                                              RS_W_COL)
+        mbal[OIL_EXP] = mbal[OIL_FVF_COL] - mbal[OIL_FVF_COL][0]
+        mbal[RES_EXP] = fw_expansion(mbal, OIL_FVF_COL, PRESSURE_COL, swo, cw, cf, mbal[OIL_FVF_COL][0],
+                                     mbal[PRESSURE_COL][0])
+
+        return mbal
 
 
 # Quicktest
@@ -266,14 +287,14 @@ water_model = WaterModel(
 )
 
 # Uw calc
-uw = Tank(
+"""uw = Tank(
     tanks=tank_dict,
     name=tank_name,
     wells=tank_dict[tank_name],
     oil_model=oil_model,
     water_model=water_model
-).calc_uw()
-
+)
+print(uw._calc_uw())
 # Average Pressure
 avg = Tank(
     tanks=tank_dict,
@@ -281,11 +302,11 @@ avg = Tank(
     wells=tank_dict[tank_name],
     oil_model=oil_model,
     water_model=water_model
-).pressure_vol_avg(
+)._pressure_vol_avg(
     avg_freq="12MS",
     position="end"
 )
-
+print(avg)"""
 tank = Tank(
     tanks=tank_dict,
     name=tank_name,
@@ -296,35 +317,17 @@ tank = Tank(
 
 mbal = tank.mat_bal_df("12MS", "end")
 
-from pytank.functions.function2 import G_method, G_method2
-from pytank.aquifer.influx_of_water import Fetkovich
 
-cf = 0.00000362
-swo = 0.15
-boi = 86
-pi = mbal[PRESSURE_COL][0]
-t = 200
-salinity = 30000
+mbal_a = tank.initializa_mbal_with_data("12MS", "end", 0.15, 3.5e-6, 0.0003)
+mbal_a.to_csv("mbal_tank.csv", index=False)
+
+from pytank.functions.function2 import G_method, G_method2, Campbell
+from pytank.aquifer.influx_of_water import Fetkovich
 
 pr = mbal["PRESSURE_DATUM"].tolist()
 ts = mbal["Time_Step"].tolist()
 
-df_we = Fetkovich(
-    aq_radius=4600,
-    res_radius=920,
-    aq_thickness=100,
-    aq_por=0.25,
-    ct=0.000007,
-    pr=pr,
-    theta=140,
-    k=200,
-    water_visc=0.55,
-    time_step=ts,
-).we()
-we = df_we
-print(we)
-df_we1 = Aquifer(
-
+df_we = Aquifer(
     aq_por=0.25,
     ct=0.000007,
     res_radius=920,
@@ -335,30 +338,12 @@ df_we1 = Aquifer(
     pr=pr,
     time_step=ts
 ).fetkovich(4600)
-print(df_we1)
 
-"""mbal["We"] = we
-# Calculate new UW
-mbal[RS_W_COL] = water_model.get_rs_at_press(mbal[PRESSURE_COL])
-mbal[WATER_FVF_COL] = water_model.get_bw_at_press(mbal[PRESSURE_COL])
+print(df_we["Cumulative We"])
+df_we.to_csv("we_tank.csv", index=False)
 
-mbal[UW_COL] = underground_withdrawal(mbal, "OIL_CUM_TANK",
-                                      "WATER_CUM_TANK",
-                                      "GAS_CUM_TANK",
-                                      OIL_FVF_COL,
-                                      WATER_FVF_COL,
-                                      GAS_FVF_COL,
-                                      RS_COL,
-                                      RS_W_COL)
-mbal["Eo"] = mbal[OIL_FVF_COL] - mbal[OIL_FVF_COL][0]
-
-mbal["Efw"] = fw_expansion(mbal, OIL_FVF_COL, PRESSURE_COL, swo, 1.0, cf, mbal[OIL_FVF_COL][0], mbal[PRESSURE_COL][0])
-mbal.to_csv("mbal_tank.csv", index=False)
-
-ho = G_method(mbal[UW_COL],mbal["We"],mbal["Eo"],mbal["Efw"])
-print(ho)
-
-import matplotlib.pyplot as plt
+# Plot Campbell
+"""import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from scipy import stats
 plt.scatter(ho["Eo + Efw"],ho["F-We"],)
@@ -388,7 +373,7 @@ plt.plot(ho["Eo + Efw"], y_pred, color='red', label='Recta de regresión')
 plt.title("HAVLENA")
 plt.legend()
 
-plt.show()
+plt.show()"""
 
 
 # Ellos"""
@@ -411,7 +396,7 @@ poes = G_method2(
 print(poes)
 
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
+from sktlearn.linear_model import LinearRegression
 from scipy import stats
 plt.scatter(poes["We*Bw/Et"],poes["F/Eo+Efw"],)
 

@@ -14,5 +14,5 @@ def interp_pvt_matbal(pvt:pd.DataFrame, press_col_name, prop_col_name, press_tar
     x = pvt[press_col_name]
     y = pvt[prop_col_name]
     function = interpolate.interp1d(x, y, fill_value='extrapolate')
-    return function(press_target)
+    return float(function(press_target))
 
