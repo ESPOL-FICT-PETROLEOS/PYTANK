@@ -1,5 +1,6 @@
 import pandas as pd
 import math
+from matplotlib import pyplot as plt
 from pytank.functions.pvt_interp import interp_pvt_matbal
 from pytank.functions.pvt_correlations import Bo_bw, comp_bw_nogas
 import numpy as np
@@ -28,14 +29,19 @@ def cw(presion, t, salinity):
 
 def Campbell(p, np, wp, bo, cf, sw0, boi, date, pi, t, salinity):
     Bw = bw(p, t, salinity)["Bw"]
-    Cw = cw(p, t, salinity)["Cw"]
+    Cw = 0.0003
     Eo = bo - boi
     Efw = boi * (((Cw * sw0) + cf) / (1 - sw0)) * (pi - p)
     F = (np * bo) + (wp * Bw)
     y = F / (Eo + Efw)
     x = date
     data = pd.DataFrame({"Date": x, "F/Eo+Efw": y})
-    return data
+    fig, ax1 = plt.subplots()
+    ax1.plot(x, y)
+    ax1.set_xlabel("Date")
+    ax1.set_ylabel("F/Eo+Efw")
+    ax1.set_title("Campbell plot")
+    plt.show()
 
 # funcion de nosotros
 def G_method(uw,We,Eo,Efw):

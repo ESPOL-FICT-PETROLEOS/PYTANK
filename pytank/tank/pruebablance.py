@@ -103,7 +103,6 @@ def mbal(p, pi, Np, wp, bo, cf, cw, sw0, boi, N, we, bw):
     F = (Np * bo) + (wp * bw)
     return (N * (Eo + Efw)) + (we * bw) - F
 
-
 def aquifer_fetkovich(
     aq_radius,
     res_radius,
