@@ -10,7 +10,7 @@ from pytank.constants.constants import (PRESSURE_PVT_COL,
                                         )
 
 
-class PVTSchema(pa.DataFrameModel):
+class _PVTSchema(pa.DataFrameModel):
     Pressure: Series[float] = pa.Field(ge=0, unique=True, coerce=True, nullable=False)
     Bo: Series[float] = pa.Field(ge=0, coerce=True)
     Bg: Series[float] = pa.Field(ge=0, coerce=True, nullable=True)
@@ -18,7 +18,7 @@ class PVTSchema(pa.DataFrameModel):
 
 
 class OilModel(BaseModel):
-    data_pvt: DataFrame[PVTSchema]
+    data_pvt: DataFrame[_PVTSchema]
     temperature: float
 
     class Config:

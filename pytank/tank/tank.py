@@ -1,5 +1,6 @@
 import pandas as pd
-from matplotlib import pyplot as plt
+import pandera as pa
+from pandera.typing import Series
 from pydantic import BaseModel
 from pytank.constants.constants import (OIL_FVF_COL,
                                         GAS_FVF_COL,
@@ -8,9 +9,6 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         OIL_CUM_COL,
                                         GAS_CUM_COL,
                                         WATER_CUM_COL,
-                                        OIL_CUM_TANK,
-                                        WATER_CUM_TANK,
-                                        GAS_CUM_TANK,
                                         DATE_COL,
                                         WELL_COL,
                                         WATER_FVF_COL,
@@ -18,27 +16,50 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         TANK_COL,
                                         LIQ_CUM,
                                         UW_COL,
-                                        PRESSURE_PVT_COL,
-                                        OIL_EXP,
-                                        RES_EXP
-                                        )
+                                        PRESSURE_PVT_COL)
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.functions.utilities import interp_dates_row
 from pytank.functions.pvt_interp import interp_pvt_matbal
-from pytank.functions.pvt_correlations import RS_bw, Bo_bw
-from pytank.notebooks.get_wells import tank_wells
-from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg, gas_expansion, oil_expansion, \
-    fw_expansion, campbell_function
-from pytank.aquifer.we import Aquifer
-from pytank.functions.pvt_correlations import comp_bw_nogas
+from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg
+
+
+class _PressSchema(pa.DataFrameModel):
+    """
+    Private Class to validate data of df_press_int method in Tank Class
+    """
+    PRESSURE_DATUM: Series[float] = pa.Field(nullable=False)
+    WELL_BORE: Series[str] = pa.Field(nullable=False)
+    START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
+    Bo: Series[float] = pa.Field(nullable=False)
+    Bg: Series[float] = pa.Field(nullable=True)
+    GOR: Series[float] = pa.Field(nullable=False)
+    Bw: Series[float] = pa.Field(nullable=False)
+    RS_bw: Series[float] = pa.Field(nullable=False)
+    Tank: Series[str] = pa.Field(nullable=False)
+
+
+class _ProdSchema(pa.DataFrameModel):
+    """
+    Private Class to validate data of df_prod_int method in Tank Class
+    """
+    OIL_CUM: Series[float] = pa.Field(nullable=False)
+    WATER_CUM: Series[float] = pa.Field(nullable=False)
+    GAS_CUM: Series[float] = pa.Field(nullable=False)
+    LIQ_CUM: Series[float] = pa.Field(nullable=False)
+    WELL_BORE: Series[str] = pa.Field(nullable=True)
+    START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
+    Tank: Series[str] = pa.Field(nullable=False)
 
 
 class Tank(BaseModel):
-    tanks:  dict
+    tanks: dict
     name: str
     wells: list
     oil_model: OilModel
     water_model: WaterModel
+
+    def __init__(self, tanks: dict, name: str, wells: list, oil_model: OilModel, water_model: WaterModel):
+        super().__init__(tanks=tanks, name=name, wells=wells, oil_model=oil_model, water_model=water_model)
 
     def _press_df_int(self):
         """
@@ -129,24 +150,29 @@ class Tank(BaseModel):
                     df_prod = pd.concat([df_prod, temp_df_prod], ignore_index=True)
         return df_prod
 
-    def _calc_uw(self) -> pd.DataFrame:
+    def calc_uw(self) -> pd.DataFrame:
         df_press = self._press_df_int()
         df_prod = self._prod_df_int()
         df_press = df_press.loc[df_press[TANK_COL] == self.name]
 
+        # Validate df_press and df_prod
+        df_press_validate = pd.DataFrame(_PressSchema.validate(df_press))
+        df_prod_validate = pd.DataFrame(_ProdSchema.validate(df_prod))
+        # df_prod = df_prod.loc[df_prod[TANK_COL]==self.name]
+
         # Calculate the accumulated production in the pressure dataframe, based on the production dataframe
         for col in [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]:
-            df_press[col] = df_press.apply(
+            df_press_validate[col] = df_press_validate.apply(
                 lambda x: interp_dates_row(
-                    x, DATE_COL, df_prod, DATE_COL, col, WELL_COL, WELL_COL, left=0.0
+                    x, DATE_COL, df_prod_validate, DATE_COL, col, WELL_COL, WELL_COL, left=0.0
                 ),
                 axis=1,
             )
             # For wells not available in the production data frame, fill nans with 0
-            df_press[col].fillna(0)
+            df_press_validate[col].fillna(0)
 
         uw_well = []
-        for well, group in df_press.groupby(WELL_COL):
+        for well, group in df_press_validate.groupby(WELL_COL):
             group[UW_COL] = underground_withdrawal(
                 group,
                 OIL_CUM_COL,
@@ -160,11 +186,11 @@ class Tank(BaseModel):
             )
             uw_well.append(group)
 
-        df_press = pd.concat(uw_well, ignore_index=True)
-        return df_press
+        df_press_validate = pd.concat(uw_well, ignore_index=True)
+        return df_press_validate
 
-    def _pressure_vol_avg(self, avg_freq: str, position: str) -> pd.DataFrame:
-        df_press = self._calc_uw()
+    def pressure_vol_avg(self, avg_freq: str, position: str) -> pd.DataFrame:
+        df_press = self.calc_uw()
         df_press_avg = (
             df_press.groupby(TANK_COL).apply(
                 lambda g: pressure_vol_avg(
@@ -198,8 +224,12 @@ class Tank(BaseModel):
             Dataframe with data to calculate material balance
 
         """
-        avg = self._pressure_vol_avg(avg_freq, position)
-        prod = self._prod_df_int()
+        avg = self.pressure_vol_avg(avg_freq, position)
+
+        #  Validate df_prod from _prod_df_int
+        prod = pd.DataFrame(_ProdSchema.validate(self._prod_df_int()))
+
+        df_pvt = self.oil_model.data_pvt
 
         avg[PRESSURE_COL] = avg[PRESSURE_COL].interpolate(method="linear")
 
@@ -222,9 +252,9 @@ class Tank(BaseModel):
             "gas_vol": GAS_CUM_COL
         }, inplace=True)
 
-        oil_cum_per_tank = OIL_CUM_TANK
-        water_cum_per_tank = WATER_CUM_TANK
-        gas_cum_per_tank = GAS_CUM_TANK
+        oil_cum_per_tank = OIL_CUM_COL + "_TANK"
+        water_cum_per_tank = WATER_CUM_COL + "_TANK"
+        gas_cum_per_tank = GAS_CUM_COL + "_TANK"
 
         for col, cum_col in zip([oil_cum_per_tank, water_cum_per_tank, gas_cum_per_tank],
                                 [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]):
@@ -242,190 +272,10 @@ class Tank(BaseModel):
             df_mbal[col] = df_mbal[PRESSURE_COL].apply(
                 lambda press: interp_pvt_matbal(df_pvt, PRESSURE_PVT_COL, prop, press)
             )
-        df_mbal[RS_W_COL] = water_model.get_rs_at_press(df_mbal[PRESSURE_COL])
-        df_mbal[WATER_FVF_COL] = water_model.get_bw_at_press(df_mbal[PRESSURE_COL])
+
+        df_mbal = df_mbal.sort_values(DATE_COL)
 
         df_mbal["Time_Step"] = 365.0
         df_mbal.loc[df_mbal.index[1:], "Time_Step"] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
 
         return df_mbal
-
-    def initializa_mbal_with_data(self, avg_freq: str, position: str, swo: float, cw, cf):
-        mbal = self.mat_bal_df(avg_freq, position)
-        mbal[UW_COL] = underground_withdrawal(mbal, OIL_CUM_TANK,
-                                              WATER_CUM_TANK,
-                                              GAS_CUM_TANK,
-                                              OIL_FVF_COL,
-                                              WATER_FVF_COL,
-                                              GAS_FVF_COL,
-                                              RS_COL,
-                                              RS_W_COL)
-        mbal[OIL_EXP] = mbal[OIL_FVF_COL] - mbal[OIL_FVF_COL][0]
-        mbal[RES_EXP] = fw_expansion(mbal, OIL_FVF_COL, PRESSURE_COL, swo, cw, cf, mbal[OIL_FVF_COL][0],
-                                     mbal[PRESSURE_COL][0])
-
-        return mbal
-
-
-# Quicktest
-df_pvt = pd.read_csv("../resources/data_csv/pvt.csv")
-#df_pvt[GAS_FVF_COL].fillna(0)
-
-tank_dict = tank_wells
-tank_name = "tank_center"
-oil_model = OilModel(
-    data_pvt=df_pvt,
-    temperature=25,
-)
-
-water_model = WaterModel(
-    correlation_bw=Bo_bw,
-    correlation_rs=RS_bw,
-    salinity=3000,
-    temperature=200,
-    unit=1
-)
-
-# Uw calc
-"""uw = Tank(
-    tanks=tank_dict,
-    name=tank_name,
-    wells=tank_dict[tank_name],
-    oil_model=oil_model,
-    water_model=water_model
-)
-print(uw._calc_uw())
-# Average Pressure
-avg = Tank(
-    tanks=tank_dict,
-    name=tank_name,
-    wells=tank_dict[tank_name],
-    oil_model=oil_model,
-    water_model=water_model
-)._pressure_vol_avg(
-    avg_freq="12MS",
-    position="end"
-)
-print(avg)"""
-tank = Tank(
-    tanks=tank_dict,
-    name=tank_name,
-    wells=tank_dict[tank_name],
-    oil_model=oil_model,
-    water_model=water_model
-)
-
-mbal = tank.mat_bal_df("12MS", "end")
-
-
-mbal_a = tank.initializa_mbal_with_data("12MS", "end", 0.15, 3.5e-6, 0.0003)
-mbal_a.to_csv("mbal_tank.csv", index=False)
-
-from pytank.functions.function2 import G_method, G_method2, Campbell
-from pytank.aquifer.influx_of_water import Fetkovich
-
-pr = mbal["PRESSURE_DATUM"].tolist()
-ts = mbal["Time_Step"].tolist()
-
-df_we = Aquifer(
-    aq_por=0.25,
-    ct=0.000007,
-    res_radius=920,
-    aq_thickness=100,
-    theta=140,
-    aq_perm=200,
-    water_visc=0.55,
-    pr=pr,
-    time_step=ts
-).fetkovich(4600)
-
-print(df_we["Cumulative We"])
-df_we.to_csv("we_tank.csv", index=False)
-
-# Plot Campbell
-"""import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
-from scipy import stats
-plt.scatter(ho["Eo + Efw"],ho["F-We"],)
-
-x=ho[["Eo + Efw"]]
-x1=ho["Eo + Efw"]
-y=ho["F-We"]
-
-model = LinearRegression()
-model.fit(x,y)
-
-pendiente = model.coef_[0]
-intercepto = model.intercept_
-slope, intercept, r, p, se = stats.linregress(x1, y)
-print(f'Pendiente: {pendiente/1000000}')
-print(f'Intercepto: {intercepto}')
-print(f"N [MMStb]: {intercepto / 1000000:.4f}")
-print(f"N [MMStb]: {intercept / 1000000:.4f}")
-
-
-y_pred = model.predict(x)
-
-plt.scatter(ho["Eo + Efw"],ho["F-We"], color='blue', label='Datos')
-plt.plot(ho["Eo + Efw"], y_pred, color='red', label='Recta de regresión')
-
-
-plt.title("HAVLENA")
-plt.legend()
-
-plt.show()"""
-
-
-# Ellos"""
-
-"""we = df_we["Cumulative We"]
-
-poes = G_method2(
-    pr=mbal[PRESSURE_COL],
-    np=mbal["OIL_CUM_TANK"],
-    wp=mbal["WATER_CUM_TANK"],
-    bo=mbal[OIL_FVF_COL],
-    cf=cf,
-    sw0=swo,
-    boi=boi,
-    we=we,
-    pi=pi,
-    t=t,
-    salinity=salinity
-)
-print(poes)
-
-import matplotlib.pyplot as plt
-from sktlearn.linear_model import LinearRegression
-from scipy import stats
-plt.scatter(poes["We*Bw/Et"],poes["F/Eo+Efw"],)
-
-x=poes[["We*Bw/Et"]]
-x1=poes["We*Bw/Et"]
-y=poes["F/Eo+Efw"]
-
-model = LinearRegression()
-model.fit(x,y)
-
-# Obtener la pendiente (coeficiente) y el intercepto
-pendiente = model.coef_[0]
-intercepto = model.intercept_
-slope, intercept, r, p, se = stats.linregress(x1, y)
-print(f'Pendiente: {pendiente}')
-print(f'Intercepto: {intercepto}')
-print(f"N [MMStb]: {intercepto / 1000000:.4f}")
-print(f"N [MMStb]: {intercept / 1000000:.4f}")
-
-# Generar los valores predichos para la recta de regresión
-y_pred = model.predict(x)
-
-# Graficar los puntos y la recta de regresión
-plt.scatter(poes["We*Bw/Et"],poes["F/Eo+Efw"], color='blue', label='Datos')
-plt.plot(poes["We*Bw/Et"], y_pred, color='red', label='Recta de regresión')
-
-# Añadir etiquetas y título
-plt.title("HAVLENA")
-plt.legend()
-
-# Mostrar el gráfico
-plt.show()"""
