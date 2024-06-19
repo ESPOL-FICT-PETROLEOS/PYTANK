@@ -247,6 +247,6 @@ df_tanks.rename(
 
 # %% Convert the df_tanks dataframe to a csv file, which then will be imported to
 # calculate the terms F, Eo, Eg, and Efw
-#mbal_tanks = df_tanks.to_csv("mbal_tanks.csv", index=False)
-print(df_tanks.loc[df_tanks[tank_name_col] == "tank_center"])
+mbal_tanks = df_tanks.to_csv("mbal_tanks.csv", index=False)
+#print(df_tanks.loc[df_tanks[tank_name_col] == "tank_center"])
 # %% New Dataframe with pressure avg

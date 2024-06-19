@@ -1,10 +1,10 @@
 #%%
-from material_balance.material_balance import campbell_function, ho_terms_equation
+from pytank.functions.material_balance import campbell_function, ho_terms_equation
 import pandas as pd
 
 
 #%% Load the the mbal dataframe
-df_mbal = pd.read_csv("mbal_Dataframe.csv")
+df_mbal = pd.read_csv("../old/dataframes/mbal_tanks.csv")
 
 #%% Creation of a mbal dataframe for each tank
 df_tankcenter = df_mbal[df_mbal["Tank"] == "tank_center"]

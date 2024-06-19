@@ -4,7 +4,9 @@ import numpy as np
 from old.utilities import variable_type
 import math
 from typing import List, Union
-from pytank.constants.constants import (PRESSURE_COL)
+from pytank.constants.constants import (PRESSURE_COL,
+                                        WE)
+
 
 class Aquifer(BaseModel):
     aq_por: float
@@ -183,7 +185,7 @@ class Aquifer(BaseModel):
         )
 
         # Calculate the cumulative water influx at any time, ti
-        df = {"Cumulative water influx, bbl": [0]}
+        df = {"Cumulative We": [0]}
         we = 0
 
         for i in np.arange(1, len(td)):
@@ -194,13 +196,13 @@ class Aquifer(BaseModel):
             a5 = td[i - 1] * pr_deriv[i]
             cum_influx_water = we + (a1 * ((a2 - a3) / (a4 - a5)))
             we = cum_influx_water
-            df["Cumulative water influx, bbl"].append(we)
+            df["Cumulative We"].append(we)
 
-        df["Elapsed time, days"] = t_array
+        df["Elapsed time"] = t_array
 
         # Concatenation of the DataFrames in a unique final DataFrame
         df = pd.concat([pd.DataFrame(df)], ignore_index=True).set_index(
-            "Elapsed time, days"
+            "Elapsed time"
         )
 
         return df

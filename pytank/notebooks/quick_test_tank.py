@@ -32,5 +32,7 @@ tank = Tank(
     water_model=water_model
 )
 # Uw calc
-mbal = tank.mat_bal_df("12MS", "end")
-print(mbal.columns)
+mbal = tank.mat_bal_df("12MS", "end", 0.15, 3.5e-6, 3.62e-6, 3700)
+
+#print(mbal["Efw"])
+

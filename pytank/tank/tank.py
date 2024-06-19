@@ -16,11 +16,16 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         TANK_COL,
                                         LIQ_CUM,
                                         UW_COL,
-                                        PRESSURE_PVT_COL)
+                                        PRESSURE_PVT_COL,
+                                        OIL_CUM_TANK,
+                                        WATER_CUM_TANK,
+                                        GAS_CUM_TANK,
+                                        OIL_EXP,
+                                        RES_EXP)
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.functions.utilities import interp_dates_row
 from pytank.functions.pvt_interp import interp_pvt_matbal
-from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg
+from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg, fw_expansion
 
 
 class _PressSchema(pa.DataFrameModel):
@@ -206,7 +211,7 @@ class Tank(BaseModel):
         )
         return df_press_avg
 
-    def mat_bal_df(self, avg_freq: str, position: str) -> pd.DataFrame:
+    def mat_bal_df(self, avg_freq: str, position: str, swo: float, cw: float, cf: float, pi) -> pd.DataFrame:
         """
         Obtain material balance parameters at a certain frequency
 
@@ -273,9 +278,31 @@ class Tank(BaseModel):
                 lambda press: interp_pvt_matbal(df_pvt, PRESSURE_PVT_COL, prop, press)
             )
 
-        df_mbal = df_mbal.sort_values(DATE_COL)
+        df_mbal[RS_W_COL] = self.water_model.get_rs_at_press(df_mbal[PRESSURE_COL])
+        df_mbal[WATER_FVF_COL] = self.water_model.get_bw_at_press(df_mbal[PRESSURE_COL])
 
         df_mbal["Time_Step"] = 365.0
         df_mbal.loc[df_mbal.index[1:], "Time_Step"] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
 
+        df_mbal[UW_COL] = underground_withdrawal(df_mbal,
+                                                 OIL_CUM_TANK,
+                                                 WATER_CUM_TANK,
+                                                 GAS_CUM_TANK,
+                                                 OIL_FVF_COL,
+                                                 WATER_FVF_COL,
+                                                 GAS_FVF_COL,
+                                                 RS_COL,
+                                                 RS_W_COL)
+        df_mbal[OIL_EXP] = df_mbal[OIL_FVF_COL] - self.oil_model.get_bo_at_press(pi)
+        #df_mbal[OIL_EXP] = df_mbal[OIL_FVF_COL] - df_mbal[OIL_FVF_COL][0]
+        df_mbal[RES_EXP] = fw_expansion(df_mbal,
+                                        OIL_FVF_COL,
+                                        PRESSURE_COL,
+                                        swo,
+                                        cw,
+                                        cf,
+                                        float(self.oil_model.get_bo_at_press(pi)),
+                                        pi)
+        #df_mbal[RES_EXP] = self.oil_model.get_bo_at_press(pi) * (((cw*swo)+cf) / (1-swo)) * (pi - df_mbal[PRESSURE_COL])
         return df_mbal
+
