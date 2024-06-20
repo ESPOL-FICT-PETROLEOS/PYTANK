@@ -25,7 +25,7 @@ from pytank.constants.constants import (OIL_FVF_COL,
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.functions.utilities import interp_dates_row
 from pytank.functions.pvt_interp import interp_pvt_matbal
-from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg, fw_expansion
+from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg, fw_expansion, ho_terms_equation
 
 
 class _PressSchema(pa.DataFrameModel):
@@ -89,8 +89,7 @@ class Tank(BaseModel):
                     well_rs = self.oil_model.get_rs_at_press(press_vector.data[PRESSURE_COL])
 
                     # In case properties are calculated using correlations
-                    if (self.water_model.correlation_bw and self.water_model.correlation_rs
-                            and self.water_model.salinity is not None
+                    if (self.water_model.salinity is not None
                             and self.water_model.temperature is not None
                             and self.water_model.unit is not None):
                         well_bw = self.water_model.get_bw_at_press(press_vector.data[PRESSURE_COL])
@@ -211,7 +210,7 @@ class Tank(BaseModel):
         )
         return df_press_avg
 
-    def mat_bal_df(self, avg_freq: str, position: str, swo: float, cw: float, cf: float, pi) -> pd.DataFrame:
+    def mat_bal_df(self, avg_freq: str, position: str, swo: float, cw: float, cf: float, pi: float) -> pd.DataFrame:
         """
         Obtain material balance parameters at a certain frequency
 
@@ -227,6 +226,12 @@ class Tank(BaseModel):
         pd.DataFrame
 
             Dataframe with data to calculate material balance
+            :param pi:
+            :param cf:
+            :param cw:
+            :param avg_freq:
+            :param position:
+            :param swo:
 
         """
         avg = self.pressure_vol_avg(avg_freq, position)
@@ -261,6 +266,7 @@ class Tank(BaseModel):
         water_cum_per_tank = WATER_CUM_COL + "_TANK"
         gas_cum_per_tank = GAS_CUM_COL + "_TANK"
 
+        # Interpolated Cumulative production
         for col, cum_col in zip([oil_cum_per_tank, water_cum_per_tank, gas_cum_per_tank],
                                 [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]):
             avg[col] = avg.apply(
@@ -272,14 +278,24 @@ class Tank(BaseModel):
 
         df_mbal = avg.sort_values(DATE_COL)
 
+        # Interpolated PVT properties from pres_avg
         for col, prop in zip([OIL_FVF_COL, GAS_FVF_COL, RS_COL],
                              [OIL_FVF_COL, GAS_FVF_COL, RS_COL]):
             df_mbal[col] = df_mbal[PRESSURE_COL].apply(
                 lambda press: interp_pvt_matbal(df_pvt, PRESSURE_PVT_COL, prop, press)
             )
 
-        df_mbal[RS_W_COL] = self.water_model.get_rs_at_press(df_mbal[PRESSURE_COL])
-        df_mbal[WATER_FVF_COL] = self.water_model.get_bw_at_press(df_mbal[PRESSURE_COL])
+        # In case properties are calculated using correlations
+        if (self.water_model.salinity is not None
+                and self.water_model.temperature is not None
+                and self.water_model.unit is not None):
+            df_mbal[WATER_FVF_COL] = self.water_model.get_bw_at_press(df_mbal[PRESSURE_COL])
+            df_mbal[RS_W_COL] = self.water_model.get_rs_at_press(df_mbal[PRESSURE_COL])
+
+            # In case there are default values for Bw and Rs_w
+        else:
+            df_mbal[WATER_FVF_COL] = self.water_model.get_default_bw()
+            df_mbal[RS_W_COL] = self.water_model.get_default_rs()
 
         df_mbal["Time_Step"] = 365.0
         df_mbal.loc[df_mbal.index[1:], "Time_Step"] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
@@ -306,3 +322,115 @@ class Tank(BaseModel):
         #df_mbal[RES_EXP] = self.oil_model.get_bo_at_press(pi) * (((cw*swo)+cf) / (1-swo)) * (pi - df_mbal[PRESSURE_COL])
         return df_mbal
 
+    def mat_bal_df2(self, avg_freq: str, position: str, swo: float, cw: float, cf: float, pi: float) -> pd.DataFrame:
+        """
+        Obtain material balance parameters at a certain frequency
+
+        Parameters
+        ----------
+        avg_freq: str
+            Frequency for averaging
+        position: str
+            Position for averaging
+
+        Returns
+        -------
+        pd.DataFrame
+
+            Dataframe with data to calculate material balance
+            :param pi:
+            :param cf:
+            :param cw:
+            :param avg_freq:
+            :param position:
+            :param swo:
+
+        """
+        avg = self.pressure_vol_avg(avg_freq, position)
+
+        #  Validate df_prod from _prod_df_int
+        prod = pd.DataFrame(_ProdSchema.validate(self._prod_df_int()))
+
+        df_pvt = self.oil_model.data_pvt
+
+        avg[PRESSURE_COL] = avg[PRESSURE_COL].interpolate(method="linear")
+
+        cols_input = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]
+        cols_output = ["oil_vol", "water_vol", "gas_vol"]
+        prod[cols_output] = (prod.groupby(WELL_COL)[cols_input]).diff().fillna(prod[cols_input])
+        cols_group = [DATE_COL, TANK_COL, "oil_vol", "water_vol", "gas_vol"]
+        df_tank = (
+            prod[cols_group]
+            .groupby(cols_group[0:2])
+            .sum()
+            .groupby(TANK_COL)
+            .cumsum()
+            .reset_index()
+        )
+
+        df_tank.rename(columns={
+            "oil_vol": OIL_CUM_COL,
+            "water_vol": WATER_CUM_COL,
+            "gas_vol": GAS_CUM_COL
+        }, inplace=True)
+
+        oil_cum_per_tank = OIL_CUM_COL + "_TANK"
+        water_cum_per_tank = WATER_CUM_COL + "_TANK"
+        gas_cum_per_tank = GAS_CUM_COL + "_TANK"
+
+        # Interpolated Cumulative production
+        for col, cum_col in zip([oil_cum_per_tank, water_cum_per_tank, gas_cum_per_tank],
+                                [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]):
+            avg[col] = avg.apply(
+                lambda g: interp_dates_row(
+                    g, DATE_COL, df_tank, DATE_COL, cum_col, TANK_COL, TANK_COL
+                ),
+                axis=1
+            )
+
+        df_mbal = avg.sort_values(DATE_COL)
+
+        # Interpolated PVT properties from pres_avg
+        for col, prop in zip([OIL_FVF_COL, GAS_FVF_COL, RS_COL],
+                             [OIL_FVF_COL, GAS_FVF_COL, RS_COL]):
+            df_mbal[col] = df_mbal[PRESSURE_COL].apply(
+                lambda press: interp_pvt_matbal(df_pvt, PRESSURE_PVT_COL, prop, press)
+            )
+
+        # In case properties are calculated using correlations
+        if (self.water_model.salinity is not None
+                and self.water_model.temperature is not None
+                and self.water_model.unit is not None):
+            df_mbal[WATER_FVF_COL] = self.water_model.get_bw_at_press(df_mbal[PRESSURE_COL])
+            df_mbal[RS_W_COL] = self.water_model.get_rs_at_press(df_mbal[PRESSURE_COL])
+
+            # In case there are default values for Bw and Rs_w
+        else:
+            df_mbal[WATER_FVF_COL] = self.water_model.get_default_bw()
+            df_mbal[RS_W_COL] = self.water_model.get_default_rs()
+
+        df_mbal["Time_Step"] = 365.0
+        df_mbal.loc[df_mbal.index[1:], "Time_Step"] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
+        df_mbal = df_mbal.fillna(0.0)
+
+        mbal_term = ho_terms_equation(
+            df_mbal,
+            OIL_CUM_TANK,
+            WATER_CUM_TANK,
+            GAS_CUM_TANK,
+            PRESSURE_COL,
+            OIL_FVF_COL,
+            GAS_FVF_COL,
+            RS_COL,
+            WATER_FVF_COL,
+            RS_W_COL,
+            swo,
+            cw,
+            cf,
+            float(self.oil_model.get_bo_at_press(pi)),
+            df_mbal[GAS_FVF_COL][0],
+            df_mbal[OIL_FVF_COL][0],
+            df_mbal[RS_COL][0],
+            pi
+        )
+        return mbal_term

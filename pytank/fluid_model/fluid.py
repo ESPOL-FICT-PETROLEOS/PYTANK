@@ -46,28 +46,19 @@ class WaterModel(BaseModel):
     unit: float = None
 
     def get_bw_at_press(self, pressure: float) -> float:
-        if (self.salinity is not None
-                and self.temperature is not None
-                and self.unit is not None):
-            bw = Bo_bw(pressure, self.temperature, self.salinity, self.unit)
-            return bw
-        else:
-            raise ValueError("Missing correlation function or parameters for Bw")
+        bw = Bo_bw(pressure, self.temperature, self.salinity, self.unit)
+        return bw
 
     def get_rs_at_press(self, pressure: float) -> float:
-        if (self.salinity is not None
-                and self.temperature is not None
-                and self.unit is not None):
-            rs = RS_bw(pressure, self.temperature, self.salinity, self.unit)
-            return rs
-        else:
-            raise ValueError("Missing correlation function or parameters for Rs")
+        rs = RS_bw(pressure, self.temperature, self.salinity, self.unit)
+        # rs = Rs_McCain(pressure, self.temperature, self.salinity)
+        return rs
 
     def get_default_bw(self) -> float:
-        return 1
+        return float(1)
 
     def get_default_rs(self) -> float:
-        return 0
+        return float(0)
 
 
 class FluidModel(BaseModel):

@@ -1,6 +1,5 @@
 import pandas as pd
 from pytank.fluid_model.fluid import OilModel, WaterModel
-from pytank.functions.pvt_correlations import Bo_bw, RS_bw
 from pytank.notebooks.get_wells import tank_wells
 from pytank.tank.tank import Tank
 
@@ -17,8 +16,6 @@ oil_model = OilModel(
 )
 
 water_model = WaterModel(
-    correlation_bw=Bo_bw,
-    correlation_rs=RS_bw,
     salinity=3000,
     temperature=200,
     unit=1
@@ -33,6 +30,8 @@ tank = Tank(
 )
 # Uw calc
 mbal = tank.mat_bal_df("12MS", "end", 0.15, 3.5e-6, 3.62e-6, 3700)
-
-#print(mbal["Efw"])
-
+mbal2 = tank.mat_bal_df2("12MS", "end", 0.15, 3.5e-6, 3.62e-6, 3700)
+print(mbal)
+print(mbal2)
+mbal_nosotros = mbal.to_csv("mbal_nosotros.csv", index=False)
+mbal_oscar = mbal2.to_csv("mbal_oscar.csv", index=False)
