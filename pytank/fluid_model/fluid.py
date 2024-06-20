@@ -8,7 +8,7 @@ from pytank.constants.constants import (PRESSURE_PVT_COL,
                                         GAS_FVF_COL,
                                         RS_COL
                                         )
-
+from pytank.functions.pvt_correlations import RS_bw, Bo_bw, Rs_McCain
 
 class _PVTSchema(pa.DataFrameModel):
     Pressure: Series[float] = pa.Field(ge=0, unique=True, coerce=True, nullable=False)
@@ -41,26 +41,24 @@ class OilModel(BaseModel):
 
 #%%
 class WaterModel(BaseModel):
-    correlation_bw: Callable = None
-    correlation_rs: Callable = None
     salinity: float = None
     temperature: float = None
     unit: float = None
 
     def get_bw_at_press(self, pressure: float) -> float:
-        if (self.correlation_bw and self.salinity is not None
+        if (self.salinity is not None
                 and self.temperature is not None
                 and self.unit is not None):
-            bw = self.correlation_bw(pressure, self.temperature, self.salinity, self.unit)
+            bw = Bo_bw(pressure, self.temperature, self.salinity, self.unit)
             return bw
         else:
             raise ValueError("Missing correlation function or parameters for Bw")
 
     def get_rs_at_press(self, pressure: float) -> float:
-        if (self.correlation_rs and self.salinity is not None
+        if (self.salinity is not None
                 and self.temperature is not None
                 and self.unit is not None):
-            rs = self.correlation_rs(pressure, self.temperature, self.salinity, self.unit)
+            rs = RS_bw(pressure, self.temperature, self.salinity, self.unit)
             return rs
         else:
             raise ValueError("Missing correlation function or parameters for Rs")
