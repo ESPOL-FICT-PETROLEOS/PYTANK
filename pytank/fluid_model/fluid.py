@@ -64,10 +64,10 @@ class WaterModel(BaseModel):
             raise ValueError("Missing correlation function or parameters for Rs")
 
     def get_default_bw(self) -> float:
-        return 1
+        return float(1)
 
     def get_default_rs(self) -> float:
-        return 0
+        return float(0)
 
 
 class FluidModel(BaseModel):

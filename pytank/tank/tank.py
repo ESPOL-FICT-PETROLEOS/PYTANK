@@ -38,8 +38,8 @@ class _PressSchema(pa.DataFrameModel):
     Bo: Series[float] = pa.Field(nullable=False)
     Bg: Series[float] = pa.Field(nullable=True)
     GOR: Series[float] = pa.Field(nullable=False)
-    Bw: Series[float] = pa.Field(nullable=False)
-    RS_bw: Series[float] = pa.Field(nullable=False)
+    Bw: Series[float] = pa.Field(nullable=True)
+    RS_bw: Series[float] = pa.Field(nullable=True)
     Tank: Series[str] = pa.Field(nullable=False)
 
 
@@ -89,8 +89,8 @@ class Tank(BaseModel):
                     well_rs = self.oil_model.get_rs_at_press(press_vector.data[PRESSURE_COL])
 
                     # In case properties are calculated using correlations
-                    if (self.water_model.correlation_bw and self.water_model.correlation_rs
-                            and self.water_model.salinity is not None
+                    if (
+                            self.water_model.salinity is not None
                             and self.water_model.temperature is not None
                             and self.water_model.unit is not None):
                         well_bw = self.water_model.get_bw_at_press(press_vector.data[PRESSURE_COL])
@@ -278,8 +278,17 @@ class Tank(BaseModel):
                 lambda press: interp_pvt_matbal(df_pvt, PRESSURE_PVT_COL, prop, press)
             )
 
-        df_mbal[RS_W_COL] = self.water_model.get_rs_at_press(df_mbal[PRESSURE_COL])
-        df_mbal[WATER_FVF_COL] = self.water_model.get_bw_at_press(df_mbal[PRESSURE_COL])
+        if (
+                self.water_model.salinity is not None
+                and self.water_model.temperature is not None
+                and self.water_model.unit is not None):
+            df_mbal[WATER_FVF_COL] = self.water_model.get_bw_at_press(df_mbal[PRESSURE_COL])
+            df_mbal[RS_W_COL] = self.water_model.get_rs_at_press(df_mbal[PRESSURE_COL])
+
+        # In case there are default values for Bw and Rs_w
+        else:
+            df_mbal[WATER_FVF_COL] = self.water_model.get_default_bw()
+            df_mbal[RS_W_COL] = self.water_model.get_default_rs()
 
         df_mbal["Time_Step"] = 365.0
         df_mbal.loc[df_mbal.index[1:], "Time_Step"] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
