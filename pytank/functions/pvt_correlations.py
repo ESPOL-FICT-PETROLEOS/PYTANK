@@ -1299,6 +1299,48 @@ def RS_bw(P, T, salinity, unit=1):
     return Rs
 
 
+def Rs_McCain(P, T, salinity):
+    """The Rs_McCain function calculates the solubilty of gas on water using the correlations of McCain
+
+        IF UNITS 1 is selected introduce:
+            | Pressure (P) in PSI
+            | Temperature (T) in ºF
+            | Salinity in Weight Fraction
+            | Rs returns in scf/STB
+
+        IF UNITS 2 is selected introduce:
+            | Pressure (P) in MPa
+            | Temperature (T) in ºC
+            | Salinity in Weight Fraction
+            | Rs returns in cm3/cm3"""
+
+    """if unit == 1:
+        #P_array = np.array(P)"""
+    P_array = P * (6.89475729 * 10 ** -3.0)
+        #T_array = np.array(T)
+    T_array = (T - 32) * 5 / 9
+        #m = np.array(salinity)
+        #m = 1000 * (m / 1000000) / (58.44 * (1 - (m / 1000000)))
+
+    """else:
+        #P_array = np.array(P)
+        P_array = P
+        #T_array = np.array(T)
+        T_array = T
+        #m = np.array(salinity)
+        #m = 1000 * (m / 1000000) / (58.44 * (1 - (m / 1000000)))"""
+
+    A = 8.15839 - (6.12265e-2 * T_array) + (1.191633e-4 * T_array ** 2) - (2.1654e-7 * T_array ** 3)
+    B = (1.011021e-2) - (7.44241e-5 * T_array) + (3.05553e-7 * T_array ** 2) - (2.94883e-10 * T_array ** 3)
+    C = -1e-7 * (9.02505 - 0.13023 * T_array + (8.53425e-4 * T_array ** 2) - (2.34122e-6 * T_array ** 3) - (2.37049e-9 * T_array ** 4))
+
+    Rswp = A + B * P_array + C * P_array
+
+    Rsw = 0.0840655 * salinity * T_array * Rswp
+
+    return Rsw
+
+
 def Bo_bw(P, T, salinity, unit=1):
     """This function calculate the Bo of methane dissolved brine
     The user must select UNITS 1 to Field units and 2 to International System
