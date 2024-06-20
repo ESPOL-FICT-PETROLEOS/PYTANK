@@ -549,7 +549,7 @@ def ho_terms_equation(
         pressure_init,
     )
 
-    data["F"] = f
+    data["UW"] = f
     data["Eo"] = eo
     data["Eg"] = eg
     data["Efw"] = efw
@@ -673,7 +673,7 @@ def campbell_function(
 
     # Build the campbell plot
     fig, ax1 = plt.subplots()
-    ax1.plot(df[oil_cum_col], vertical_axis)
+    ax1.scatter(df[oil_cum_col], vertical_axis)
     ax1.set_xlabel("Np")
     ax1.set_ylabel("F/Eo+Efw")
     ax1.set_title("Campbell plot")
