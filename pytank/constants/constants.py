@@ -26,6 +26,8 @@ RES_EXP = "Efw"
 OIL_CUM_TANK = "OIL_CUM_TANK"
 WATER_CUM_TANK = "WATER_CUM_TANK"
 GAS_CUM_TANK = "GAS_CUM_TANK"
+WE = "Cumulative We"
+
 
 # Frecuency's of time
 VALID_FREQS = ["D", "W", "M", "MS", "Q", "Y", None]

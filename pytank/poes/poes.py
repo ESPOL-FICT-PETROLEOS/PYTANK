@@ -4,6 +4,11 @@ from pandera.typing import DataFrame, Series
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from scipy import stats
+from pytank.constants.constants import (UW_COL,
+                                        OIL_EXP,
+                                        RES_EXP,
+                                        OIL_CUM_TANK,
+                                        WE)
 
 
 class _DFMbalSchema(pa.DataFrameModel):
@@ -15,8 +20,13 @@ class _DFMbalSchema(pa.DataFrameModel):
     GAS_CUM_TANK: Series[float] = pa.Field(nullable=False)
     Bo: Series[float] = pa.Field(nullable=False)
     Bg: Series[float] = pa.Field(nullable=True)
+    RS_bw: Series[float] = pa.Field(nullable=False)
+    Bw: Series[float] = pa.Field(nullable=False)
     GOR: Series[float] = pa.Field(nullable=False)
     Time_Step: Series[float] = pa.Field(nullable=False)
+    UW: Series[float] = pa.Field(nullable=False)
+    Eo: Series[float] = pa.Field(nullable=False)
+    Efw: Series[float] = pa.Field(nullable=False)
 
 
 class POES(BaseModel):
@@ -26,30 +36,66 @@ class POES(BaseModel):
     we_df: pd.DataFrame = None
     mbal_df: DataFrame[_DFMbalSchema]
 
-    def campbell(self, f: str, eo: str, efw: str, np: float):
-        y = self.mbal_df[f] / (self.mbal_df[eo] + self.mbal_df[efw])
-        x = self.mbal_df[np]
+    def campbell(self):
+        y = self.mbal_df[UW_COL] / (self.mbal_df[OIL_EXP] + self.mbal_df[RES_EXP])
+        x = self.mbal_df[OIL_CUM_TANK]
         data = pd.DataFrame({"Np": x, "F/Eo+Efw": y})
+
+        # Graphic
         fig, ax1 = plt.subplots()
-        ax1.plot(x, y)
-        ax1.set_xlabel("Date")
+        ax1.scatter(x, y)
+        ax1.set_xlabel("Np Cumulative Oil Production [MMStb]")
         ax1.set_ylabel("F/Eo+Efw")
-        ax1.set_title("Campbell plot")
+        ax1.set_title(f"Campbell plot of " + str(self.mbal_df["Tank"][0].replace("_", " ")))
         plt.show()
         return data
 
-    def havlena_odeh(self, f: str, eo: str, efw: str, we: str):
-        y = self.mbal_df[f] - self.we_df[we]
-        x = self.mbal_df[eo] + self.mbal_df[efw]
-        data = pd.DataFrame({"Eo+Efw": x, "F-Wwe": y})
-        slope, intercept, r, p, se = stats.linregress(data["Eo+Efw"], data["F-Wwe"])
-        print(f"N [MMStb]: {slope / 1000000:.4f}")
+    def havlena_odeh(self):
+        y = self.mbal_df[UW_COL] / (self.mbal_df[OIL_EXP] + self.mbal_df[RES_EXP])
+        x = self.we_df[WE] / (self.mbal_df[OIL_EXP] + self.mbal_df[RES_EXP])
+        data = pd.DataFrame({"WeBw/Eo+Efw": x, "F/Eo+Efw": y})
+
+        # Graphic
+        slope, intercept, r, p, se = stats.linregress(data["WeBw/Eo+Efw"], data["F/Eo+Efw"])
+        print(f"N [MMStb]: {intercept / 1000000:.4f}")
         fig, ax1 = plt.subplots()
-        ax1.scatter(data["Eo+Efw"], data["F-Wwe"], color="blue")
+        ax1.scatter(data["WeBw/Eo+Efw"], data["F/Eo+Efw"], color="blue")
+        reg_line = (slope * data["WeBw/Eo+Efw"]) + intercept
+        ax1.plot(data["WeBw/Eo+Efw"], reg_line, color="red", label="Regression line")
+        ax1.set_xlabel("WeBw/Eo+Efw")
+        ax1.set_ylabel("F/Eo+Efw")
+        ax1.set_title("Havlena y Odeh plot of " + str(self.mbal_df["Tank"][0].replace("_", " ")))
+        ax1.annotate(
+            "N [MMStb]: {:.2f}".format(intercept / 1000000),
+            xy=(3, 5),
+            xytext=(4, 5)
+        )
+        ax1.legend()
+        plt.grid(True)
+        plt.show()
+        return data
+
+    def havlena_odeh2(self):
+        y = self.mbal_df[UW_COL] - self.we_df[WE]
+        x = self.mbal_df[OIL_EXP] + self.mbal_df[RES_EXP]
+        data = pd.DataFrame({"Eo+Efw": x, "F-We": y})
+
+        # Graphic
+        slope, intercept, r, p, se = stats.linregress(data["Eo+Efw"], data["F-We"])
+        print(f"N [MMStb]: {slope / 1000000:.4f}")
+        fig, ax2 = plt.subplots()
+        ax2.scatter(data["Eo+Efw"], data["F-We"], color="blue")
         reg_line = (slope * data["Eo+Efw"]) + intercept
-        ax1.plot(data["Eo+Efw"], reg_line, color="red", label="Regression line")
-        ax1.set_xlabel("Eo+Efw")
-        ax1.set_ylabel("F")
-        ax1.set_title("Havlena_Odeh plot")
+        ax2.plot(data["Eo+Efw"], reg_line, color="red", label="Regression line")
+        ax2.set_xlabel("Eo+Efw")
+        ax2.set_ylabel("F-We")
+        ax2.set_title("Havlena y Odeh plot of " + str(self.mbal_df["Tank"][0].replace("_", " ")))
+        ax2.annotate(
+            "N [MMStb]: {:.2f}".format(slope / 1000000),
+            xy=(0.035, 0.2),
+            xytext=(10, 3)
+        )
+        ax2.legend()
+        plt.grid(True)
         plt.show()
         return data
