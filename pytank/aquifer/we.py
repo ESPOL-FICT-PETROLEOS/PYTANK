@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, validator
 import pandas as pd
 import numpy as np
-from old.utilities import variable_type
+from pytank.functions.utilities import variable_type
 import math
 from typing import List, Union
 from pytank.constants.constants import (PRESSURE_COL,

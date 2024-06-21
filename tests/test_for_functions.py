@@ -1,5 +1,5 @@
 "In this file we will add the test for the respective dataframes of the library"
-from old.utilities import G_method
+from pytank.functions.function2 import G_method2
 import pandas as pd
 
-graph = G_method()
+graph = G_method2()

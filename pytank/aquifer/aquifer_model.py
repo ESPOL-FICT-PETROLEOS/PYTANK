@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from old.utilities import variable_type
+from pytank.functions.utilities import variable_type
 import math
 from datetime import datetime
 from pandas import Timestamp
@@ -279,7 +279,7 @@ class Carter_Tracy:
             a5 = td[i - 1] * pr_deriv[i]
             cum_influx_water = we + (a1 * ((a2 - a3) / (a4 - a5)))
             we = cum_influx_water
-            df["Cumulative water influx, bbl"].append(we)
+            df["Cumulative We"].append(we)
 
         df["Elapsed time, days"] = t_array
 
