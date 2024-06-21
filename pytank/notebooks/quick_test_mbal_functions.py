@@ -100,28 +100,3 @@ camp = campbell_function(df_mbal,
                          tot_fvf_init,
                          gas_oil_rs_init,
                          pressure_init)
-print(camp)
-
-havle = havlena_and_odeh(df_mbal,
-                         "OIL_CUM_TANK",
-                         "WATER_CUM_TANK",
-                         "GAS_CUM_TANK",
-                         "PRESSURE_DATUM",
-                         "F",
-                         "Eo",
-                         "Eg",
-                         "Bo",
-                         "Bg",
-                         "GOR",
-                         "Bw",
-                         gas_water_rs,
-                         water_sat,
-                         water_comp,
-                         rock_comp,
-                         oil_fvf_init,
-                         gas_fvf_init,
-                         tot_fvf_init,
-                         gas_oil_rs_init,
-                         pressure_init)
-
-print(havle)

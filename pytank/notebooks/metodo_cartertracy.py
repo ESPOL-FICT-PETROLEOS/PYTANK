@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fsolve
-from old.utilities import interp_pvt_matbal
-from old.utilities import Bo_bw, comp_bw_nogas
+from pytank.functions.pvt_interp import interp_pvt_matbal
+from pytank.functions.pvt_correlations import Bo_bw, comp_bw_nogas
 
 # %%
 

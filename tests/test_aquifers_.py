@@ -17,7 +17,7 @@ def prod_data_1():
 @pytest.fixture()
 def press_data_uw_1():
 
-    df = pd.read_csv("../../pytank/resources/other_data/press_data_1.csv")
+    df = pd.read_csv("../pytank/resources/other_data/press_data_1.csv")
     df["Date"] = df["Date"].astype("datetime64")
 
     yield df

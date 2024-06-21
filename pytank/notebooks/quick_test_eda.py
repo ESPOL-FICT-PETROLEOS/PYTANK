@@ -2,6 +2,7 @@ import pandas as pd
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.notebooks.get_wells import tank_wells
 from pytank.tank.tank import Tank
+from pytank.analysis.poes import Analysis
 
 # Quicktest
 df_pvt = pd.read_csv("../resources/data_csv/pvt.csv")
@@ -32,7 +33,7 @@ tank1 = Tank(
     aquifer=None
 )
 
-# To sse the internal dataframes (only test)
-# df_press = tank1._press_df_int()
-df_prod = tank1._press_df_int()
-print(df_prod)
+analysis = Analysis(tank_class=tank1, freq="12MS", position="end")
+
+eda = analysis.eda(method="pressure_per_date", option="both")
+print(eda)

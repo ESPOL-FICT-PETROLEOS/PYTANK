@@ -10,6 +10,7 @@ from pytank.constants.constants import (PRESSURE_PVT_COL,
                                         )
 from pytank.functions.pvt_correlations import RS_bw, Bo_bw, Rs_McCain
 
+
 class _PVTSchema(pa.DataFrameModel):
     Pressure: Series[float] = pa.Field(ge=0, unique=True, coerce=True, nullable=False)
     Bo: Series[float] = pa.Field(ge=0, coerce=True)
@@ -61,6 +62,3 @@ class WaterModel(BaseModel):
         return float(0)
 
 
-class FluidModel(BaseModel):
-    oil: OilModel
-    water: WaterModel

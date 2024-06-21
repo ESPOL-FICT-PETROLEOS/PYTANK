@@ -1,9 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from old.utilities import days_in_month, interp_from_dates, interp_dates_row
+from pytank.functions.utilities import days_in_month, interp_from_dates, interp_dates_row
 from scipy.interpolate import interp1d
-from material_balance.material_balance import underground_withdrawal, pressure_vol_avg
+from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg
 from typing import Optional
 
 # Constants for column names
@@ -307,7 +307,7 @@ class LiquidCumulativesPerTank(ExploreDataAnalysis):
     def __init__(self, production_file, pressure_file, pvt_file):
         super().__init__(production_file, pressure_file, pvt_file)
 
-        # Automatically plot liquid cumulatives per tank upon object creation
+        # Automatically plot liquid cumulative per tank upon object creation
         self.plot()
 
         # Automatically liquid cumulatives per tank data upon object creation

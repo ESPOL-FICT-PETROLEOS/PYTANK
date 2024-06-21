@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
-from old.utilities import material_bal_var_type, material_bal_numerical_data
+from pytank.functions.utilities import material_bal_var_type, material_bal_numerical_data
 import numpy as np
 
 
