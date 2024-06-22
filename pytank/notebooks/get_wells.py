@@ -10,7 +10,7 @@ from pytank.constants.constants import (OIL_CUM_COL,
                                         DATE_COL
                                         )
 from pytank.vector_data.vector_data import ProdVector, PressVector
-from pytank.well.well import Well
+from pytank.well.well import CreateWell,Well
 from collections import defaultdict
 from pandera.errors import SchemaError
 from pytank.functions.utilities import normalize_date_freq
@@ -101,11 +101,13 @@ for name in all_wells:
             tank_name = group_press[TANK_COL].iloc[0]
 
         # Creating Well object with both production and pressure data
-    info_well = Well(
+    info_well = CreateWell(
         name=name,
+        tank=tank_name,
         prod_data=prod_vector,
         press_data=press_vector
     )
 
     # Add the well to the tank dictionary
     tank_wells[tank_name].append(info_well)
+

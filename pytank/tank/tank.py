@@ -19,6 +19,7 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         )
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.aquifer.aquifer_model import Fetkovich, Carter_Tracy
+from pytank.well.well import Well
 
 
 class _PressSchema(pa.DataFrameModel):
@@ -51,7 +52,7 @@ class _ProdSchema(pa.DataFrameModel):
 
 class Tank(BaseModel):
     name: str
-    wells: list
+    wells: Well
     oil_model: OilModel
     water_model: WaterModel
     pi: float
@@ -63,7 +64,7 @@ class Tank(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def __init__(self, name: str, wells: list, oil_model: OilModel, water_model: WaterModel, pi: float, swo: float, cw: float, cf: float, aquifer: None) -> None:
+    def __init__(self, name: str, wells: Well, oil_model: OilModel, water_model: WaterModel, pi: float, swo: float, cw: float, cf: float, aquifer: None) -> None:
         super().__init__(name=name, wells=wells, oil_model=oil_model, water_model=water_model, pi=pi, swo=swo, cw=cw, cf=cf, aquifer=aquifer)
 
     def _dict_tank(self):
@@ -81,10 +82,12 @@ class Tank(BaseModel):
         A pressure DataFrame with properties PVT of oil and water
         """
         df_press = pd.DataFrame()
-        for well in self.wells:
+        for well in self.wells.get_wells():
             press_vector = well.press_data
-            if press_vector is not None:
-                well_name = well.name
+            well_name = well.name
+            tank_name = well.tank
+            if press_vector is not None and self.name == tank_name:
+
                 well_date = press_vector.data.index
                 well_oil_fvf = self.oil_model.get_bo_at_press(press_vector.data[PRESSURE_COL])
                 well_gas_fvf = self.oil_model.get_bg_at_press(press_vector.data[PRESSURE_COL])
@@ -113,7 +116,7 @@ class Tank(BaseModel):
                 temp_df_press[RS_COL] = well_rs
                 temp_df_press[WATER_FVF_COL] = well_bw
                 temp_df_press[RS_W_COL] = well_rs_w
-                temp_df_press[TANK_COL] = self.name
+                temp_df_press[TANK_COL] = tank_name
 
                 df_press = pd.concat([df_press, temp_df_press], ignore_index=True)
         return df_press
@@ -131,10 +134,11 @@ class Tank(BaseModel):
 
         """
         df_prod = pd.DataFrame()
-        for well in self.wells:
+        for well in self.wells.get_wells():
             prod_vector = well.prod_data
-            if prod_vector is not None:
-                well_name = well.name
+            well_name = well.name
+            tank_name = well.tank
+            if prod_vector is not None and self.name == tank_name:
                 well_date = prod_vector.data.index
                 well_oil_cum = prod_vector.data[OIL_CUM_COL]
                 well_water_cum = prod_vector.data[WATER_CUM_COL]
@@ -150,7 +154,7 @@ class Tank(BaseModel):
                 temp_df_prod[WATER_CUM_COL] = well_water_cum
                 temp_df_prod[GAS_CUM_COL] = well_gas_cum
                 temp_df_prod[LIQ_CUM] = well_liq_cum
-                temp_df_prod[TANK_COL] = self.name
+                temp_df_prod[TANK_COL] = tank_name
 
                 df_prod = pd.concat([df_prod, temp_df_prod], ignore_index=True)
         return df_prod

@@ -1,14 +1,19 @@
 import pandas as pd
 from pytank.fluid_model.fluid import OilModel, WaterModel
-from pytank.notebooks.get_wells import tank_wells
 from pytank.tank.tank import Tank
+from pytank.well.well import Well
 
 # Quicktest
 df_pvt = pd.read_csv("../resources/data_csv/pvt.csv")
+df_production = pd.read_csv("../resources/data_csv/production.csv")
+df_pressures = pd.read_csv("../resources/data_csv/pressures.csv")
+freq = "MS"
 
-tank_dict = tank_wells
 tank_name = "tank_center"
 
+well = Well(df_prod=df_production,df_press=df_pressures, freq_prod=freq)
+
+print(well.get_wells())
 oil_model = OilModel(
     data_pvt=df_pvt,
     temperature=25,
@@ -22,7 +27,7 @@ water_model = WaterModel(
 
 tank1 = Tank(
     name=tank_name,
-    wells=tank_dict[tank_name],
+    wells=well,
     oil_model=oil_model,
     water_model=water_model,
     pi=3700,
@@ -32,7 +37,5 @@ tank1 = Tank(
     aquifer=None
 )
 
-# To sse the internal dataframes (only test)
-# df_press = tank1._press_df_int()
-df_prod = tank1._press_df_int()
-
+df_press = tank1._press_df_int()
+df_prod = tank1._prod_df_int()

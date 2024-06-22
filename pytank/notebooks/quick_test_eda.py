@@ -3,6 +3,7 @@ from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.notebooks.get_wells import tank_wells
 from pytank.tank.tank import Tank
 from pytank.analysis.poes import Analysis
+from pytank.notebooks.quick_test_tank import well
 
 # Quicktest
 df_pvt = pd.read_csv("../resources/data_csv/pvt.csv")
@@ -23,7 +24,7 @@ water_model = WaterModel(
 
 tank1 = Tank(
     name=tank_name,
-    wells=tank_dict[tank_name],
+    wells=well,
     oil_model=oil_model,
     water_model=water_model,
     pi=3700,
@@ -35,5 +36,5 @@ tank1 = Tank(
 
 analysis = Analysis(tank_class=tank1, freq="12MS", position="end")
 
-eda = analysis.eda(method="production_per_well")
+eda = analysis.campbell(option="plot")
 print(eda)

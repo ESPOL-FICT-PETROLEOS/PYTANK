@@ -48,6 +48,13 @@ _PRESSURE_VALIDATION = Column(
     required=False
 )
 
+_STR_VALIDATION = Column(
+    str,
+    Check(lambda s: s == s),
+    coerce=True,
+    nullable=False
+)
+
 # SCHEMAS DICTIONARIES:
 _PROD_SCHEMA_DICT = {
     OIL_CUM_COL: _VECTOR_VALIDATION,
@@ -58,7 +65,6 @@ _PROD_SCHEMA_DICT = {
 
 _PRESS_SCHEMA_DICT = {
     PRESSURE_COL: _PRESSURE_VALIDATION,
-
 }
 
 _INJ_SCHEMA_DICT = {
