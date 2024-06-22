@@ -1,5 +1,7 @@
 import pandas as pd
 import pandera as pa
+import numpy as np
+from matplotlib.font_manager import FontProperties
 from pandera.typing import Series
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
@@ -63,12 +65,12 @@ class Analysis(BaseModel):
     def _calc_uw(self) -> pd.DataFrame:
         df_press = self.tank_class._press_df_int()
         df_prod = self.tank_class._prod_df_int()
-        df_press = df_press.loc[df_press[TANK_COL] == self.tank_class.name]
+        #df_press = df_press.loc[df_press[TANK_COL] == self.tank_class.name]
 
         # Validate df_press and df_prod
         df_press_validate = pd.DataFrame(_PressSchema.validate(df_press))
         df_prod_validate = pd.DataFrame(_ProdSchema.validate(df_prod))
-        # df_prod = df_prod.loc[df_prod[TANK_COL]==self.name]
+        #df_prod = df_prod.loc[df_prod[TANK_COL]==self.tank_class.name]
 
         # Calculate the accumulated production in the pressure dataframe, based on the production dataframe
         for col in [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]:
@@ -79,7 +81,7 @@ class Analysis(BaseModel):
                 axis=1,
             )
             # For wells not available in the production data frame, fill nans with 0
-            df_press_validate[col].fillna(0)
+            df_press_validate[col].fillna(0.0, inplace=True)
 
         uw_well = []
         for well, group in df_press_validate.groupby(WELL_COL):
@@ -320,15 +322,38 @@ class Analysis(BaseModel):
 
         # Pressure date with Cumulative Production
         df_press_cum = self._calc_uw()
-        df_press_cum[DATE_COL] = pd.to_datetime(df_press[DATE_COL])
-        df_press_cum = df_press.sort_values(by=DATE_COL)
+        df_press_cum[DATE_COL] = pd.to_datetime(df_press_cum[DATE_COL])
+        df_press_cum = df_press_cum.sort_values(by=PRESSURE_COL)
 
         # Average Pressure Data
         df_press_avg = self.mat_bal_df()
 
         # Production per Well
         if method == "production_per_well":
-            pass
+            # Well Group
+            df_prod_well = df_prod.groupby(WELL_COL)[[OIL_CUM_COL, WATER_CUM_COL]].sum()
+
+            fig, ax = plt.subplots(figsize=(10, 6))
+            well_ind = df_prod_well.index
+            bar_witd = 0.35
+            r1 = range(len(well_ind))
+            r2 = [x + bar_witd for x in r1]
+
+            ax.bar(r1, df_prod_well[OIL_CUM_COL], color="black", width=bar_witd, edgecolor='grey',
+                   label="Oil Cumulative")
+            ax.bar(r2, df_prod_well[WATER_CUM_COL], color="blue", width=bar_witd, edgecolor='grey',
+                   label="Water Cumulative")
+
+            ax.set_title("Cumulative Production per Well - " + str(df_prod[TANK_COL][0].replace("_", " ").upper()),
+                         fontsize=16)
+            ax.set_xlabel("Well", fontsize=14)
+            ax.set_ylabel("Cumulative Production", fontsize=14)
+            ax.set_xticks([r + bar_witd / 2 for r in range(len(well_ind))])
+            ax.set_xticklabels(well_ind, rotation=45, fontproperties=FontProperties(size=8.5,weight="bold"))
+            ax.legend(loc='upper left', fontsize=12)
+            plt.grid(True)
+            plt.tight_layout()
+            plt.show()
 
         # Cumulative production per Date
         if method == "cumulative_production_per_date":
@@ -414,7 +439,7 @@ class Analysis(BaseModel):
                 ax5.plot(df_press[DATE_COL], df_press[PRESSURE_COL], color="green", label="Pressure")
                 ax5.plot(df_press_avg[DATE_COL], df_press_avg[PRESSURE_COL], color="red", label="Avg Pressure")
 
-                ax5.set_title("Pressure per Date - " + str(df_press[TANK_COL][0].replace("_", " ").upper()),)
+                ax5.set_title("Pressure per Date - " + str(df_press[TANK_COL][0].replace("_", " ").upper()), )
                 ax5.set_ylabel("Pressure[PSI]", fontsize=14)
                 ax5.legend(loc='upper left', fontsize=12)
 
@@ -426,10 +451,40 @@ class Analysis(BaseModel):
         if method == "pressure_per_cumulative_production":
             # Observed Pressure
             if option == "observed":
-                pass
+                fig6, ax6 = plt.subplots(figsize=(10, 6))
+                colors = ["black", "blue"]
+                columns = [OIL_CUM_COL, WATER_CUM_COL]
+
+                for i, col in enumerate(columns):
+                    ax6.plot(df_press_cum[PRESSURE_COL], df_press_cum[col], color=colors[i], label=col)
+
+                ax6.set_title("Pressure vs Cumulative Production - " + str(df_prod[TANK_COL][0].
+                                                                           replace("_", " ").upper()), fontsize=16)
+                ax6.set_xlabel("Pressure", fontsize=14)
+                ax6.set_ylabel("Cumulative Production", fontsize=14)
+                ax6.legend(loc='upper left', fontsize=12)
+
+                plt.gcf().autofmt_xdate()
+                plt.grid(True)
+                plt.show()
 
             # Average Pressure
             elif option == "avg":
-                pass
+                df_press_avg[DATE_COL] = pd.to_datetime(df_press_avg[DATE_COL])
+                df_press_avg = df_press_avg.sort_values(by=PRESSURE_COL)
+                fig7, ax7 = plt.subplots(figsize=(10, 6))
+                colors = ["black", "blue"]
+                columns = [OIL_CUM_TANK, WATER_CUM_TANK]
 
+                for i, col in enumerate(columns):
+                    ax7.plot(df_press_avg[PRESSURE_COL], df_press_avg[col], color=colors[i], label=col)
 
+                ax7.set_title("Pressure vs Cumulative Production - " + str(df_prod[TANK_COL][0].
+                                                                           replace("_", " ").upper()), fontsize=16)
+                ax7.set_xlabel("Average Pressure", fontsize=14)
+                ax7.set_ylabel("Cumulative Production", fontsize=14)
+                ax7.legend(loc='upper left', fontsize=12)
+
+                plt.gcf().autofmt_xdate()
+                plt.grid(True)
+                plt.show()
