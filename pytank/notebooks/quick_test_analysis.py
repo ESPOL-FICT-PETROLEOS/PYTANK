@@ -46,6 +46,7 @@ tank_with_aquifer = Tank(
     cf=3.6e-6,
     aquifer=we_fet
 )
+import pandas as pd
 analisis2 = Analysis(tank_class=tank_with_aquifer, freq="12MS", position="end")
-mbal2 = analisis2.havlena_odeh("data")
-print(mbal2)
+# mbal2 = analisis2._calc_uw()
+# print(mbal2["PRESSURE_DATUM"],mbal2["OIL_CUM"],mbal2["WATER_CUM"])

@@ -35,5 +35,5 @@ tank1 = Tank(
 
 analysis = Analysis(tank_class=tank1, freq="12MS", position="end")
 
-eda = analysis.eda(method="pressure_per_date", option="both")
+eda = analysis.eda(method="production_per_well")
 print(eda)

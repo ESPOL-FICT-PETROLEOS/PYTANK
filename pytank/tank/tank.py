@@ -44,7 +44,7 @@ class _ProdSchema(pa.DataFrameModel):
     WATER_CUM: Series[float] = pa.Field(nullable=False)
     GAS_CUM: Series[float] = pa.Field(nullable=False)
     LIQ_CUM: Series[float] = pa.Field(nullable=False)
-    WELL_BORE: Series[str] = pa.Field(nullable=True)
+    WELL_BORE: Series[str] = pa.Field(nullable=False)
     START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
     Tank: Series[str] = pa.Field(nullable=False)
 
