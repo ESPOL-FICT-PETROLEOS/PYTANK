@@ -1,6 +1,5 @@
 import pandas as pd
 from pydantic import BaseModel
-from pytank.vector_data.vector_data import ProdVector, PressVector
 from typing import Optional
 from pytank.constants.constants import (OIL_CUM_COL,
                                         WATER_CUM_COL,
@@ -11,8 +10,6 @@ from pytank.constants.constants import (OIL_CUM_COL,
                                         DATE_COL
                                         )
 from pytank.vector_data.vector_data import ProdVector, PressVector
-# from pytank.well.well import Well
-from collections import defaultdict
 from pandera.errors import SchemaError
 from pytank.functions.utilities import normalize_date_freq
 import warnings
@@ -72,24 +69,33 @@ class Well(BaseModel):
                 group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[WATER_CUM_COL]
                 group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
 
-                group_prod_norm = normalize_date_freq(df=group_prod,
-                                                      freq=self.freq_prod,
-                                                      cols_fill_na=cols_fills_na,
-                                                      method_no_cols="ffill")
-                try:
-                    prod_vector = ProdVector(
-                        freq=self.freq_prod,
-                        data=group_prod_norm
-                    )
-                except SchemaError as e:
-                    expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
-                    if str(e) == expected_error_msg:
-                        group_prod.index.freq = self.freq_prod
+                if self.freq_prod is not None:
+                    group_prod_norm = normalize_date_freq(df=group_prod,
+                                                          freq=self.freq_prod,
+                                                          cols_fill_na=cols_fills_na,
+                                                          method_no_cols="ffill")
+                    try:
                         prod_vector = ProdVector(
-                            freq=None,
+                            freq=self.freq_prod,
                             data=group_prod_norm
                         )
-                tank_name = group_prod_norm[TANK_COL].iloc[0]
+                    except SchemaError as e:
+                        expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
+                        if str(e) == expected_error_msg:
+                            group_prod.index.freq = self.freq_prod
+                            prod_vector = ProdVector(
+                                freq=None,
+                                data=group_prod_norm
+                            )
+                    tank_name = group_prod_norm[TANK_COL].iloc[0]
+
+                else:
+                    prod_vector = ProdVector(
+                        freq=self.freq_prod,
+                        data=group_prod
+                    )
+                    tank_name = group_prod[TANK_COL].iloc[0]
+
             if name in press_data["WELLBORE"].unique():
                 group_press = press_data[press_data["WELLBORE"] == name]
 
