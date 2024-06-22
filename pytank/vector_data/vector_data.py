@@ -146,64 +146,11 @@ class VectorData(BaseModel):
 class ProdVector(VectorData):
     data_schema: DataFrameSchema = PROD_SCHEMA
 
-    def get_well_name(self) -> pd.Series:
-        return self.data[WELL_COL]
-
-    def get_oil_cum(self) -> pd.Series:
-        return self.data[OIL_CUM_COL]
-
-    def get_water_cum(self) -> pd.Series:
-        return self.data[WATER_CUM_COL]
-
-    def get_gas_cum(self) -> pd.Series:
-        return self.data[GAS_CUM_COL]
-
-    def calculate_rate(self, liquid: str) -> pd.Series:
-        ind = self.data.index
-        days = ind.to_series().map(lambda date: days_in_month(date))
-        cum_prod = self.data[liquid].diff().fillna(self.data[liquid])
-        rate = cum_prod / days
-        return rate
-
-    """def plot_oil_cum(self, ax=None, **kwards):
-        if ax is None:
-            ax = plt.gca()
-
-        self.get_oil_cum().plot(ax=ax, **kwards)
-        ax.set_ylabel("Oil Cumulative (STB)")
-        ax.set_xlabel("Date")
-
-    def plot_water_cum(self, ax=None, **kwards):
-        if ax is None:
-            ax = plt.gca()
-
-        self.get_water_cum().plot(ax=ax, **kwards)
-        ax.set_ylabel("Water Cumulative (STB)")
-        ax.set_xlabel("Date")"""
-
-    # Dentro de esta clase, tambien se ponen las columnas que nosotros esperamos obtener?
-
 
 class PressVector(VectorData):
     data_schema: DataFrameSchema = PRESS_SCHEMA
-
-    def get_pressure_datum(self) -> pd.Series:
-        return self.data[PRESSURE_COL]
-
-    """def plot_pressure_vs_date(self, ax=None, **kwargs):
-        if ax is None:
-            ax = plt.gca()
-
-        self.get_pressure_datum().plot(ax=ax, **kwargs)
-        ax.set_ylabel("Pressure (PSI)")
-        ax.set_xlabel("Date")"""
 
 
 class InjVector(VectorData):
     data_schema: DataFrameSchema = INJ_SCHEMA
 
-    def get_well_inj_name(self) -> pd.Series:
-        return self.data[WELL_COL]
-
-    def get_water_volume(self) -> pd.Series:
-        return self.data[INJECTION_WATER]

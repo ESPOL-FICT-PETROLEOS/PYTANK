@@ -1,5 +1,5 @@
 from pytank.notebooks.quick_test_tank import (tank1,
-                                              tank_dict,
+                                              well,
                                               tank_name,
                                               oil_model,
                                               water_model)
@@ -37,7 +37,7 @@ we_fet = Fetkovich(aq_radius,
 
 tank_with_aquifer = Tank(
     name=tank_name,
-    wells=tank_dict[tank_name],
+    wells=well,
     oil_model=oil_model,
     water_model=water_model,
     pi=3700,
@@ -48,5 +48,6 @@ tank_with_aquifer = Tank(
 )
 import pandas as pd
 analisis2 = Analysis(tank_class=tank_with_aquifer, freq="12MS", position="end")
-# mbal2 = analisis2._calc_uw()
+mbal2 = analisis2._calc_uw()
 # print(mbal2["PRESSURE_DATUM"],mbal2["OIL_CUM"],mbal2["WATER_CUM"])
+print(mbal2)
