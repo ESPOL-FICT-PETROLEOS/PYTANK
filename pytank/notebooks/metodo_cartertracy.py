@@ -155,7 +155,6 @@ cum = 0
 pi = 4500
 sw0 = 0.25
 boi = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, pi)
-print(boi)
 N = 70e6
 x0 = 3600
 P_calculada = [pi]

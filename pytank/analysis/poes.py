@@ -6,6 +6,7 @@ from pandera.typing import Series
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from scipy import stats
+from scipy.optimize import fsolve
 from pytank.constants.constants import (OIL_FVF_COL,
                                         GAS_FVF_COL,
                                         RS_COL,
@@ -31,6 +32,8 @@ from pytank.functions.pvt_interp import interp_pvt_matbal
 from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg, ho_terms_equation
 from pytank.tank.tank import Tank, _PressSchema, _ProdSchema
 from pytank.aquifer.aquifer_model import Fetkovich, Carter_Tracy
+from pytank.functions.function2 import press, calcuted_pressure, G_method2
+from typing import Optional
 
 
 class _DFMbalSchema(pa.DataFrameModel):
@@ -65,12 +68,12 @@ class Analysis(BaseModel):
     def _calc_uw(self) -> pd.DataFrame:
         df_press = self.tank_class._press_df_int()
         df_prod = self.tank_class._prod_df_int()
-        #df_press = df_press.loc[df_press[TANK_COL] == self.tank_class.name]
+        # df_press = df_press.loc[df_press[TANK_COL] == self.tank_class.name]
 
         # Validate df_press and df_prod
         df_press_validate = pd.DataFrame(_PressSchema.validate(df_press))
         df_prod_validate = pd.DataFrame(_ProdSchema.validate(df_prod))
-        #df_prod = df_prod.loc[df_prod[TANK_COL]==self.tank_class.name]
+        # df_prod = df_prod.loc[df_prod[TANK_COL]==self.tank_class.name]
 
         # Calculate the accumulated production in the pressure dataframe, based on the production dataframe
         for col in [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]:
@@ -81,7 +84,7 @@ class Analysis(BaseModel):
                 axis=1,
             )
             # For wells not available in the production data frame, fill nans with 0
-            df_press_validate[col].fillna(0.0, inplace=True)
+            df_press_validate.fillna({col: 0.0}, inplace=True)
 
         uw_well = []
         for well, group in df_press_validate.groupby(WELL_COL):
@@ -215,7 +218,7 @@ class Analysis(BaseModel):
         )
         mbal_final_per_tank = mbal_term.fillna(0.0)
         if self.tank_class.aquifer is None:
-            mbal_final_per_tank[WE] = 0
+            mbal_final_per_tank[WE] = 0.0
 
         elif isinstance(self.tank_class.aquifer, Fetkovich):
             df = self.tank_class.aquifer.we()
@@ -231,7 +234,7 @@ class Analysis(BaseModel):
 
         return mbal_final_per_tank
 
-    def campbell(self, option, ):
+    def campbell(self, option):
         mbal_df = self.mat_bal_df()
         y = mbal_df[UW_COL] / (mbal_df[OIL_EXP] + mbal_df[RES_EXP])
         x = mbal_df[OIL_CUM_TANK]
@@ -251,23 +254,26 @@ class Analysis(BaseModel):
 
     def havlena_odeh(self, option):
         mbal_df = self.mat_bal_df()
-        y = mbal_df[UW_COL] / (mbal_df[OIL_EXP] + mbal_df[RES_EXP])
-        x = mbal_df[WE] / (mbal_df[OIL_EXP] + mbal_df[RES_EXP])
-        data = pd.DataFrame({"WeBw/Eo+Efw": x, "F/Eo+Efw": y})
-        slope, intercept, r, p, se = stats.linregress(data["WeBw/Eo+Efw"], data["F/Eo+Efw"])
+        data = G_method2(mbal_df[PRESSURE_COL], mbal_df[OIL_CUM_TANK], mbal_df[WATER_CUM_TANK], mbal_df[OIL_FVF_COL],
+                         self.tank_class.cf,
+                         self.tank_class.swo, self.tank_class.oil_model.get_bo_at_press(self.tank_class.pi),
+                         mbal_df[WE], self.tank_class.pi, self.tank_class.water_model.temperature,
+                         self.tank_class.water_model.salinity)
+        slope, intercept, r, p, se = stats.linregress(data["We*Bw/Et"], data["F/Eo+Efw"])
 
         # Data
         if option == "data":
-            print(f"N [MMStb]: {intercept / 1000000:.4f}")
-            return data
+            poes = str(f"N [MMStb]: {intercept / 1000000:.4f}")
+            # print(poes)
+            return poes
 
         # Graphic
         elif option == "plot":
             fig, ax1 = plt.subplots()
-            ax1.scatter(data["WeBw/Eo+Efw"], data["F/Eo+Efw"], color="blue")
-            reg_line = (slope * data["WeBw/Eo+Efw"]) + intercept
-            ax1.plot(data["WeBw/Eo+Efw"], reg_line, color="red", label="Regression line")
-            ax1.set_xlabel("WeBw/Eo+Efw")
+            ax1.scatter(data["We*Bw/Et"], data["F/Eo+Efw"], color="blue")
+            reg_line = (slope * data["We*Bw/Et"]) + intercept
+            ax1.plot(data["We*Bw/Et"], reg_line, color="red", label="Regression line")
+            ax1.set_xlabel("We*Bw/Et")
             ax1.set_ylabel("F/Eo+Efw")
             ax1.set_title("Havlena y Odeh plot of " + str(mbal_df["Tank"][0].replace("_", " ")))
             ax1.annotate(
@@ -288,8 +294,9 @@ class Analysis(BaseModel):
 
         # Data
         if option == "data":
-            print(f"N [MMStb]: {slope / 1000000:.4f}")
-            return data
+            poes = str(f"N [MMStb]: {slope / 1000000:.4f}")
+            # print(poes)
+            return poes
 
         # Graphic
         elif option == "plot":
@@ -349,7 +356,7 @@ class Analysis(BaseModel):
             ax.set_xlabel("Well", fontsize=14)
             ax.set_ylabel("Cumulative Production", fontsize=14)
             ax.set_xticks([r + bar_witd / 2 for r in range(len(well_ind))])
-            ax.set_xticklabels(well_ind, rotation=45, fontproperties=FontProperties(size=8.5,weight="bold"))
+            ax.set_xticklabels(well_ind, rotation=45, fontproperties=FontProperties(size=8.5, weight="bold"))
             ax.legend(loc='upper left', fontsize=12)
             plt.grid(True)
             plt.tight_layout()
@@ -488,3 +495,36 @@ class Analysis(BaseModel):
                 plt.gcf().autofmt_xdate()
                 plt.grid(True)
                 plt.show()
+
+    def analytic_method(self, N, option):
+        df = self.mat_bal_df()
+        press_calc = calcuted_pressure(df[OIL_CUM_TANK], df[WATER_CUM_TANK], self.tank_class.cf,
+                                       self.tank_class.water_model.temperature,
+                                       self.tank_class.water_model.salinity, self.tank_class.oil_model.data_pvt,
+                                       self.tank_class.aquifer.aq_radius, self.tank_class.aquifer.res_radius,
+                                       self.tank_class.aquifer.aq_thickness, self.tank_class.aquifer.aq_por,
+                                       self.tank_class.aquifer.theta, self.tank_class.aquifer.k,
+                                       self.tank_class.aquifer.water_visc, self.tank_class.pi,
+                                       self.tank_class.swo, N, PRESSURE_PVT_COL, "Bo")
+        dates = df[[DATE_COL, PRESSURE_COL]]
+        new_date = df[DATE_COL].min() - pd.Timedelta(days=365)
+        n_row = pd.DataFrame({DATE_COL: new_date}, index=[0])
+        data = pd.concat([n_row, dates]).reset_index(drop=True)
+        data.loc[0, PRESSURE_COL] = self.tank_class.pi
+        data["PRESS_CALC"] = press_calc
+
+        if option == "data":
+            return data[[DATE_COL, "PRESS_CALC"]]
+
+        elif option == "plot":
+            fig8, ax8 = plt.subplots(figsize=(15, 10))
+            ax8.scatter(data[DATE_COL].dt.year, data[PRESSURE_COL], label="Observed Pressure")
+            ax8.plot(data[DATE_COL].dt.year, press_calc, c="g", label="Calculated Pressure")
+            plt.title("Plot Pressure vs Time", fontsize=15)
+            plt.xlabel("Time (Years)", fontsize=15)
+            plt.ylabel("Pressure (PSI)", fontsize=15)
+            ax8.set_ylim(0, 4000)
+            plt.yticks(fontsize=15)
+            ax8.grid(axis="both", color="lightgray", linestyle="dashed")
+            plt.legend(fontsize=15)
+            plt.show()

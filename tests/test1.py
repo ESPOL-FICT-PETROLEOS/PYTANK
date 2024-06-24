@@ -7,7 +7,6 @@ def odia(n):
 
 
 def EBM(p,np,wp,bo,cf,cw,sw0,boi, name,date):
-
     pi = 3676
     F = (np*bo)+wp
     Efw = boi*((cf + cw * sw0) / (1 - sw0)) * (pi - p)

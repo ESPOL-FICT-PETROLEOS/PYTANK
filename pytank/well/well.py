@@ -14,19 +14,21 @@ from pandera.errors import SchemaError
 from pytank.functions.utilities import normalize_date_freq
 import warnings
 
+warnings.filterwarnings("ignore", message="DataFrame.fillna with 'method' is deprecated")
+
 
 class CreateWell(BaseModel):
     name: str
     tank: Optional[str] = None
-    prod_data: Optional[ProdVector] = None
-    press_data: Optional[PressVector] = None
+    prod_data: Optional[ProdVector]
+    press_data: Optional[PressVector]
 
 
 class Well(BaseModel):
     freq_prod: Optional[str] = None
     freq_press: Optional[str] = None
-    df_prod: pd.DataFrame = None
-    df_press: pd.DataFrame = None
+    df_prod: pd.DataFrame
+    df_press: pd.DataFrame
 
     class Config:
         arbitrary_types_allowed = True
@@ -37,7 +39,7 @@ class Well(BaseModel):
     def process_data(self):
         prod_data = self.df_prod
         prod_data[DATE_COL] = pd.to_datetime(prod_data[DATE_COL])
-        prod_data.set_index(prod_data[DATE_COL],inplace=True)
+        prod_data.set_index(prod_data[DATE_COL], inplace=True)
 
         press_data = self.df_press
         press_data[DATE_COL] = pd.to_datetime(press_data["DATE"])
@@ -122,4 +124,3 @@ class Well(BaseModel):
             tank_wells.append(info_well)
 
         return tank_wells
-

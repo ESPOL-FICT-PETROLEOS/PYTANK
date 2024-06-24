@@ -167,6 +167,9 @@ class Fetkovich:
         #df = df.set_index("Elapsed time")
 
         return df
+    def get_we(self):
+        we = self.we()
+        return we["Cumulative We"]
 
 
 class Carter_Tracy:
@@ -289,3 +292,7 @@ class Carter_Tracy:
         )
 
         return df
+
+    def get_we(self):
+        we = self.we()
+        return we["Cumulative We"]

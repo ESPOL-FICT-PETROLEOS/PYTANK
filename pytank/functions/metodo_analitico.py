@@ -185,7 +185,7 @@ for i in range(len(df_ta2[PRESSURE_COL])):
 nueva_fila = pd.DataFrame(
     {DATE_COL: "1987-09-01", PRESSURE_COL: 4000.00, OIL_FVF_COL: 1.1}, index=[0]
 )
-df_ta2 = pd.concat([nueva_fila, df_ta2]).reset_index(drop=True)
+"""df_ta2 = pd.concat([nueva_fila, df_ta2]).reset_index(drop=True)
 df_ta2[DATE_COL] = pd.to_datetime(df_ta2[DATE_COL])
 df_ta2.iloc[0] = df_ta2.iloc[0].fillna(0)
 # %%
@@ -201,4 +201,4 @@ ax.set_ylim([400, 4000])
 plt.yticks(fontsize=15)
 ax.grid(axis="both", color="gray", linestyle="dashed")
 plt.legend(fontsize=15)
-plt.show()
+plt.show()"""
