@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
@@ -69,7 +70,8 @@ def EBM(press, np, bo, cf, cw, sw0, boi, name, we, date, p2, F):
 
 # def uwater2(p,T):
 #     return math.exp(1)
-from pytank.tank.tank import mbal
+from pytank.notebooks.quick_test_analysis import mbal
+
 f_ta = mbal.rename(columns={
     "START_DATETIME": "Date",
     "PRESSURE_DATUM": "Pressure",
@@ -81,7 +83,7 @@ f_ta = mbal.rename(columns={
     "GOR": "gas_oil_rs_col",
     "Time_Step": "time_step"
 })
-df_ta2 = pd.read_csv("../tank/mbal_tank.csv")
+df_ta2 = mbal
 # nueva_fila = pd.DataFrame({'DATE': '1987-09-01', 'Tank': 'tank_center', 'Pressure': 3700.00, 'oil_fvf': 1.1},
 #                           index=[0])
 # df_ta2 = pd.concat([nueva_fila, df_ta2]).reset_index(drop=True)
@@ -175,7 +177,7 @@ def press(
 
 cf = 4.5e-6
 t = 200
-salinity = 30000
+salinity = 3000
 aq_radius = 14000
 res_radius = 2000
 aq_thickness = 20
@@ -186,9 +188,9 @@ water_visc = 0.6
 cum = 0
 pi = 3700
 sw0 = 0.25
-boi = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, 3700)
+boi = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, pi)
 N = 72e+6
-x0 = 3600
+x0 = pi
 P_calculada = [pi]
 for i in range(len(df_ta2[PRESSURE_COL])):
     Np = df_ta2["OIL_CUM_TANK"][i]
@@ -220,7 +222,6 @@ for i in range(len(df_ta2[PRESSURE_COL])):
             boi,
         ),
     )[0]
-    print(f"Calculated Reservoir Pressure: {presion}")
     x0 = presion
 
     P_calculada.append(presion)
@@ -303,7 +304,7 @@ for i in range(len(df_ta2[PRESSURE_COL])):
 #                             p_anterior, cum, pi)
 # %%
 nueva_fila = pd.DataFrame(
-    {DATE_COL: "1987-09-01", PRESSURE_COL: 4000.00, OIL_FVF_COL: 1.1}, index=[0]
+    {DATE_COL: "1987-09-01", PRESSURE_COL: pi, OIL_FVF_COL: 1.1}, index=[0]
 )
 df_ta2 = pd.concat([nueva_fila, df_ta2]).reset_index(drop=True)
 df_ta2[DATE_COL] = pd.to_datetime(df_ta2[DATE_COL])
@@ -322,3 +323,4 @@ plt.yticks(fontsize=15)
 ax.grid(axis="both", color="gray", linestyle="dashed")
 plt.legend(fontsize=15)
 plt.show()
+print(P_calculada)

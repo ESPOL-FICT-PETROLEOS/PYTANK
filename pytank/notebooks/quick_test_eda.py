@@ -36,5 +36,5 @@ tank1 = Tank(
 
 analysis = Analysis(tank_class=tank1, freq="12MS", position="end")
 
-eda = analysis.campbell(option="plot")
-print(eda)
+mbal = analysis.mat_bal_df()
+print(mbal)

@@ -73,9 +73,6 @@ def Solution_GOR_Pb_ValkoMcCain(Psep, Tsep, API, Rsp, Units=1):
 
     return Rsb
 
-
-# print("Rsb =",Solution_GOR_Pb_ValkoMcCain (Psep, Tsep, API, Rsp))
-
 def Spec_grav_st_ValkoMcCain2(Psep, Tsep, API, Rsp, SGsep, Units=1):
     """ The Spec_grav_st_ValkoMcCain2 correlation calculates the weighted-average
     Specific Gravities of surface gases at Stock-Tank conditions, the required imput

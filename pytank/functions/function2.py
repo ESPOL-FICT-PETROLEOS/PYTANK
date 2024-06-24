@@ -43,12 +43,14 @@ def Campbell(p, np, wp, bo, cf, sw0, boi, date, pi, t, salinity):
     ax1.set_title("Campbell plot")
     plt.show()
 
+
 # funcion de nosotros
-def G_method(uw,We,Eo,Efw):
+def G_method(uw, We, Eo, Efw):
     y = uw - We
     x = Eo + Efw
     df = pd.DataFrame({"F-We": y, "Eo + Efw": x})
     return df
+
 
 # funcion de elllos:
 def G_method2(pr, np, wp, bo, cf, sw0, boi, we, pi, t, salinity):
@@ -62,6 +64,7 @@ def G_method2(pr, np, wp, bo, cf, sw0, boi, we, pi, t, salinity):
     data = pd.DataFrame({"We*Bw/Et": x, "F/Eo+Efw": y})
     return data
 
+
 def EBM(p, pi, Np, wp, bo, cf, cw, sw0, boi, N, we, bw):
     Eo = bo - boi
     Efw = boi * (((cw * sw0) + cf) / (1 - sw0)) * (pi - p)
@@ -71,21 +74,21 @@ def EBM(p, pi, Np, wp, bo, cf, cw, sw0, boi, N, we, bw):
 
 
 def aquifer_fetkovich(
-    aq_radius,
-    res_radius,
-    aq_thickness,
-    aq_por,
-    ct,
-    p,
-    theta,
-    k,
-    water_visc,
-    p_anterior,
-    cum,
-    pi,
+        aq_radius,
+        res_radius,
+        aq_thickness,
+        aq_por,
+        ct,
+        p,
+        theta,
+        k,
+        water_visc,
+        p_anterior,
+        cum,
+        pi,
 ):
     delta_t = 365
-    wi = (math.pi / 5.615) * (aq_radius**2 - res_radius**2) * aq_thickness * aq_por
+    wi = (math.pi / 5.615) * (aq_radius ** 2 - res_radius ** 2) * aq_thickness * aq_por
     f = theta / 360
     wei = ct * wi * pi * f
     rd = aq_radius / res_radius
@@ -98,28 +101,28 @@ def aquifer_fetkovich(
 
 
 def press(
-    p,
-    Np,
-    wp,
-    cf,
-    t,
-    salinity,
-    df_pvt,
-    aq_radius,
-    res_radius,
-    aq_thickness,
-    aq_por,
-    theta,
-    k,
-    water_visc,
-    p_anterior,
-    cum,
-    pi,
-    sw0,
-    N,
-    boi,
-    ppvt_col,
-    oil_fvf_col,
+        p,
+        Np,
+        wp,
+        cf,
+        t,
+        salinity,
+        df_pvt,
+        aq_radius,
+        res_radius,
+        aq_thickness,
+        aq_por,
+        theta,
+        k,
+        water_visc,
+        p_anterior,
+        cum,
+        pi,
+        sw0,
+        N,
+        boi,
+        ppvt_col,
+        oil_fvf_col,
 ):
     # Parametros que depende de la presión
     bo = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, p)
@@ -144,24 +147,24 @@ def press(
 
 
 def calcuted_pressure(
-    Np_frame,
-    wp_frame,
-    cf,
-    t,
-    salinity,
-    df_pvt,
-    aq_radius,
-    res_radius,
-    aq_thickness,
-    aq_por,
-    theta,
-    k,
-    water_visc,
-    pi,
-    sw0,
-    N,
-    ppvt_col,
-    oil_fvf_col,
+        Np_frame,
+        wp_frame,
+        cf,
+        t,
+        salinity,
+        df_pvt,
+        aq_radius,
+        res_radius,
+        aq_thickness,
+        aq_por,
+        theta,
+        k,
+        water_visc,
+        pi,
+        sw0,
+        N,
+        ppvt_col,
+        oil_fvf_col,
 ):
     # Valores iniciales
     boi = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, pi)
