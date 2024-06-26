@@ -1,3 +1,17 @@
+"""
+pvt_table.py
+
+This module containing functions to calculate PVT properties If you do not have a CSV of the PVT information.
+
+Libraries:
+    - pandas:
+    - numpy
+    - warnings
+
+Important:
+THE LOGIC OF THESE FUNCTIONS HAS NOT YET BEEN IMPLEMENTED TO THE LIBRARY. SO ITS USE IS IN FUTURE DEVELOPMENT
+
+"""
 from pytank.functions import pvt_correlations as pvt
 import pandas as pd
 import numpy as np
@@ -328,7 +342,6 @@ def pvt_table2(
     return pvt_dataframe
 
 
-"""#%%
 # Example values for the function parameters
 p_sep = 2500  # Separator pressure [psia]
 t_sep = 150   # Separator temperature [F]
@@ -343,4 +356,4 @@ jump = 100    # step size of the iteration over the pressure
 
 # Call the function with these example values
 result_df = pvt_table2(p_sep, t_sep, api, rsp, sg_sep, tres, den_sto, p_res, salinity, jump)
-print(result_df)"""
+

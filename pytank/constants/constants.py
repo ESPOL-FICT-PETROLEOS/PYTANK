@@ -1,4 +1,11 @@
-import pandera
+"""
+constants.py
+
+This archive.py containing the constant or columns names used in some methods and classes in the library
+
+libraries:
+    - pandera
+"""
 from pandera import Column, Check, DataFrameSchema
 
 # Constants of DataFrames
@@ -29,7 +36,7 @@ GAS_CUM_TANK = "GAS_CUM_TANK"
 WE = "Cumulative We"
 
 
-# Frecuency's of time
+# Frequency's of time
 VALID_FREQS = ["D", "W", "M", "MS", "Q", "Y", None]
 
 # VALIDATIONS:

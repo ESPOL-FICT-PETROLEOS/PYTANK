@@ -1,3 +1,14 @@
+"""
+pvt_correlations.py
+
+This module containing a lot of functions to calculate PVT properties using correlations
+
+libraries:
+    - pandas
+
+Importance:
+NOT ALL THE FUNCTIONS OF THIS MODULE ARE USED. HOWEVER, THEY CAN BE USED IN FUTURE UPDATES OF THE LIBRARY
+"""
 import numpy as np
 
 """----------------------------Oil Correlations--------------------------------------"""

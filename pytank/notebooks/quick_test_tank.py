@@ -11,11 +11,15 @@ freq = "MS"
 
 tank_name = "tank_center"
 
-well = Well(df_prod=df_production, df_press=df_pressures)
+well = Well(df_prod=df_production,
+            df_press=df_pressures,
+            freq_prod=freq,
+            freq_press=None)
+
 
 oil_model = OilModel(
     data_pvt=df_pvt,
-    temperature=200,
+    temperature=25,
 )
 
 water_model = WaterModel(
@@ -30,8 +34,11 @@ tank1 = Tank(
     oil_model=oil_model,
     water_model=water_model,
     pi=3700,
-    swo=0.25,
+    swo=0.15,
     cw=3.5e-6,
-    cf=4.5e-6,
+    cf=3.6e-6,
     aquifer=None
 )
+
+df_press = tank1.get_pressure_df()
+df_prod = tank1.get_production_df()

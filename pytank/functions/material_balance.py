@@ -1,20 +1,42 @@
+"""
+material_balance_functions.py
+
+This module contains the necessary functions to calculate the poes of graphic and analytical way.
+
+Libraries:
+    - pandas
+    - numpy
+    - matplotlib
+    - math
+    - scipy
+"""
+
 import pandas as pd
-import matplotlib.pyplot as plt
-from scipy import stats
-from pytank.functions.utilities import material_bal_var_type, material_bal_numerical_data
 import numpy as np
+import matplotlib.pyplot as plt
+import math
+from scipy import stats
+from scipy.optimize import fsolve
+from pytank.functions.pvt_correlations import Bo_bw, comp_bw_nogas
+from pytank.functions.pvt_interp import interp_pvt_matbal
+from pytank.functions.utilities import material_bal_var_type, material_bal_numerical_data
+
+"""
+This part of this module contains functions that are used to calculate the poes through the graphical method
+(Havlena and Odeh)
+"""
 
 
 def underground_withdrawal(
-    data: pd.DataFrame,
-    oil_cum_col: str,
-    water_cum_col: str,
-    gas_cum_col: str,
-    oil_fvf,
-    water_fvf,
-    gas_fvf,
-    gas_oil_rs,
-    gas_water_rs,
+        data: pd.DataFrame,
+        oil_cum_col: str,
+        water_cum_col: str,
+        gas_cum_col: str,
+        oil_fvf,
+        water_fvf,
+        gas_fvf,
+        gas_oil_rs,
+        gas_water_rs,
 ):
     """
     Calculates the total underground withdrawal of a well using its cumulative
@@ -97,8 +119,8 @@ def underground_withdrawal(
 
     # Calculate gas withdrawal
     gas_withdrawal = (
-        df[gas_vol_col] - df[oil_vol_col] * df[rs_col] - df[water_vol_col] * df[rsw_col]
-    ) * df[gas_fvf_col]
+                             df[gas_vol_col] - df[oil_vol_col] * df[rs_col] - df[water_vol_col] * df[rsw_col]
+                     ) * df[gas_fvf_col]
 
     if sum(gas_withdrawal < 0) > 0:
         raise ArithmeticError(
@@ -110,22 +132,22 @@ def underground_withdrawal(
     gas_withdrawal.fillna(0, inplace=True)
 
     uw = (
-        df[oil_vol_col] * df[oil_fvf_col]
-        + df[water_vol_col] * df[water_fvf_col]
-        + gas_withdrawal
+            df[oil_vol_col] * df[oil_fvf_col]
+            + df[water_vol_col] * df[water_fvf_col]
+            + gas_withdrawal
     )
 
     return uw.cumsum().values
 
 
 def pressure_vol_avg(
-    data: pd.DataFrame,
-    entity_col,
-    date_col,
-    press_col,
-    uw_col,
-    avg_freq="1MS",
-    position="begin",
+        data: pd.DataFrame,
+        entity_col,
+        date_col,
+        press_col,
+        uw_col,
+        avg_freq="1MS",
+        position="begin",
 ) -> pd.DataFrame:
     """
 
@@ -181,13 +203,13 @@ def pressure_vol_avg(
                 f"are not increasing with time"
             )
 
-    POSITIONS = ["begin", "middle", "end"]
+    pos = ["begin", "middle", "end"]
 
     # Check if position argument has the correct values
-    if position not in POSITIONS:
+    if position not in pos:
         raise ValueError(
             f"{position} is not an accepted value for 'position' "
-            f"argument. Use any of {POSITIONS} instead."
+            f"argument. Use any of {pos} instead."
         )
 
     # Calculate the differences in pressure and underground withdrawal per well
@@ -217,8 +239,8 @@ def pressure_vol_avg(
         g_1 = group[cond]
         if len(g_1) > 0:
             avg_1 = (
-                g_1[press_col] * g_1[delta_uw_col] / g_1[delta_press_col]
-            ).sum() / (g_1[delta_uw_col] / g_1[delta_press_col]).sum()
+                            g_1[press_col] * g_1[delta_uw_col] / g_1[delta_press_col]
+                    ).sum() / (g_1[delta_uw_col] / g_1[delta_press_col]).sum()
 
         # This group has no UW and pressure changes, the average of these values will
         # be processed normally
@@ -235,7 +257,7 @@ def pressure_vol_avg(
 
     result = pd.DataFrame(result_avg_press)
 
-    if position == POSITIONS[0]:
+    if position == pos[0]:
         pass
     else:
         # Get the DateOffset object based on the average frequency
@@ -248,7 +270,7 @@ def pressure_vol_avg(
         # Calculate the time deltas comparing to the original dates
         dates_delta = new_dates - result[date_col]
 
-        if position == POSITIONS[1]:
+        if position == pos[1]:
             result[date_col] = result[date_col] + dates_delta / 2
         else:
             result[date_col] = result[date_col] + dates_delta
@@ -257,7 +279,7 @@ def pressure_vol_avg(
 
 
 def oil_expansion(
-    data: pd.DataFrame, oil_fvf, gas_fvf, gas_oil_rs, gas_oil_rs_init, oil_fvf_init
+        data: pd.DataFrame, oil_fvf, gas_fvf, gas_oil_rs, gas_oil_rs_init, oil_fvf_init
 ) -> pd.Series:
     """
     Calculates the oil expansion using its cumulative production
@@ -317,7 +339,7 @@ def oil_expansion(
 
 # %%
 def gas_expansion(
-    data: pd.DataFrame, oil_fvf, gas_fvf, gas_fvf_init, tot_fvf_init
+        data: pd.DataFrame, oil_fvf, gas_fvf, gas_fvf_init, tot_fvf_init
 ) -> pd.Series:
     """
     Calculates the gas expansion using its cumulative production
@@ -372,14 +394,14 @@ def gas_expansion(
 
 
 def fw_expansion(
-    data: pd.DataFrame,
-    oil_fvf,
-    p_col: str,
-    water_sat,
-    water_comp,
-    rock_comp,
-    oil_fvf_init,
-    pressure_init,
+        data: pd.DataFrame,
+        oil_fvf,
+        p_col: str,
+        water_sat,
+        water_comp,
+        rock_comp,
+        oil_fvf_init,
+        pressure_init,
 ) -> pd.Series:
     """
     Calculates the expansion of connate water and rock(formation) using its cumulative
@@ -431,31 +453,31 @@ def fw_expansion(
     material_bal_numerical_data(num_arg)
 
     efw = (oil_fvf_init * ((water_comp * water_sat + rock_comp) / (1 - water_sat))) * (
-        pressure_init - df[p_col]
+            pressure_init - df[p_col]
     )
 
     return efw
 
 
 def ho_terms_equation(
-    data: pd.DataFrame,
-    oil_cum_col: str,
-    water_cum_col: str,
-    gas_cum_col: str,
-    p_col: str,
-    oil_fvf,
-    gas_fvf,
-    gas_oil_rs,
-    water_fvf,
-    gas_water_rs,
-    water_sat,
-    water_comp,
-    rock_comp,
-    oil_fvf_init,
-    gas_fvf_init,
-    tot_fvf_init,
-    gas_oil_rs_init,
-    pressure_init,
+        data: pd.DataFrame,
+        oil_cum_col: str,
+        water_cum_col: str,
+        gas_cum_col: str,
+        p_col: str,
+        oil_fvf,
+        gas_fvf,
+        gas_oil_rs,
+        water_fvf,
+        gas_water_rs,
+        water_sat,
+        water_comp,
+        rock_comp,
+        oil_fvf_init,
+        gas_fvf_init,
+        tot_fvf_init,
+        gas_oil_rs_init,
+        pressure_init,
 ) -> pd.DataFrame:
     """
     Calculates the terms of the Havlena and Odeh equation using the cumulative
@@ -558,27 +580,27 @@ def ho_terms_equation(
 
 
 def campbell_function(
-    data: pd.DataFrame,
-    oil_cum_col: str,
-    water_cum_col: str,
-    gas_cum_col: str,
-    p_col: str,
-    uw_col: str,
-    eo_col: str,
-    efw_col: str,
-    oil_fvf,
-    gas_fvf,
-    gas_oil_rs,
-    water_fvf,
-    gas_water_rs,
-    water_sat,
-    water_comp,
-    rock_comp,
-    oil_fvf_init,
-    gas_fvf_init,
-    tot_fvf_init,
-    gas_oil_rs_init,
-    pressure_init,
+        data: pd.DataFrame,
+        oil_cum_col: str,
+        water_cum_col: str,
+        gas_cum_col: str,
+        p_col: str,
+        uw_col: str,
+        eo_col: str,
+        efw_col: str,
+        oil_fvf,
+        gas_fvf,
+        gas_oil_rs,
+        water_fvf,
+        gas_water_rs,
+        water_sat,
+        water_comp,
+        rock_comp,
+        oil_fvf_init,
+        gas_fvf_init,
+        tot_fvf_init,
+        gas_oil_rs_init,
+        pressure_init,
 ):
     """
     This function is able to plot the campbell plot for a required reservoir
@@ -681,27 +703,27 @@ def campbell_function(
 
 
 def havlena_and_odeh(
-    data: pd.DataFrame,
-    oil_cum_col: str,
-    water_cum_col: str,
-    gas_cum_col: str,
-    p_col: str,
-    uw_col: str,
-    eo_col: str,
-    eg_col: str,
-    oil_fvf,
-    gas_fvf,
-    gas_oil_rs,
-    water_fvf,
-    gas_water_rs,
-    water_sat,
-    water_comp,
-    rock_comp,
-    oil_fvf_init,
-    gas_fvf_init,
-    tot_fvf_init,
-    gas_oil_rs_init,
-    pressure_init,
+        data: pd.DataFrame,
+        oil_cum_col: str,
+        water_cum_col: str,
+        gas_cum_col: str,
+        p_col: str,
+        uw_col: str,
+        eo_col: str,
+        eg_col: str,
+        oil_fvf,
+        gas_fvf,
+        gas_oil_rs,
+        water_fvf,
+        gas_water_rs,
+        water_sat,
+        water_comp,
+        rock_comp,
+        oil_fvf_init,
+        gas_fvf_init,
+        tot_fvf_init,
+        gas_oil_rs_init,
+        pressure_init,
 ):
     """
     This function is able to plot the Havlena and Odeh straight line, which is useful
@@ -817,3 +839,271 @@ def havlena_and_odeh(
     plt.text(0.008, 1, text)
     plt.legend()
     plt.show()
+
+
+"""
+This part of this module contains functions that are used to calculate the poes through the analytical method
+"""
+
+
+def ebm(p,
+        pi,
+        n_p,
+        wp,
+        bo,
+        cf,
+        cw,
+        sw0,
+        boi,
+        poes,
+        we,
+        bw) -> float:
+    """
+
+    :param:
+        - p: pressure [Psi]
+        - pi: initial pressure
+        - n_p: oil cumulative production
+        - wp: water cumulative production
+        - bo: oil volumetric factor
+        - cf: total compressibility
+        - cw: water compressibility
+        - sw0: initial water saturation
+        - boi: initial oil volumetric factor
+        - poes: inferred poes
+        - we: influx of water
+        - bw: water volumetric factor
+    :return:
+        float: function_p
+    """
+    eo = bo - boi
+    efw = boi * (((cw * sw0) + cf) / (1 - sw0)) * (pi - p)
+    f = (n_p * bo) + (wp * bw)
+    func_p = (poes * (eo + efw)) + (we * bw) - f
+    return func_p
+
+
+def aquifer_fetkovich(
+        aq_radius: float,
+        res_radius: float,
+        aq_thickness: float,
+        aq_por: float,
+        ct: float,
+        p: float,
+        theta: float,
+        k: float,
+        water_visc: float,
+        p_anterior: float,
+        cum: float,
+        pi: float
+) -> float:
+    """
+    Simplified function of the Fetkovich class for calculating the accumulated influx of water
+    :param:
+    - aq_radius (float): Aquifer ratio value (ft)
+    - res_radius (float):  Reservoir ratio value (ft)
+    - aq_thickness (float):  Aquifer thickness (ft)
+    - aq_por (float): Aquifer porosity (decimal)
+    - ct (float): Total compressibility
+    - pr (list): Pressures of reservoir
+    - theta (float): Aquifer angle degrees
+    - k (float): permeability value (mD)
+    - water_visc (float): Viscosity value
+    - p_anterior (float): anterior pressure to pi
+    - cum (float): cumulative
+    - pi (float): initial pressure
+
+    :return:
+        - float: we cumulative influx of water
+    """
+    delta_t = 365
+    wi = (math.pi / 5.615) * (aq_radius ** 2 - res_radius ** 2) * aq_thickness * aq_por
+    f = theta / 360
+    wei = ct * wi * pi * f
+    rd = aq_radius / res_radius
+    j = (0.00708 * k * aq_thickness * f) / (water_visc * (math.log(abs(rd))))
+    pa = pi * (1 - (cum / wei))
+    pr_avg = (p_anterior + p) / 2
+    we = (wei / pi) * (1 - np.exp((-1 * j * pi * delta_t) / wei)) * (pa - pr_avg)
+    cum_water_influx = cum + we
+    return cum_water_influx
+
+
+def press(
+        p: float,
+        n_p: float,
+        wp: float,
+        cf: float,
+        t: float,
+        salinity: float,
+        df_pvt: pd.DataFrame,
+        aq_radius: float,
+        res_radius: float,
+        aq_thickness: float,
+        aq_por: float,
+        theta: float,
+        k: float,
+        water_visc: float,
+        p_anterior: float,
+        cum: float,
+        pi: float,
+        sw0: float,
+        poes: float,
+        boi: float,
+        ppvt_col: str,
+        oil_fvf_col: str,
+):
+    """
+    This function calculates reservoir pressure based on oil properties,
+    oil and water production, and aquifer influence.
+
+    :param:
+        - p: Reservoir pressure
+        - n_p: Oil cumulative production
+        - wp: Water cumulative production
+        - cf: Total compressibility
+        - t: Temperature [F]
+        - salinity: Salinity value
+        - df_pvt: PVT DataFrame
+        - aq_radius: Aquifer ratio
+        - res_radius: Reservoir ratio
+        - aq_thickness: Aquifer thickness
+        - aq_por: Aquifer porosity
+        - theta: Angle of aquifer
+        - k: permeability
+        - water_visc: Water viscosity
+        - p_anterior: anterior pressure
+        - cum: cumulative
+        - pi: initial pressure
+        - sw0: initial water saturation
+        - poes: Inferred poes
+        - boi: initial oil volumetric factor
+        - ppvt_col: Column name of pressure in PVT DataFrame
+        - oil_fvf_col: Column name of Bo
+    :return:
+        - pressure
+    """
+    # Parameters that depend on pressure
+    bo = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, p)
+    bw = Bo_bw(p, t, salinity, unit=1)
+    cw = comp_bw_nogas(p, t, salinity, unit=1)
+    ct = cw + cf
+    we = aquifer_fetkovich(
+        aq_radius,
+        res_radius,
+        aq_thickness,
+        aq_por,
+        ct,
+        p,
+        theta,
+        k,
+        water_visc,
+        p_anterior,
+        cum,
+        pi,
+    )
+    return ebm(p, pi, n_p, wp, bo, cf, cw, sw0, boi, poes, we, bw)
+
+
+def calculated_pressure(
+        np_frame: pd.Series,
+        wp_frame: pd.Series,
+        cf: float,
+        t: float,
+        salinity: float,
+        df_pvt: pd.DataFrame,
+        aq_radius: float,
+        res_radius: float,
+        aq_thickness: float,
+        aq_por: float,
+        theta: float,
+        k: float,
+        water_visc: float,
+        pi: float,
+        sw0: float,
+        poes: float,
+        ppvt_col: str,
+        oil_fvf_col: str,
+):
+    """
+    This function calculates the reservoir pressure for each record in the df_ta2 dataframe
+    using scipy's fsolve function to solve the material balance equations iteratively.
+
+    :param:
+        - np_frame: Column of oil cumulative production
+        - wp_frame: Column of water cumulative production
+        - cf: Total compressibility
+        - t: Temperature [F]
+        - salinity: Salinity value
+        - df_pvt: PVT DataFrame
+        - aq_radius: Aquifer ratio
+        - res_radius: Reservoir ratio
+        - aq_thickness: Aquifer thickness
+        - aq_por: Aquifer porosity
+        - theta: Angle of aquifer
+        - k: permeability
+        - water_visc: Water viscosity
+        - pi: initial pressure
+        - sw0: initial water saturation
+        - poes: Inferred poes
+        - ppvt_col: Column name of pressure in PVT DataFrame
+        - oil_fvf_col: Column name of Bo
+    """
+    # initial values
+    boi = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, pi)
+    cum = 0
+    calculated_p = [pi]
+    x0 = pi
+
+    # Iteration of each of the years
+    for i in range(len(np_frame)):
+        n_p = np_frame[i]
+        wp = wp_frame[i]
+        p_anterior = calculated_p[i]
+        # Calculate current reservoir pressure given all other material balance variables through numeric solving.
+        pressure = fsolve(
+            press,
+            x0,
+            args=(
+                n_p,
+                wp,
+                cf,
+                t,
+                salinity,
+                df_pvt,
+                aq_radius,
+                res_radius,
+                aq_thickness,
+                aq_por,
+                theta,
+                k,
+                water_visc,
+                p_anterior,
+                cum,
+                pi,
+                sw0,
+                poes,
+                boi,
+                ppvt_col,
+                oil_fvf_col,
+            ),
+        )[0]
+        x0 = pressure
+        calculated_p.append(pressure)
+        cw = comp_bw_nogas(pressure, t, salinity, unit=1)
+        ct = cf + cw
+        cum = aquifer_fetkovich(
+            aq_radius,
+            res_radius,
+            aq_thickness,
+            aq_por,
+            ct,
+            pressure,
+            theta,
+            k,
+            water_visc,
+            p_anterior,
+            cum,
+            pi,
+        )
+    return calculated_p

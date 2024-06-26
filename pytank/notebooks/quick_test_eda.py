@@ -1,6 +1,5 @@
 import pandas as pd
 from pytank.fluid_model.fluid import OilModel, WaterModel
-from pytank.notebooks.get_wells import tank_wells
 from pytank.tank.tank import Tank
 from pytank.analysis.poes import Analysis
 from pytank.notebooks.quick_test_tank import well
@@ -8,7 +7,6 @@ from pytank.notebooks.quick_test_tank import well
 # Quicktest
 df_pvt = pd.read_csv("../resources/data_csv/pvt.csv")
 
-tank_dict = tank_wells
 tank_name = "tank_center"
 
 oil_model = OilModel(

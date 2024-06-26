@@ -1,10 +1,24 @@
-from calendar import monthrange
+"""
+utilities.py
+
+This module contains several functions that are helpful for other functions and classes in the library.
+
+Libraries:
+    - calendar
+    - datetime
+    - pandera
+    - pandas
+    - numpy
+    - typing
+"""
+
 import datetime
-from pandera import Column, Check, DataFrameSchema
 import pandas as pd
-from pytank.constants.constants import DATE_COL, VALID_FREQS, PRESSURE_COL
 import numpy as np
+from pandera import Column, Check, DataFrameSchema
+from pytank.constants.constants import DATE_COL, VALID_FREQS, PRESSURE_COL
 from typing import Union, Optional, Sequence
+from calendar import monthrange
 
 
 def days_in_month(date):
@@ -213,7 +227,7 @@ def variable_type(obj):
 def add_date_index_validation(base_schema: DataFrameSchema, freq: str = None) -> DataFrameSchema:
     """Add a date index validation to a base schema."""
     if freq is None:
-        # Si freq es None, simplemente agregamos una columna de fecha sin validación
+        # iF freq is None, we just add a date column without validation
         new_schema = base_schema.add_columns(
             {
                 DATE_COL: Column(

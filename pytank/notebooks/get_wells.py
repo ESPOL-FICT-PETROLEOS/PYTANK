@@ -1,6 +1,11 @@
 # %%
 # Importing necessary libraries and modules
+import warnings
+from collections import defaultdict
+
 import pandas as pd
+from pandera.errors import SchemaError
+
 from pytank.constants.constants import (OIL_CUM_COL,
                                         WATER_CUM_COL,
                                         GAS_CUM_COL,
@@ -9,12 +14,9 @@ from pytank.constants.constants import (OIL_CUM_COL,
                                         TANK_COL,
                                         DATE_COL
                                         )
-from pytank.vector_data.vector_data import ProdVector, PressVector
-from pytank.well.well import CreateWell,Well
-from collections import defaultdict
-from pandera.errors import SchemaError
 from pytank.functions.utilities import normalize_date_freq
-import warnings
+from pytank.vector_data.vector_data import ProdVector, PressVector
+from pytank.well.well import _CreateWell
 
 # Avoid warnings
 warnings.filterwarnings("ignore", message="DataFrame.fillna with 'method' is deprecated")
@@ -26,7 +28,7 @@ df_production.set_index(df_production[DATE_COL], inplace=True)
 
 # Data to process pressure info
 df_pressures = pd.read_csv("../resources/data_csv/pressures.csv")
-df_pressures.rename(columns={"DATE": "START_DATETIME", "WELLLBORE": "ITEM_NAME"}, inplace=True)
+df_pressures.rename(columns={"DATE": "START_DATETIME", "WELLBORE": "ITEM_NAME"}, inplace=True)
 df_pressures["START_DATETIME"] = pd.to_datetime(df_pressures["START_DATETIME"])
 
 # Empty dictionary for the different tanks
@@ -101,7 +103,7 @@ for name in all_wells:
             tank_name = group_press[TANK_COL].iloc[0]
 
         # Creating Well object with both production and pressure data
-    info_well = CreateWell(
+    info_well = _CreateWell(
         name=name,
         tank=tank_name,
         prod_data=prod_vector,
@@ -110,4 +112,3 @@ for name in all_wells:
 
     # Add the well to the tank dictionary
     tank_wells[tank_name].append(info_well)
-

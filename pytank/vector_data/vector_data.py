@@ -1,18 +1,27 @@
+"""
+vector_data.py
+
+This module defines the VectorData Class for handling vector data with specific validations schemas /
+and date indices.
+
+The logic is structured using classes and methods.
+
+libraries:
+    - pandas
+    - datetime
+    - typing
+    - pydantic
+    - pandera
+"""
+
 import pandas as pd
 from datetime import datetime
 from typing import Any
 from pydantic import BaseModel, PrivateAttr, validator
 from pandera import DataFrameSchema
 import pandera as pa
-from pytank.functions.utilities import add_date_index_validation, days_in_month
-# import matplotlib.pyplot as plt
+from pytank.functions.utilities import add_date_index_validation
 from pytank.constants.constants import (
-    WELL_COL,
-    OIL_CUM_COL,
-    WATER_CUM_COL,
-    GAS_CUM_COL,
-    PRESSURE_COL,
-    INJECTION_WATER,
     PROD_SCHEMA,
     PRESS_SCHEMA,
     INJ_SCHEMA,
@@ -20,6 +29,17 @@ from pytank.constants.constants import (
 
 
 class VectorData(BaseModel):
+    """
+    Class used to handle vector data with a specific validation scheme and date index.
+
+    :parameter:
+        - is_result: Indicates whether the vector is a result.
+        - data_schema: Validation scheme for the data.
+        - freq (str): Frequency of the data.
+        - use_pressure: Indicates whether the pressure is used.
+        - data: Data container.
+        - _start_date and _end_date: Private start and end dates.
+    """
     is_result: bool = False
     data_schema: DataFrameSchema = DataFrameSchema()
     freq: str | None
@@ -33,6 +53,14 @@ class VectorData(BaseModel):
 
     @validator("data")
     def validate_data(cls, v, values):
+        """
+        Validate the dates with the specific scheme
+        :param
+            - v:
+            - values:
+        :return:
+            - data_schema
+        """
         new_schema = add_date_index_validation(values["data_schema"], values["freq"])
 
         cls.data_schema = new_schema
@@ -40,17 +68,33 @@ class VectorData(BaseModel):
 
     @property
     def start_date(self):
+        """
+        :return:
+            - start date
+        """
         if self._start_date is None:
             self._start_date = self.data.index.min()
         return self._start_date
 
     @property
     def end_date(self):
+        """
+        :return:
+            - end date
+        """
         if self._end_date is None:
             self._end_date = self.data.index.max()
         return self._end_date
 
     def equal_date_index(self, other) -> bool:
+        """
+        Compare the vector_data objects
+
+        :param other:
+
+        :return:
+        A comparative
+        """
         return all(
             [
                 self.start_date == other.start_date,
@@ -60,9 +104,16 @@ class VectorData(BaseModel):
         )
 
     def get_date_index(self) -> pd.DatetimeIndex:
+        """
+        :return:
+            - Date index of data
+        """
         return self.data.index
 
     def _eq_(self, other):
+        """
+        Compare two VectorDara Objects
+        """
         return all(
             [
                 self.data_schema == other.data_schema,
@@ -72,9 +123,16 @@ class VectorData(BaseModel):
         )
 
     def _len_(self):
+        """
+        :return:
+            - The length of the data
+        """
         return len(self.data)
 
     def _add_(self, other):
+        """
+        Allows the addition of two VectorData objects or a VectorData with a number or a series.
+        """
         if isinstance(other, VectorData):
             if self == other:
                 """If the two VectorData have the same schema, then we can just add
@@ -140,17 +198,28 @@ class VectorData(BaseModel):
                 )
 
     def _radd_(self, other):
+        """
+        Reverse addition to allow addition of a number with a VectorData.
+        """
         return self.add(other)
 
 
 class ProdVector(VectorData):
+    """
+    This class is used to handle production data with a specific scheme.
+    """
     data_schema: DataFrameSchema = PROD_SCHEMA
 
 
 class PressVector(VectorData):
+    """
+    This class is used to handle pressure data with a specific scheme.
+    """
     data_schema: DataFrameSchema = PRESS_SCHEMA
 
 
 class InjVector(VectorData):
+    """
+    This class is used to handle injection data with a specific scheme.
+    """
     data_schema: DataFrameSchema = INJ_SCHEMA
-

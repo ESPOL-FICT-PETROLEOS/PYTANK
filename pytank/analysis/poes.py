@@ -1,12 +1,26 @@
+"""
+poes.py
+
+This archive.py defines to calculated POES from material balance equation.
+
+The logic is structure using Classes and methods.
+
+libraries:
+    - pandas
+    - matplotlib
+    - pydantic
+    - pandera
+    - scipy
+    - typing
+"""
 import pandas as pd
 import pandera as pa
-import numpy as np
 from matplotlib.font_manager import FontProperties
 from pandera.typing import Series
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from scipy import stats
-from scipy.optimize import fsolve
+from typing import Union
 from pytank.constants.constants import (OIL_FVF_COL,
                                         GAS_FVF_COL,
                                         RS_COL,
@@ -28,12 +42,40 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         RES_EXP,
                                         WE)
 from pytank.functions.utilities import interp_dates_row
-from pytank.functions.pvt_interp import interp_pvt_matbal
-from pytank.functions.material_balance import underground_withdrawal, pressure_vol_avg, ho_terms_equation
-from pytank.tank.tank import Tank, _PressSchema, _ProdSchema
-from pytank.aquifer.aquifer_model import Fetkovich, Carter_Tracy
-from pytank.functions.function2 import press, calcuted_pressure, G_method2
-from typing import Optional
+from pytank.functions.material_balance import (underground_withdrawal,
+                                               pressure_vol_avg,
+                                               ho_terms_equation,
+                                               calculated_pressure)
+from pytank.tank.tank import Tank
+from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
+
+
+class _PressSchema(pa.DataFrameModel):
+    """
+    Private Class to validate data of df_press_int method in Tank Class
+    """
+    PRESSURE_DATUM: Series[float] = pa.Field(nullable=False)
+    WELL_BORE: Series[str] = pa.Field(nullable=False)
+    START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
+    Bo: Series[float] = pa.Field(nullable=False)
+    Bg: Series[float] = pa.Field(nullable=True)
+    GOR: Series[float] = pa.Field(nullable=False)
+    Bw: Series[float] = pa.Field(nullable=False)
+    RS_bw: Series[float] = pa.Field(nullable=False)
+    Tank: Series[str] = pa.Field(nullable=False)
+
+
+class _ProdSchema(pa.DataFrameModel):
+    """
+    Private Class to validate data of df_prod_int method in Tank Class
+    """
+    OIL_CUM: Series[float] = pa.Field(nullable=False)
+    WATER_CUM: Series[float] = pa.Field(nullable=False)
+    GAS_CUM: Series[float] = pa.Field(nullable=False)
+    LIQ_CUM: Series[float] = pa.Field(nullable=False)
+    WELL_BORE: Series[str] = pa.Field(nullable=False)
+    START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
+    Tank: Series[str] = pa.Field(nullable=False)
 
 
 class _DFMbalSchema(pa.DataFrameModel):
@@ -55,27 +97,45 @@ class _DFMbalSchema(pa.DataFrameModel):
 
 
 class Analysis(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-
+    """
+    Class to calculate POES graphically and analytically.
+    It also allows to project graphics:
+        - DataFrame with necessary information to material balance
+        - Campbell
+        - Exploratory data analysis (EDA) through graphics
+    """
     tank_class: Tank
     freq: str
     position: str
 
+    class Config:
+        arbitrary_types_allowed = True
+
     def __init__(self, tank_class, freq, position):
+        """
+        :param:
+        tank_class: Instance of Tank class.
+        freq:  Frequency of data to balance of material equation.
+        position: Position of frequency of date
+        """
         super().__init__(tank_class=tank_class, freq=freq, position=position)
 
     def _calc_uw(self) -> pd.DataFrame:
-        df_press = self.tank_class._press_df_int()
-        df_prod = self.tank_class._prod_df_int()
-        # df_press = df_press.loc[df_press[TANK_COL] == self.tank_class.name]
+        """
+        Internal method to calculate underground withdrawal (F) per well using underground_withdrawal() function.
+        :return:
+        - pd.Dataframe: A DataFrame with underground withdrawal (F) information.
+        """
+
+        # Call the internal methods that process production and pressure data
+        df_press = self.tank_class.get_pressure_df()
+        df_prod = self.tank_class.get_production_df()
 
         # Validate df_press and df_prod
         df_press_validate = pd.DataFrame(_PressSchema.validate(df_press))
         df_prod_validate = pd.DataFrame(_ProdSchema.validate(df_prod))
-        # df_prod = df_prod.loc[df_prod[TANK_COL]==self.tank_class.name]
 
-        # Calculate the accumulated production in the pressure dataframe, based on the production dataframe
+        # Calculate the accumulated production in the pressure dataframe, based on the production dataframe.
         for col in [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]:
             df_press_validate[col] = df_press_validate.apply(
                 lambda x: interp_dates_row(
@@ -86,7 +146,7 @@ class Analysis(BaseModel):
             # For wells not available in the production data frame, fill nans with 0
             df_press_validate.fillna({col: 0.0}, inplace=True)
 
-        uw_well = []
+        uw_well = []  # Empty list to uw values
         for well, group in df_press_validate.groupby(WELL_COL):
             group[UW_COL] = underground_withdrawal(
                 group,
@@ -105,6 +165,13 @@ class Analysis(BaseModel):
         return df_press_validate
 
     def _pressure_vol_avg(self) -> pd.DataFrame:
+        """
+        Internal method to calculate the average pressure per tank using press_vol_avg() function.
+        :return:
+            - pd.DataFrame: A DataFrame with the average pressure column
+        """
+        # Encapsulation of DataFrame from internal private method
+
         df_press = self._calc_uw()
         df_press_avg = (
             df_press.groupby(TANK_COL).apply(
@@ -125,17 +192,33 @@ class Analysis(BaseModel):
         """
         Obtain material balance parameters at a certain frequency
 
-        Returns
-        -------
-        pd.DataFrame
+        :return:
+            - pd.DataFrame: A Dataframe with the follow columns:
+                - Tank: Name of Tank
+                - START_DATETIME: Date
+                - PRESSURE_DATUM: Pressure value
+                - OIL_CUM_TANK: Oil cumulative production
+                - WATER_CUM_TANK: Water cumulative production
+                - GAS_CUM_TANK: Gas cumulative production
+                - Bo: Oil volumetric factor
+                - Bg: Gas volumetric factor
+                - GOR: Oil Solubility
+                - Bw: Water volumetric factor
+                - Rs_bw: Water Solubility
+                - Time_Step: Time lapses
+                - UW: F underground withdrawal
+                - Eo: Oil Expansion
+                - Eg: Gas Expansion
+                - Efw: Rock-fluid Expansion
+                - Cumulative We: Cumulative influx of water
         """
+        # Encapsulation of DataFrame from internal private method
         avg = self._pressure_vol_avg()
 
         #  Validate df_prod from _prod_df_int
-        prod = pd.DataFrame(_ProdSchema.validate(self.tank_class._prod_df_int()))
+        prod = pd.DataFrame(_ProdSchema.validate(self.tank_class.get_production_df()))
 
-        df_pvt = self.tank_class.oil_model.data_pvt
-
+        # Linear interpolated of average pressure
         avg[PRESSURE_COL] = avg[PRESSURE_COL].interpolate(method="linear")
 
         cols_input = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]
@@ -151,6 +234,7 @@ class Analysis(BaseModel):
             .reset_index()
         )
 
+        # Rename of columns of DataFrame
         df_tank.rename(columns={
             "oil_vol": OIL_CUM_COL,
             "water_vol": WATER_CUM_COL,
@@ -171,14 +255,13 @@ class Analysis(BaseModel):
                 axis=1
             )
 
+        # Sort by dates of DataFrame
         df_mbal = avg.sort_values(DATE_COL)
 
         # Interpolated PVT properties from pres_avg
-        for col, prop in zip([OIL_FVF_COL, GAS_FVF_COL, RS_COL],
-                             [OIL_FVF_COL, GAS_FVF_COL, RS_COL]):
-            df_mbal[col] = df_mbal[PRESSURE_COL].apply(
-                lambda press: interp_pvt_matbal(df_pvt, PRESSURE_PVT_COL, prop, press)
-            )
+        df_mbal[OIL_FVF_COL] = self.tank_class.oil_model.get_bo_at_press(df_mbal[PRESSURE_COL])
+        df_mbal[GAS_FVF_COL] = self.tank_class.oil_model.get_bg_at_press(df_mbal[PRESSURE_COL])
+        df_mbal[RS_COL] = self.tank_class.oil_model.get_rs_at_press(df_mbal[PRESSURE_COL])
 
         # In case properties are calculated using correlations
         if (self.tank_class.water_model.salinity is not None
@@ -192,10 +275,12 @@ class Analysis(BaseModel):
             df_mbal[WATER_FVF_COL] = self.tank_class.water_model.get_default_bw()
             df_mbal[RS_W_COL] = self.tank_class.water_model.get_default_rs()
 
+        # Creation of time lapses columns
         df_mbal["Time_Step"] = 365.0
         df_mbal.loc[df_mbal.index[1:], "Time_Step"] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
         df_mbal = df_mbal.fillna(0.0)
 
+        # Calculated values of Eo, Eg, Efw and F columns
         mbal_term = ho_terms_equation(
             df_mbal,
             OIL_CUM_TANK,
@@ -217,6 +302,8 @@ class Analysis(BaseModel):
             self.tank_class.pi
         )
         mbal_final_per_tank = mbal_term.fillna(0.0)
+
+        # Creation of WE value according to the aquifer model
         if self.tank_class.aquifer is None:
             mbal_final_per_tank[WE] = 0.0
 
@@ -227,14 +314,39 @@ class Analysis(BaseModel):
             # mbal_final_per_tank[WE] = list_we
             # mbal_final_per_tank = pd.concat([df["Cumulative We"], mbal_final_per_tank], axis=1)
 
-        elif isinstance(self.tank_class.aquifer, Carter_Tracy):
+        elif isinstance(self.tank_class.aquifer, CarterTracy):
             df = self.tank_class.aquifer.we()
             mbal_final_per_tank = mbal_final_per_tank.join(df["Cumulative We"])
             # mbal_final_per_tank = pd.concat([df["Cumulative We"], mbal_final_per_tank], axis=1)
 
+        # final mbal DataFrame
         return mbal_final_per_tank
 
-    def campbell(self, option):
+    def campbell(self, option: str) -> Union[pd.DataFrame, plt.Figure]:
+        """
+        Method to graphic the Campbell graph to be able to graphically see the energy /
+        contribution of the aquifer.
+
+        :param:
+        option (str): The option that determines the type of result and graph to be displayed.
+        It can be "plot" or "data"
+
+        :return:
+        Union[pd.DataFrame, plt.Figure]:
+            - pd.Dataframe: If option is "data", returns a Dataframe.
+            - plt.Figure: If option is "plot", return a matplotlib figure object containing the plot
+
+        :raise:
+        ValueError: If the option is not "data" or "plot".
+
+        :examples:
+            instance = Analysis()
+            df = instance.campbell("data")
+            print(df)
+
+            figure = instance.havlena_odeh("plot")
+            figure.show()
+        """
         mbal_df = self.mat_bal_df()
         y = mbal_df[UW_COL] / (mbal_df[OIL_EXP] + mbal_df[RES_EXP])
         x = mbal_df[OIL_CUM_TANK]
@@ -250,42 +362,37 @@ class Analysis(BaseModel):
             ax1.set_xlabel("Np Cumulative Oil Production [MMStb]")
             ax1.set_ylabel("F/Eo+Efw")
             ax1.set_title(f"Campbell plot of " + str(mbal_df["Tank"][0].replace("_", " ")))
-            plt.show()
+            # Annotation
+            return fig
 
-    def havlena_odeh(self, option):
-        mbal_df = self.mat_bal_df()
-        data = G_method2(mbal_df[PRESSURE_COL], mbal_df[OIL_CUM_TANK], mbal_df[WATER_CUM_TANK], mbal_df[OIL_FVF_COL],
-                         self.tank_class.cf,
-                         self.tank_class.swo, self.tank_class.oil_model.get_bo_at_press(self.tank_class.pi),
-                         mbal_df[WE], self.tank_class.pi, self.tank_class.water_model.temperature,
-                         self.tank_class.water_model.salinity)
-        slope, intercept, r, p, se = stats.linregress(data["We*Bw/Et"], data["F/Eo+Efw"])
+        else:
+            raise ValueError("Option no validate. Use 'data' or 'plot'.")
 
-        # Data
-        if option == "data":
-            poes = str(f"N [MMStb]: {intercept / 1000000:.4f}")
-            # print(poes)
-            return poes
+    def havlena_odeh(self, option: str) -> Union[pd.DataFrame, plt.Figure]:
+        """
+        Calculate results based on Havlena and Odeh Methods and show a graphic.
 
-        # Graphic
-        elif option == "plot":
-            fig, ax1 = plt.subplots()
-            ax1.scatter(data["We*Bw/Et"], data["F/Eo+Efw"], color="blue")
-            reg_line = (slope * data["We*Bw/Et"]) + intercept
-            ax1.plot(data["We*Bw/Et"], reg_line, color="red", label="Regression line")
-            ax1.set_xlabel("We*Bw/Et")
-            ax1.set_ylabel("F/Eo+Efw")
-            ax1.set_title("Havlena y Odeh plot of " + str(mbal_df["Tank"][0].replace("_", " ")))
-            ax1.annotate(
-                "N [MMStb]: {:.2f}".format(intercept / 1000000),
-                xy=(3, 5),
-                xytext=(4, 5)
-            )
-            ax1.legend()
-            plt.grid(True)
-            plt.show()
+        :param option:
+        option (str): The option that determines the type of result and graph to be displayed.
+        It can be "plot" or "data"
 
-    def havlena_odeh2(self, option):
+        :return:
+        Union[pd.DataFrame, plt.Figure]:
+            - pd.Dataframe: If option is "data", returns a Dataframe.
+            - plt.Figure: If option is "plot", return a matplotlib figure object containing the plot.
+
+        :raise:
+        ValueError: It the option is not "plot" or "data"
+
+        :Examples:
+            instance = Analysis()
+            df = instance.havlena_odeh("data")
+            print(df)
+
+            figure = instance.havlena_odeh("plot")
+            figure.show()
+        """
+        # Data Processing
         mbal_df = self.mat_bal_df()
         y = mbal_df[UW_COL] - mbal_df[WE]
         x = mbal_df[OIL_EXP] + mbal_df[RES_EXP]
@@ -295,8 +402,8 @@ class Analysis(BaseModel):
         # Data
         if option == "data":
             poes = str(f"N [MMStb]: {slope / 1000000:.4f}")
-            # print(poes)
-            return poes
+            print(poes)
+            return data
 
         # Graphic
         elif option == "plot":
@@ -309,21 +416,114 @@ class Analysis(BaseModel):
             ax2.set_title("Havlena y Odeh plot of " + str(mbal_df["Tank"][0].replace("_", " ")))
             ax2.annotate(
                 "N [MMStb]: {:.2f}".format(slope / 1000000),
-                xy=(0.035, 0.2),
-                xytext=(10, 3)
+                xy=(3, 5),
+                xytext=(0.032, 1)
             )
             ax2.legend()
             plt.grid(True)
-            plt.show()
+            return fig
 
-    def eda(self, method, option=None):
+        else:
+            raise ValueError("Option no validate. Use 'data' or 'plot'.")
+
+    def analytic_method(self, poes: float, option: str) -> Union[pd.DataFrame, plt.Figure]:
+        """
+        Method used to calculate the POES through an inferred POES that ensures that there is /
+        the best match between the behavior of the observed pressure and the calculated pressure.
+        the calculation is done through calculated_pressure function
+
+        :param:
+        poes (float): Inferred N [MMStb] value
+        option (str): Can be:
+            - "data": Gets a DataFrame with the observed and calculated pressure columns.
+            - "plot: Gets a Graph with the behavior of observed and calculated pressure per date.
+
+        :return:
+        Union[pd.DataFrame, plt.Figure]:
+            - pd.DataFrame: A DataFrame with data of Date, Observed Pressure and Calculated Pressure columns
+            - plt.Figure: A graph of observed and calculated pressure per Date to see its behavior.
+        """
+
+        # Encapsulation of material balance DataFrame from mat_bal_df() method
+        df = self.mat_bal_df()
+
+        # Call the function to calculate the new pressure
+        press_calc = calculated_pressure(df[OIL_CUM_TANK],
+                                         df[WATER_CUM_TANK],
+                                         self.tank_class.cf,
+                                         self.tank_class.water_model.temperature,
+                                         self.tank_class.water_model.salinity,
+                                         self.tank_class.oil_model.data_pvt,
+                                         self.tank_class.aquifer.aq_radius,
+                                         self.tank_class.aquifer.res_radius,
+                                         self.tank_class.aquifer.aq_thickness,
+                                         self.tank_class.aquifer.aq_por,
+                                         self.tank_class.aquifer.theta,
+                                         self.tank_class.aquifer.k,
+                                         self.tank_class.aquifer.water_visc,
+                                         self.tank_class.pi,
+                                         self.tank_class.swo,
+                                         poes,
+                                         PRESSURE_PVT_COL,
+                                         OIL_FVF_COL)
+
+        # Aad the first date to initial pressure
+        dates = df[[DATE_COL, PRESSURE_COL]]
+        new_date = df[DATE_COL].min() - pd.Timedelta(days=365)
+        n_row = pd.DataFrame({DATE_COL: new_date}, index=[0])
+        data = pd.concat([n_row, dates]).reset_index(drop=True)
+        data.loc[0, PRESSURE_COL] = self.tank_class.pi
+
+        # Add the Calculated Pressure column
+        data["PRESS_CALC"] = press_calc
+
+        if option == "data":
+            return data[[DATE_COL, PRESSURE_COL, "PRESS_CALC"]]
+
+        elif option == "plot":
+            fig8, ax8 = plt.subplots(figsize=(15, 10))
+            ax8.scatter(data[DATE_COL].dt.year, data[PRESSURE_COL], label="Observed Pressure")
+            ax8.plot(data[DATE_COL].dt.year, press_calc, c="g", label="Calculated Pressure")
+            plt.title("Plot Pressure vs Time", fontsize=15)
+            plt.xlabel("Time (Years)", fontsize=15)
+            plt.ylabel("Pressure (PSI)", fontsize=15)
+            ax8.set_ylim(0, 4000)
+            plt.yticks(fontsize=15)
+            ax8.grid(axis="both", color="lightgray", linestyle="dashed")
+            plt.legend(fontsize=15)
+            return fig8
+
+        else:
+            raise ValueError("Option no validate. Use 'data' or 'plot'.")
+
+    def eda(self, method: str, option: str = None) -> plt.Figure:
+        """
+        Method that serves to carry out an exploratory analysis through the necessary data and graphs that show
+        the behavior of the tank properties.
+
+        parameter
+        method (str): A string can be:
+            - "production_per_well"
+            - "cumulative_production_per_date"
+            - "pressure_per_date"
+            - "pressure_per_cumulative_production"
+        option (str): Depending on the method, you can graph different scenarios
+
+        :return:
+            -plt.Figure: A graph of the given information.
+
+        :examples:
+            instance = Analysis()
+            figure = instance.eda(method, option)
+            figure.show()
+        """
         # Production Data
-        df_prod = self.tank_class._prod_df_int()
+        df_prod = self.tank_class.get_production_df()
         df_prod[DATE_COL] = pd.to_datetime(df_prod[DATE_COL])
         df_prod = df_prod.sort_values(by=DATE_COL)
 
         # Pressure Data
-        df_press = self.tank_class._press_df_int()
+        df_press = self.tank_class.get_pressure_df()
         df_press[DATE_COL] = pd.to_datetime(df_press[DATE_COL])
         df_press = df_press.sort_values(by=DATE_COL)
 
@@ -360,10 +560,10 @@ class Analysis(BaseModel):
             ax.legend(loc='upper left', fontsize=12)
             plt.grid(True)
             plt.tight_layout()
-            plt.show()
+            return fig
 
         # Cumulative production per Date
-        if method == "cumulative_production_per_date":
+        elif method == "cumulative_production_per_date":
             # Oil and Water
             if option == "liquids":
                 fig1, ax1 = plt.subplots(figsize=(10, 6))
@@ -381,7 +581,7 @@ class Analysis(BaseModel):
 
                 plt.gcf().autofmt_xdate()
                 plt.grid(True)
-                plt.show()
+                return fig1
 
             # Total Production
             elif option == "total_liquids":
@@ -400,10 +600,13 @@ class Analysis(BaseModel):
 
                 plt.gcf().autofmt_xdate()
                 plt.grid(True)
-                plt.show()
+                return fig2
+
+            else:
+                raise ValueError("Option no validate. Use 'liquids' or 'total_liquids'.")
 
         # Pressure per Date
-        if method == "pressure_per_date":
+        elif method == "pressure_per_date":
             # Observed Pressure
             if option == "observed":
                 fig3, ax3 = plt.subplots(figsize=(10, 6))
@@ -438,7 +641,7 @@ class Analysis(BaseModel):
 
                 plt.gcf().autofmt_xdate()
                 plt.grid(True)
-                plt.show()
+                return fig4
 
             # Both pressures
             elif option == "both":
@@ -452,10 +655,13 @@ class Analysis(BaseModel):
 
                 plt.gcf().autofmt_xdate()
                 plt.grid(True)
-                plt.show()
+                return fig5
+
+            else:
+                raise ValueError("Option no validate. Use 'observed','avg' or 'both'.")
 
         # Pressure per Cumulative Production
-        if method == "pressure_per_cumulative_production":
+        elif method == "pressure_per_cumulative_production":
             # Observed Pressure
             if option == "observed":
                 fig6, ax6 = plt.subplots(figsize=(10, 6))
@@ -473,7 +679,7 @@ class Analysis(BaseModel):
 
                 plt.gcf().autofmt_xdate()
                 plt.grid(True)
-                plt.show()
+                return fig6
 
             # Average Pressure
             elif option == "avg":
@@ -494,37 +700,11 @@ class Analysis(BaseModel):
 
                 plt.gcf().autofmt_xdate()
                 plt.grid(True)
-                plt.show()
+                return fig7
 
-    def analytic_method(self, N, option):
-        df = self.mat_bal_df()
-        press_calc = calcuted_pressure(df[OIL_CUM_TANK], df[WATER_CUM_TANK], self.tank_class.cf,
-                                       self.tank_class.water_model.temperature,
-                                       self.tank_class.water_model.salinity, self.tank_class.oil_model.data_pvt,
-                                       self.tank_class.aquifer.aq_radius, self.tank_class.aquifer.res_radius,
-                                       self.tank_class.aquifer.aq_thickness, self.tank_class.aquifer.aq_por,
-                                       self.tank_class.aquifer.theta, self.tank_class.aquifer.k,
-                                       self.tank_class.aquifer.water_visc, self.tank_class.pi,
-                                       self.tank_class.swo, N, PRESSURE_PVT_COL, "Bo")
-        dates = df[[DATE_COL, PRESSURE_COL]]
-        new_date = df[DATE_COL].min() - pd.Timedelta(days=365)
-        n_row = pd.DataFrame({DATE_COL: new_date}, index=[0])
-        data = pd.concat([n_row, dates]).reset_index(drop=True)
-        data.loc[0, PRESSURE_COL] = self.tank_class.pi
-        data["PRESS_CALC"] = press_calc
+            else:
+                raise ValueError("Option no validate. Use 'observed' or 'avg'.")
 
-        if option == "data":
-            return data[[DATE_COL, "PRESS_CALC"]]
-
-        elif option == "plot":
-            fig8, ax8 = plt.subplots(figsize=(15, 10))
-            ax8.scatter(data[DATE_COL].dt.year, data[PRESSURE_COL], label="Observed Pressure")
-            ax8.plot(data[DATE_COL].dt.year, press_calc, c="g", label="Calculated Pressure")
-            plt.title("Plot Pressure vs Time", fontsize=15)
-            plt.xlabel("Time (Years)", fontsize=15)
-            plt.ylabel("Pressure (PSI)", fontsize=15)
-            ax8.set_ylim(0, 4000)
-            plt.yticks(fontsize=15)
-            ax8.grid(axis="both", color="lightgray", linestyle="dashed")
-            plt.legend(fontsize=15)
-            plt.show()
+        else:
+            raise ValueError("Option no validate. Use: 'production_per_well', 'cumulative_production_per_date', "
+                             "'pressure_per_date' or 'pressure_per_cumulative_production'")
