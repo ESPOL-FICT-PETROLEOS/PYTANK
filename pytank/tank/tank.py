@@ -1,8 +1,19 @@
+"""
+tank.py
+
+This module defines the Tank CLass is to process data internally.
+
+Also, it works as a container for the reservoir properties.
+
+libraries:
+    - pandas
+    - pydantic
+    - typing
+"""
+
 import pandas as pd
-import pandera as pa
-from pandera.typing import Series
 from pydantic import BaseModel
-from typing import Union
+from typing import Union, Optional
 from pytank.constants.constants import (OIL_FVF_COL,
                                         GAS_FVF_COL,
                                         RS_COL,
@@ -18,39 +29,14 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         LIQ_CUM,
                                         )
 from pytank.fluid_model.fluid import OilModel, WaterModel
-from pytank.aquifer.aquifer_model import Fetkovich, Carter_Tracy
+from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
 from pytank.well.well import Well
 
 
-class _PressSchema(pa.DataFrameModel):
-    """
-    Private Class to validate data of df_press_int method in Tank Class
-    """
-    PRESSURE_DATUM: Series[float] = pa.Field(nullable=False)
-    WELL_BORE: Series[str] = pa.Field(nullable=False)
-    START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
-    Bo: Series[float] = pa.Field(nullable=False)
-    Bg: Series[float] = pa.Field(nullable=True)
-    GOR: Series[float] = pa.Field(nullable=False)
-    Bw: Series[float] = pa.Field(nullable=False)
-    RS_bw: Series[float] = pa.Field(nullable=False)
-    Tank: Series[str] = pa.Field(nullable=False)
-
-
-class _ProdSchema(pa.DataFrameModel):
-    """
-    Private Class to validate data of df_prod_int method in Tank Class
-    """
-    OIL_CUM: Series[float] = pa.Field(nullable=False)
-    WATER_CUM: Series[float] = pa.Field(nullable=False)
-    GAS_CUM: Series[float] = pa.Field(nullable=False)
-    LIQ_CUM: Series[float] = pa.Field(nullable=False)
-    WELL_BORE: Series[str] = pa.Field(nullable=False)
-    START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
-    Tank: Series[str] = pa.Field(nullable=False)
-
-
 class Tank(BaseModel):
+    """
+    Class that functions as a container for the reservoir (tank) properties.
+    """
     name: str
     wells: Well
     oil_model: OilModel
@@ -59,27 +45,49 @@ class Tank(BaseModel):
     swo: float
     cw: float
     cf: float
-    aquifer: Union[None, Fetkovich, Carter_Tracy]
+    aquifer: Optional[Union[None, Fetkovich, CarterTracy]]
 
     class Config:
         arbitrary_types_allowed = True
 
-    def __init__(self, name: str, wells: Well, oil_model: OilModel, water_model: WaterModel, pi: float, swo: float, cw: float, cf: float, aquifer: None) -> None:
-        super().__init__(name=name, wells=wells, oil_model=oil_model, water_model=water_model, pi=pi, swo=swo, cw=cw, cf=cf, aquifer=aquifer)
-
-    def _dict_tank(self):
-        pass
-
-    def _press_df_int(self):
+    def __init__(self, name: str,
+                 wells: Well,
+                 oil_model: OilModel,
+                 water_model: WaterModel,
+                 pi: float,
+                 swo: float,
+                 cw: float,
+                 cf: float,
+                 aquifer: Optional[Union[None, Fetkovich, CarterTracy]]):
         """
-        Private method that internally manages the pressure vector for use in the UW method
+        Init Method
+        :param
+            - name: Name of tank (reservoir)
+            - wells: Instance of Well Class (list)
+            - oil_model: Instance of OilModel Class
+            - water_model: Instance of WaterModel CLass
+            - pi: Initial Pressure [Psi]
+            - swo: Water initial saturation [decimal]
+            - cw: Water compressibility
+            - cf: Total compressibility
+            - aquifer: Instance of Aquifer Class
+        """
+        super().__init__(name=name,
+                         wells=wells,
+                         oil_model=oil_model,
+                         water_model=water_model,
+                         pi=pi,
+                         swo=swo,
+                         cw=cw,
+                         cf=cf,
+                         aquifer=aquifer)
 
-        Parameters
-        ----------
+    def _press_df_internal(self) -> pd.DataFrame:
+        """
+        Private method that internally manages the pressure vector for use in the UW method.
 
-        Returns
-        -------
-        A pressure DataFrame with properties PVT of oil and water
+        :return:
+            - pd.Dataframe: A pressure DataFrame with properties PVT of oil and water
         """
         df_press = pd.DataFrame()
         for well in self.wells.get_wells():
@@ -121,16 +129,22 @@ class Tank(BaseModel):
                 df_press = pd.concat([df_press, temp_df_press], ignore_index=True)
         return df_press
 
-    def _prod_df_int(self) -> pd.DataFrame:
+    def get_pressure_df(self) -> pd.DataFrame:
         """
-        Private method that internally manages production vector for use in the UW method
+        Gets a DatFrame with pressure data using the private _press_df_internal method
+        THIS METHOD IS MARKED PRIVATE FOR INTERNAL USE ONLY.
 
-        Parameters
-        ----------
+        :return:
+            pd.Dataframe: DataFrame with PVT properties.
+        """
+        return self._press_df_internal()
 
-        Returns
-        -------
-        A production DataFrame
+    def _prod_df_internal(self) -> pd.DataFrame:
+        """
+        Private method that internally manages production vector for use in the UW method.
+
+        :return:
+            - pd.Dataframe: A production DataFrame
 
         """
         df_prod = pd.DataFrame()
@@ -159,4 +173,12 @@ class Tank(BaseModel):
                 df_prod = pd.concat([df_prod, temp_df_prod], ignore_index=True)
         return df_prod
 
+    def get_production_df(self):
+        """
+        Gets a DataFrame with production data using the private _prod_df_internal method
+        THIS METHOD IS MARKED PRIVATE FOR INTERNAL USE ONLY.
 
+        :return:
+            pd.DataFrame: A DataFrame with cumulative production
+        """
+        return self._prod_df_internal()

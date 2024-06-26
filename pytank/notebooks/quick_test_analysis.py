@@ -10,8 +10,6 @@ from pytank.tank.tank import Tank
 # No Aquifer Case
 analisis1 = Analysis(tank_class=tank1, freq="12MS", position="end")
 
-mbal1 = analisis1.havlena_odeh2("data")
-
 # Analysis 2 (Aquifer Case)
 aq_radius = 14000
 res_radius = 2000
@@ -46,9 +44,14 @@ tank_with_aquifer = Tank(
     cf=4.5e-6,
     aquifer=we
 )
-import pandas as pd
 
 analisis2 = Analysis(tank_class=tank_with_aquifer, freq="12MS", position="end")
-mbal2 = analisis2.analytic_method(67e+6, option="data")
-mbal3 = analisis2.analytic_method(67e+6, option="plot")
-mbal = analisis2.mat_bal_df()
+
+analit_data = analisis2.analytic_method(72e+6, option="data")
+print(analit_data)
+analit_figure = analisis2.analytic_method(72e+6, option="plot")
+analit_figure.show()
+havlnea_N = analisis2.havlena_odeh(option="plot")
+havlnea_N.show()
+havlnea_N_data = analisis2.havlena_odeh(option="data")
+print(havlnea_N_data)

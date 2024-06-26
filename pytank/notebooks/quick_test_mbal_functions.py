@@ -1,18 +1,12 @@
-from pytank.notebooks.quick_test_tank import mbal
-from pytank.functions.material_balance import (underground_withdrawal,
-                                               pressure_vol_avg,
+from pytank.functions.material_balance import (
                                                fw_expansion,
                                                gas_expansion,
                                                ho_terms_equation,
-                                               material_bal_numerical_data,
-                                               material_bal_var_type,
                                                campbell_function,
-                                               oil_expansion,
-                                               havlena_and_odeh)
+                                               oil_expansion)
 
 # Call dataframe of tank
 df_mbal = mbal.fillna(0.0)
-#print(df_mbal["RS_bw"])
 
 # Some required data
 water_sat = 0.15

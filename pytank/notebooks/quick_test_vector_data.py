@@ -24,6 +24,7 @@ df_prod = (
     .set_index(DATE_COL)
     .assign(**{LIQ_CUM: lambda x: x[OIL_CUM_COL] + x[WATER_CUM_COL]})
 )
+
 # %% Create sample df for injection
 date_index_inj = pd.date_range("2020-01-01", periods=5, freq="D")
 df_inj = pd.DataFrame(
@@ -32,8 +33,9 @@ df_inj = pd.DataFrame(
         DATE_COL: date_index_inj,
     }
 ).set_index(DATE_COL)
+
 # %% Production vector data
 prod_vector_data = ProdVector(freq="MS", data=df_prod)
 oil_cum = prod_vector_data
 water_cum = prod_vector_data
-print(prod_vector_data.calculate_rate(OIL_CUM_COL))
+# print(prod_vector_data.calculate_rate(OIL_CUM_COL))

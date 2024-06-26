@@ -1,3 +1,11 @@
+"""
+well.py
+
+This module defines the Well Class to group production and pressure information per well.
+
+The logic is structured using classes and methods.
+
+"""
 import pandas as pd
 from pydantic import BaseModel
 from typing import Optional
@@ -14,17 +22,21 @@ from pandera.errors import SchemaError
 from pytank.functions.utilities import normalize_date_freq
 import warnings
 
-warnings.filterwarnings("ignore", message="DataFrame.fillna with 'method' is deprecated")
 
-
-class CreateWell(BaseModel):
+class _CreateWell(BaseModel):
+    """
+    PRIVATE Class used to handle pressure and production vectors
+    """
     name: str
     tank: Optional[str] = None
-    prod_data: Optional[ProdVector]
-    press_data: Optional[PressVector]
+    prod_data: Optional[ProdVector] = None
+    press_data: Optional[PressVector] = None
 
 
 class Well(BaseModel):
+    """
+    Class to assign the respective production and pressure data to each well
+    """
     freq_prod: Optional[str] = None
     freq_press: Optional[str] = None
     df_prod: pd.DataFrame
@@ -33,10 +45,32 @@ class Well(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def __init__(self, df_prod: pd.DataFrame, df_press: pd.DataFrame, freq_prod=None, freq_press=None) -> None:
-        super().__init__(df_prod=df_prod, df_press=df_press, freq_prod=freq_prod, freq_press=freq_press)
+    warnings.filterwarnings("ignore", message="DataFrame.fillna with 'method' is deprecated")
 
-    def process_data(self):
+    def __init__(self,
+                 df_prod: pd.DataFrame,
+                 df_press: pd.DataFrame,
+                 freq_prod: str = None,
+                 freq_press: str = None):
+        """
+        :param:
+            - df_prod: csv of production data
+            - df_press: csv of pressure data
+            - freq_prod: Frequency of production Data. Can be None if exists a correct frequency.
+            - freq_press: Frequency of pressure Data. Its no necessary.
+        """
+        super().__init__(df_prod=df_prod,
+                         df_press=df_press,
+                         freq_prod=freq_prod,
+                         freq_press=freq_press)
+
+    def _process_data(self):
+        """
+        PRIVATE internal method to handle the production and pressure data (dates)
+        :return:
+            - Production DataFrame
+            - Pressure DataFrame
+        """
         prod_data = self.df_prod
         prod_data[DATE_COL] = pd.to_datetime(prod_data[DATE_COL])
         prod_data.set_index(prod_data[DATE_COL], inplace=True)
@@ -47,8 +81,14 @@ class Well(BaseModel):
 
         return prod_data, press_data
 
-    def get_wells(self):
-        prod_data, press_data = self.process_data()
+    def get_wells(self) -> dict:
+        """
+        Method to crea a dictionary of tanks with the list of corresponding wells
+        with pressure and production data (vectors)
+        :return:
+            - Dictionary: {Tank: List[Wells]}
+        """
+        prod_data, press_data = self._process_data()
         cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
         all_wells = set(prod_data["ITEM_NAME"]).union(press_data["WELLBORE"])
         tank_wells = []
@@ -71,6 +111,7 @@ class Well(BaseModel):
                 group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[WATER_CUM_COL]
                 group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
 
+                # Normalize the frequency
                 if self.freq_prod is not None:
                     group_prod_norm = normalize_date_freq(df=group_prod,
                                                           freq=self.freq_prod,
@@ -85,6 +126,8 @@ class Well(BaseModel):
                         expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
                         if str(e) == expected_error_msg:
                             group_prod.index.freq = self.freq_prod
+
+                            # Create a production vector
                             prod_vector = ProdVector(
                                 freq=None,
                                 data=group_prod_norm
@@ -107,6 +150,8 @@ class Well(BaseModel):
                     }
                 )
                 group_press.set_index(DATE_COL, inplace=True)
+
+                # Create a pressure vector
                 press_vector = PressVector(
                     freq=self.freq_press,
                     data=group_press
@@ -114,13 +159,15 @@ class Well(BaseModel):
                 if prod_vector is None and TANK_COL in group_press.columns:
                     tank_name = group_press[TANK_COL].iloc[0]
 
-            info_well = CreateWell(
+            # Create well lists
+            info_well = _CreateWell(
                 name=name,
                 tank=tank_name,
                 prod_data=prod_vector,
                 press_data=press_vector
             )
 
+            # Add wells list to tanks dict
             tank_wells.append(info_well)
 
         return tank_wells
