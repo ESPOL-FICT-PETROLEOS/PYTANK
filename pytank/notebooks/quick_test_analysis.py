@@ -3,7 +3,7 @@ from pytank.notebooks.quick_test_tank import (tank1,
                                               tank_name,
                                               oil_model,
                                               water_model)
-from pytank.aquifer.aquifer_model import Fetkovich
+from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
 from pytank.analysis.poes import Analysis
 from pytank.tank.tank import Tank
 
@@ -32,6 +32,7 @@ we = Fetkovich(aq_radius,
                k,
                water_visc,
                time_step)
+we2 = CarterTracy(phi, ct, res_radius, aq_thickness, theta, k, water_visc, pr, time_step)
 
 tank_with_aquifer = Tank(
     name=tank_name,
@@ -47,11 +48,6 @@ tank_with_aquifer = Tank(
 
 analisis2 = Analysis(tank_class=tank_with_aquifer, freq="12MS", position="end")
 
-analit_data = analisis2.analytic_method(72e+6, option="data")
-print(analit_data)
-analit_figure = analisis2.analytic_method(72e+6, option="plot")
-analit_figure.show()
-havlnea_N = analisis2.havlena_odeh(option="plot")
-havlnea_N.show()
-havlnea_N_data = analisis2.havlena_odeh(option="data")
-print(havlnea_N_data)
+mbal2 = analisis2.mat_bal_df()
+carter = analisis2.analytic_method(67e+6, "plot")
+print(carter)

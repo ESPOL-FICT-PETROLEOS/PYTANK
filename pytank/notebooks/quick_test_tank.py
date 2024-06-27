@@ -39,6 +39,3 @@ tank1 = Tank(
     cf=3.6e-6,
     aquifer=None
 )
-
-df_press = tank1.get_pressure_df()
-df_prod = tank1.get_production_df()

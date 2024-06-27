@@ -33,6 +33,8 @@ tank1 = Tank(
 )
 
 analysis = Analysis(tank_class=tank1, freq="12MS", position="end")
-
+import matplotlib.pyplot as plt
 mbal = analysis.mat_bal_df()
-print(mbal)
+print(mbal["Cumulative We"])
+graph = analysis.havlena_odeh(option="plot")
+plt.show()
