@@ -446,26 +446,46 @@ class Analysis(BaseModel):
 
         # Encapsulation of material balance DataFrame from mat_bal_df() method
         df = self.mat_bal_df()
-
-        # Call the function to calculate the new pressure
-        press_calc = calculated_pressure(df[OIL_CUM_TANK],
-                                         df[WATER_CUM_TANK],
-                                         self.tank_class.cf,
-                                         self.tank_class.water_model.temperature,
-                                         self.tank_class.water_model.salinity,
-                                         self.tank_class.oil_model.data_pvt,
-                                         self.tank_class.aquifer.aq_radius,
-                                         self.tank_class.aquifer.res_radius,
-                                         self.tank_class.aquifer.aq_thickness,
-                                         self.tank_class.aquifer.aq_por,
-                                         self.tank_class.aquifer.theta,
-                                         self.tank_class.aquifer.k,
-                                         self.tank_class.aquifer.water_visc,
-                                         self.tank_class.pi,
-                                         self.tank_class.swo,
-                                         poes,
-                                         PRESSURE_PVT_COL,
-                                         OIL_FVF_COL)
+        press_calc = []
+        if isinstance(self.tank_class.aquifer, Fetkovich):
+            # Call the function to calculate the new pressure
+            press_calc = calculated_pressure(df[OIL_CUM_TANK],
+                                             df[WATER_CUM_TANK],
+                                             self.tank_class.cf,
+                                             self.tank_class.water_model.temperature,
+                                             self.tank_class.water_model.salinity,
+                                             self.tank_class.oil_model.data_pvt,
+                                             self.tank_class.aquifer.aq_radius,
+                                             self.tank_class.aquifer.res_radius,
+                                             self.tank_class.aquifer.aq_thickness,
+                                             self.tank_class.aquifer.aq_por,
+                                             self.tank_class.aquifer.theta,
+                                             self.tank_class.aquifer.k,
+                                             self.tank_class.aquifer.water_visc,
+                                             self.tank_class.pi,
+                                             self.tank_class.swo,
+                                             poes,
+                                             PRESSURE_PVT_COL,
+                                             OIL_FVF_COL)
+        elif isinstance(self.tank_class.aquifer,CarterTracy):
+            press_calc = calculated_pressure(df[OIL_CUM_TANK],
+                                             df[WATER_CUM_TANK],
+                                             self.tank_class.cf,
+                                             self.tank_class.water_model.temperature,
+                                             self.tank_class.water_model.salinity,
+                                             self.tank_class.oil_model.data_pvt,
+                                             self.tank_class.aquifer.res_radius,
+                                             self.tank_class.aquifer.aq_thickness,
+                                             self.tank_class.aquifer.aq_por,
+                                             self.tank_class.aquifer.theta,
+                                             self.tank_class.aquifer.aq_perm,
+                                             self.tank_class.aquifer.water_visc,
+                                             df["Time_Step"],
+                                             self.tank_class.pi,
+                                             self.tank_class.swo,
+                                             poes,
+                                             PRESSURE_PVT_COL,
+                                             OIL_FVF_COL)
 
         # Aad the first date to initial pressure
         dates = df[[DATE_COL, PRESSURE_COL]]

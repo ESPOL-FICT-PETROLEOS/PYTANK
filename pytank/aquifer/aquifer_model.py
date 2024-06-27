@@ -338,7 +338,7 @@ class CarterTracy:
         )
 
         # Calculate the cumulative water influx at any time, ti
-        df = {"Cumulative water influx, bbl": [0]}
+        df = {"Cumulative We": [0]}
         we = 0
 
         for i in np.arange(1, len(td)):
