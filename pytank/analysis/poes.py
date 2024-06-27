@@ -16,6 +16,7 @@ libraries:
 import pandas as pd
 import pandera as pa
 from matplotlib.font_manager import FontProperties
+from matplotlib.ticker import FuncFormatter
 from pandera.typing import Series
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
@@ -426,7 +427,18 @@ class Analysis(BaseModel):
             ax1.set_xlabel("Np Cumulative Oil Production [MMStb]")
             ax1.set_ylabel("F/Eo+Efw")
             ax1.set_title(f"Campbell plot of " + str(mbal_df["Tank"][0].replace("_", " ")))
-            ax1.legend(loc="upper right")
+            textstr = "Graph that gives an \nidea of the energy \ncontribution of an aquifer"
+            props = dict(boxstyle="round", facecolor="grey", alpha=0.5)
+            ax1.text(0.05, 0.95, textstr, transform=ax1.transAxes, fontsize=9,
+                     verticalalignment="top", horizontalalignment="left", bbox=props)
+            ax1.legend(frameon=True, framealpha=0.9, loc="upper right")
+            plt.grid(True, linestyle="--", alpha=0.7)
+
+            formattery = FuncFormatter(lambda x, pos: "{:.1f}Mm".format(x * 1e-9))
+            ax1.yaxis.set_major_formatter(formattery)
+
+            formatterx = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
+            ax1.xaxis.set_major_formatter(formatterx)
             return fig
 
         else:
@@ -478,13 +490,18 @@ class Analysis(BaseModel):
             ax2.set_xlabel("Eo+Efw")
             ax2.set_ylabel("F-We")
             ax2.set_title("Havlena y Odeh plot of " + str(mbal_df["Tank"][0].replace("_", " ")))
-            ax2.annotate(
-                "N [MMStb]: {:.2f}".format(slope / 1000000),
-                xy=(3, 5),
-                xytext=(0.032, 1)
-            )
-            ax2.legend()
-            plt.grid(True)
+
+            # Text in the graph
+            textstr = "N [MMStb]: {:.2f}".format(slope / 1000000)
+            props = dict(boxstyle="round", facecolor="yellow", alpha=0.5)
+            ax2.text(0.05, 0.95, textstr, transform=ax2.transAxes, fontsize=10,
+                     verticalalignment="top", horizontalalignment="left", bbox=props)
+            ax2.legend(frameon=True, framealpha=0.9, loc="upper right")
+            plt.grid(True, linestyle="--", alpha=0.7)
+
+            # formatter for the axes in M
+            formatter = FuncFormatter(lambda x, pos: "{:.2f}M".format(x*1e-6))
+            ax2.yaxis.set_major_formatter(formatter)
             return fig
 
         else:
@@ -581,8 +598,10 @@ class Analysis(BaseModel):
             plt.ylabel("Pressure (PSI)", fontsize=17)
             ax8.set_ylim(0, 4000)
             plt.yticks(fontsize=15)
+            plt.xticks(fontsize=15)
             ax8.grid(axis="both", color="lightgray", linestyle="dashed")
             plt.legend(fontsize=15)
+            plt.gcf().autofmt_xdate()
             return fig8
 
         else:
@@ -646,11 +665,15 @@ class Analysis(BaseModel):
             ax.set_title("Cumulative Production per Well - " + str(df_prod[TANK_COL][0].replace("_", " ").upper()),
                          fontsize=16)
             ax.set_xlabel("Well", fontsize=14)
-            ax.set_ylabel("Cumulative Production", fontsize=14)
+            ax.set_ylabel("Cumulative Production [Stb]", fontsize=14)
             ax.set_xticks([r + bar_witd / 2 for r in range(len(well_ind))])
             ax.set_xticklabels(well_ind, rotation=45, fontproperties=FontProperties(size=8.5, weight="bold"))
             ax.legend(loc='upper left', fontsize=12)
-            plt.grid(True)
+            plt.grid(True, linestyle="--", alpha=0.7)
+
+            # formatter for the axes in M
+            formatter = FuncFormatter(lambda x, pos: "{:.0f}M".format(x*1e-6))
+            ax.yaxis.set_major_formatter(formatter)
             plt.tight_layout()
             return fig
 
@@ -658,12 +681,13 @@ class Analysis(BaseModel):
         elif method == "cumulative_production_per_date":
             # Oil and Water
             if option == "liquids":
+                plt.close("all")
                 fig1, ax1 = plt.subplots(figsize=(10, 6))
                 colors = ["black", "blue"]
-                columns = [OIL_CUM_COL, WATER_CUM_COL]
+                columns = [OIL_CUM_TANK, WATER_CUM_TANK]
 
                 for i, col in enumerate(columns):
-                    ax1.plot(df_prod[DATE_COL], df_prod[col], color=colors[i], label=col)
+                    ax1.plot(df_press_avg[DATE_COL], df_press_avg[col], color=colors[i], label=col)
 
                 ax1.set_title("Cumulative Production per Date - " + str(df_prod[TANK_COL][0].replace("_", " ").upper()),
                               fontsize=16)
@@ -672,16 +696,20 @@ class Analysis(BaseModel):
                 ax1.legend(loc='upper left', fontsize=12)
 
                 plt.gcf().autofmt_xdate()
-                plt.grid(True)
+                plt.grid(True, linestyle="--", alpha=0.7)
+
+                # formatter for the axes in M
+                formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
+                ax1.yaxis.set_major_formatter(formatter)
                 return fig1
 
             # Total Production
             elif option == "total_liquids":
                 fig2, ax2 = plt.subplots(figsize=(10, 6))
                 colors = "skyblue"
-                total_liquid = df_prod[OIL_CUM_COL] + df_prod[WATER_CUM_COL]
+                total_liquid = df_press_avg[OIL_CUM_TANK] + df_press_avg[WATER_CUM_TANK]
 
-                ax2.plot(df_prod[DATE_COL], total_liquid, color=colors, label="Total Liquid")
+                ax2.plot(df_press_avg[DATE_COL], total_liquid, color=colors, label="Total Liquid")
 
                 ax2.set_title("Cumulative Total Liquid Production per Date - " + str(
                     df_prod[TANK_COL][0].replace("_", " ").upper()),
@@ -691,7 +719,11 @@ class Analysis(BaseModel):
                 ax2.legend(loc='upper left', fontsize=12)
 
                 plt.gcf().autofmt_xdate()
-                plt.grid(True)
+                plt.grid(True, linestyle="--", alpha=0.7)
+
+                # formatter for the axes in M
+                formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
+                ax2.yaxis.set_major_formatter(formatter)
                 return fig2
 
             else:
@@ -714,8 +746,8 @@ class Analysis(BaseModel):
                 ax3.legend(loc='upper left', fontsize=12)
 
                 plt.gcf().autofmt_xdate()
-                plt.grid(True)
-                plt.show()
+                plt.grid(True, linestyle="--", alpha=0.7)
+                return fig3
 
             # Average Pressure
             elif option == "avg":
@@ -732,7 +764,7 @@ class Analysis(BaseModel):
                 ax4.legend(loc='upper left', fontsize=12)
 
                 plt.gcf().autofmt_xdate()
-                plt.grid(True)
+                plt.grid(True, linestyle="--", alpha=0.7)
                 return fig4
 
             # Both pressures
@@ -746,7 +778,7 @@ class Analysis(BaseModel):
                 ax5.legend(loc='upper left', fontsize=12)
 
                 plt.gcf().autofmt_xdate()
-                plt.grid(True)
+                plt.grid(True, linestyle="--", alpha=0.7)
                 return fig5
 
             else:
@@ -770,7 +802,11 @@ class Analysis(BaseModel):
                 ax6.legend(loc='upper left', fontsize=12)
 
                 plt.gcf().autofmt_xdate()
-                plt.grid(True)
+                plt.grid(True, linestyle="--", alpha=0.7)
+
+                # formatter for the axes in M
+                formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
+                ax6.yaxis.set_major_formatter(formatter)
                 return fig6
 
             # Average Pressure
@@ -791,7 +827,11 @@ class Analysis(BaseModel):
                 ax7.legend(loc='upper left', fontsize=12)
 
                 plt.gcf().autofmt_xdate()
-                plt.grid(True)
+                plt.grid(True, linestyle="--", alpha=0.7)
+
+                # formatter for the axes in M
+                formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
+                ax7.yaxis.set_major_formatter(formatter)
                 return fig7
 
             else:

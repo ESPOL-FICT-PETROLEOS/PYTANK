@@ -48,10 +48,10 @@ analysis2.setup_fetkovich_aquifer(
     water_visc=water_visc,
 )
 
-mbal_fet = analysis2.mat_bal_df()
-# print(mbal_fet)
-anali_fet = analysis2.analytic_method(67e+6, "plot")
-anali_fet.show()
+
+anali_fet = analysis2.analytic_method(72e+6, "plot")
+havle = analysis2.havlena_odeh("plot")
+havle.show()
 
 
 # With Carter Tracy
@@ -61,6 +61,8 @@ phi = 0.30
 ct = 0.000007
 theta = 140
 k = 25
+
+
 water_visc = 0.6
 analysis2.setup_carter_tracy_aquifer(
     aq_por=phi,
@@ -71,9 +73,6 @@ analysis2.setup_carter_tracy_aquifer(
     aq_perm=k,
     water_visc=water_visc
 )
-
-mbal_cartet = analysis2.mat_bal_df()
-# print(mbal_carter)
-anali_carter = analysis2.analytic_method(67e+6, "plot")
+anali_carter = analysis2.analytic_method(72e+6, "plot")
 anali_carter.show()
 
