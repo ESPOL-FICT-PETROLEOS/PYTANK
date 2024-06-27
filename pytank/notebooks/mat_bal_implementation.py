@@ -47,9 +47,9 @@ tank1 = Tank(
     oil_model=oil_model,
     water_model=water_model,
     pi=3700,
-    swo=0.15,
+    swo=0.25,
     cw=3.5e-6,
-    cf=3.6e-6,
+    cf=4.6e-6,
     aquifer=None
 )
 df_press = tank1.get_pressure_df()
