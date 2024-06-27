@@ -39,3 +39,7 @@ tank1 = Tank(
     cf=3.6e-6,
     aquifer=None
 )
+
+# Its only a test, this method is PRIVATE
+df_press = tank1.get_pressure_df()
+# print(df_press)

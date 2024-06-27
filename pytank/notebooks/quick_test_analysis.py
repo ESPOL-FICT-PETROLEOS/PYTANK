@@ -3,36 +3,12 @@ from pytank.notebooks.quick_test_tank import (tank1,
                                               tank_name,
                                               oil_model,
                                               water_model)
-from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
+# from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
 from pytank.analysis.poes import Analysis
 from pytank.tank.tank import Tank
 
 # No Aquifer Case
-analisis1 = Analysis(tank_class=tank1, freq="12MS", position="end")
-
-# Analysis 2 (Aquifer Case)
-aq_radius = 14000
-res_radius = 2000
-aq_thickness = 20
-phi = 0.25
-ct = 0.000007
-pr = list(analisis1.mat_bal_df()["PRESSURE_DATUM"])
-theta = 290
-k = 25
-water_visc = 0.6
-time_step = list(analisis1.mat_bal_df()["Time_Step"])
-
-we = Fetkovich(aq_radius,
-               res_radius,
-               aq_thickness,
-               phi,
-               ct,
-               pr,
-               theta,
-               k,
-               water_visc,
-               time_step)
-we2 = CarterTracy(phi, ct, res_radius, aq_thickness, theta, k, water_visc, pr, time_step)
+analysis1 = Analysis(tank_class=tank1, freq="12MS", position="end")
 
 tank_with_aquifer = Tank(
     name=tank_name,
@@ -43,11 +19,61 @@ tank_with_aquifer = Tank(
     swo=0.25,
     cw=3.5e-6,
     cf=4.5e-6,
-    aquifer=we
+    aquifer=None
 )
 
-analisis2 = Analysis(tank_class=tank_with_aquifer, freq="12MS", position="end")
+analysis2 = Analysis(tank_class=tank_with_aquifer,
+                     freq="12MS",
+                     position="end")
 
-mbal2 = analisis2.mat_bal_df()
-carter = analisis2.analytic_method(67e+6, "plot")
-print(carter)
+
+# With Fetkovich
+aq_radius = 14000
+res_radius = 2000
+aq_thickness = 20
+phi = 0.25
+ct = 0.000007
+theta = 290
+k = 25
+water_visc = 0.6
+
+analysis2.setup_fetkovich_aquifer(
+    aq_radius=aq_radius,
+    res_radius=res_radius,
+    aq_thickness=aq_thickness,
+    aq_por=phi,
+    ct=ct,
+    theta=theta,
+    k=k,
+    water_visc=water_visc,
+)
+
+mbal_fet = analysis2.mat_bal_df()
+# print(mbal_fet)
+anali_fet = analysis2.analytic_method(67e+6, "plot")
+anali_fet.show()
+
+
+# With Carter Tracy
+res_radius = 2000
+aq_thickness = 13
+phi = 0.30
+ct = 0.000007
+theta = 140
+k = 25
+water_visc = 0.6
+analysis2.setup_carter_tracy_aquifer(
+    aq_por=phi,
+    ct=ct,
+    res_radius=res_radius,
+    aq_thickness=aq_thickness,
+    theta=theta,
+    aq_perm=k,
+    water_visc=water_visc
+)
+
+mbal_cartet = analysis2.mat_bal_df()
+# print(mbal_carter)
+anali_carter = analysis2.analytic_method(67e+6, "plot")
+anali_carter.show()
+

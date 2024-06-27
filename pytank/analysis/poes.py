@@ -45,7 +45,8 @@ from pytank.functions.utilities import interp_dates_row
 from pytank.functions.material_balance import (underground_withdrawal,
                                                pressure_vol_avg,
                                                ho_terms_equation,
-                                               calculated_pressure)
+                                               calculated_pressure,
+                                               calculate_pressure_with_carter_tracy)
 from pytank.tank.tank import Tank
 from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
 
@@ -322,6 +323,66 @@ class Analysis(BaseModel):
         # final mbal DataFrame
         return mbal_final_per_tank
 
+    def setup_fetkovich_aquifer(self,
+                                aq_radius,
+                                res_radius,
+                                aq_thickness,
+                                aq_por,
+                                ct,
+                                theta,
+                                k,
+                                water_visc
+                                ):
+        """
+        Method to update aquifer values without the need to make an instance of Fetkovich Class.
+        """
+        # Encapsulation of mat_bal_df
+        mat_bal_data = self.mat_bal_df()
+        pr = list(mat_bal_data[PRESSURE_COL])
+        time_step = list(mat_bal_data["Time_Step"])
+
+        self.tank_class.aquifer = Fetkovich(
+            aq_radius=aq_radius,
+            res_radius=res_radius,
+            aq_thickness=aq_thickness,
+            aq_por=aq_por,
+            ct=ct,
+            theta=theta,
+            k=k,
+            water_visc=water_visc,
+            pr=pr,
+            time_step=time_step
+        )
+
+    def setup_carter_tracy_aquifer(self,
+                                   aq_por,
+                                   ct,
+                                   res_radius,
+                                   aq_thickness,
+                                   theta,
+                                   aq_perm,
+                                   water_visc
+                                   ):
+        """
+        Method to update aquifer values without the need to make an instance of Fetkovich Class.
+        """
+        # Encapsulation of mat_bal_df
+        mat_bal_data = self.mat_bal_df()
+        pr = list(mat_bal_data[PRESSURE_COL])
+        time_step = list(mat_bal_data["Time_Step"])
+
+        self.tank_class.aquifer = CarterTracy(
+            aq_por=aq_por,
+            ct=ct,
+            res_radius=res_radius,
+            aq_thickness=aq_thickness,
+            theta=theta,
+            aq_perm=aq_perm,
+            water_visc=water_visc,
+            pr=pr,
+            time=time_step
+        )
+
     def campbell(self, option: str) -> Union[pd.DataFrame, plt.Figure]:
         """
         Method to graphic the Campbell graph to be able to graphically see the energy /
@@ -350,19 +411,22 @@ class Analysis(BaseModel):
         mbal_df = self.mat_bal_df()
         y = mbal_df[UW_COL] / (mbal_df[OIL_EXP] + mbal_df[RES_EXP])
         x = mbal_df[OIL_CUM_TANK]
+        data = pd.DataFrame({"Np": x, "F/Eo+Efw": y})
 
         if option == "data":
-            data = pd.DataFrame({"Np": x, "F/Eo+Efw": y})
             return data
 
         # Graphic
         elif option == "plot":
+            slope, intercept, r, p, se = stats.linregress(data["Np"], data["F/Eo+Efw"])
             fig, ax1 = plt.subplots()
             ax1.scatter(x, y)
+            reg_line = (slope * data["Np"]) + intercept
+            ax1.plot(data["Np"], reg_line, color="green", label="Regression line")
             ax1.set_xlabel("Np Cumulative Oil Production [MMStb]")
             ax1.set_ylabel("F/Eo+Efw")
             ax1.set_title(f"Campbell plot of " + str(mbal_df["Tank"][0].replace("_", " ")))
-            # Annotation
+            ax1.legend(loc="upper right")
             return fig
 
         else:
@@ -447,7 +511,12 @@ class Analysis(BaseModel):
         # Encapsulation of material balance DataFrame from mat_bal_df() method
         df = self.mat_bal_df()
         press_calc = []
+
+        # name of aquifer model:
+        model_aq_name = ""
+        # Fetkovich Aquifer Model
         if isinstance(self.tank_class.aquifer, Fetkovich):
+            model_aq_name = "Fetkovich Model"
             # Call the function to calculate the new pressure
             press_calc = calculated_pressure(df[OIL_CUM_TANK],
                                              df[WATER_CUM_TANK],
@@ -467,25 +536,28 @@ class Analysis(BaseModel):
                                              poes,
                                              PRESSURE_PVT_COL,
                                              OIL_FVF_COL)
-        elif isinstance(self.tank_class.aquifer,CarterTracy):
-            press_calc = calculated_pressure(df[OIL_CUM_TANK],
-                                             df[WATER_CUM_TANK],
-                                             self.tank_class.cf,
-                                             self.tank_class.water_model.temperature,
-                                             self.tank_class.water_model.salinity,
-                                             self.tank_class.oil_model.data_pvt,
-                                             self.tank_class.aquifer.res_radius,
-                                             self.tank_class.aquifer.aq_thickness,
-                                             self.tank_class.aquifer.aq_por,
-                                             self.tank_class.aquifer.theta,
-                                             self.tank_class.aquifer.aq_perm,
-                                             self.tank_class.aquifer.water_visc,
-                                             df["Time_Step"],
-                                             self.tank_class.pi,
-                                             self.tank_class.swo,
-                                             poes,
-                                             PRESSURE_PVT_COL,
-                                             OIL_FVF_COL)
+
+        # Carter Tracy Aquifer Model
+        elif isinstance(self.tank_class.aquifer, CarterTracy):
+            model_aq_name = "Carter-Tracy Model"
+            press_calc = calculate_pressure_with_carter_tracy(df[OIL_CUM_TANK],
+                                                              df[WATER_CUM_TANK],
+                                                              self.tank_class.cf,
+                                                              self.tank_class.water_model.temperature,
+                                                              self.tank_class.water_model.salinity,
+                                                              self.tank_class.oil_model.data_pvt,
+                                                              self.tank_class.aquifer.res_radius,
+                                                              self.tank_class.aquifer.aq_thickness,
+                                                              self.tank_class.aquifer.aq_por,
+                                                              self.tank_class.aquifer.theta,
+                                                              self.tank_class.aquifer.aq_perm,
+                                                              self.tank_class.aquifer.water_visc,
+                                                              df["Time_Step"],
+                                                              self.tank_class.pi,
+                                                              self.tank_class.swo,
+                                                              poes,
+                                                              PRESSURE_PVT_COL,
+                                                              OIL_FVF_COL)
 
         # Aad the first date to initial pressure
         dates = df[[DATE_COL, PRESSURE_COL]]
@@ -504,9 +576,9 @@ class Analysis(BaseModel):
             fig8, ax8 = plt.subplots(figsize=(15, 10))
             ax8.scatter(data[DATE_COL].dt.year, data[PRESSURE_COL], label="Observed Pressure")
             ax8.plot(data[DATE_COL].dt.year, press_calc, c="g", label="Calculated Pressure")
-            plt.title("Plot Pressure vs Time", fontsize=15)
-            plt.xlabel("Time (Years)", fontsize=15)
-            plt.ylabel("Pressure (PSI)", fontsize=15)
+            plt.title(f"Pressure vs Time with {model_aq_name}", fontsize=25)
+            plt.xlabel("Time (Years)", fontsize=17)
+            plt.ylabel("Pressure (PSI)", fontsize=17)
             ax8.set_ylim(0, 4000)
             plt.yticks(fontsize=15)
             ax8.grid(axis="both", color="lightgray", linestyle="dashed")
