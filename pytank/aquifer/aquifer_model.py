@@ -13,9 +13,10 @@ libraries:
 
 import pandas as pd
 import numpy as np
-from pytank.functions.utilities import variable_type
 import math
+from pytank.functions.utilities import variable_type
 from datetime import datetime
+from typing import Optional, List
 
 
 # Fetkovich
@@ -30,13 +31,13 @@ class Fetkovich:
             aq_thickness: float,
             aq_por: float,
             ct: float,
-            pr: list,
             theta: float,
             k: float,
             water_visc: float,
-            time_step: list,
             boundary_type: str = "no_flow",
             flow_type: str = "radial",
+            pr: Optional[List[float]] = None,
+            time_step: Optional[List[float]] = None,
             width: float = None,
             length: float = None,
     ):
@@ -62,7 +63,7 @@ class Fetkovich:
         self.aq_thickness = aq_thickness
         self.aq_por = aq_por
         self.ct = ct
-        self.pr = variable_type(pr)
+        self.pr = pr
         self.theta = theta
         self.k = k
         self.water_visc = water_visc
@@ -230,8 +231,8 @@ class CarterTracy:
             theta: float,
             aq_perm: float,
             water_visc: float,
-            pr: list,
-            time: list,
+            pr: Optional[List[float]] = None,
+            time: Optional[List[float]] = None,
     ):
         """
 
@@ -354,9 +355,7 @@ class CarterTracy:
         df["Elapsed time, days"] = t_array
 
         # Concatenation of the DataFrames in a unique final DataFrame
-        df = pd.concat([pd.DataFrame(df)], ignore_index=True).set_index(
-            "Elapsed time, days"
-        )
+        df = pd.concat([pd.DataFrame(df)], ignore_index=True)
 
         return df
 
