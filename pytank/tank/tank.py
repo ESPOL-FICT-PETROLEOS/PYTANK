@@ -30,7 +30,6 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         )
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
-from pytank.well.well import Well
 
 
 class Tank(BaseModel):
@@ -38,7 +37,7 @@ class Tank(BaseModel):
     Class that functions as a container for the reservoir (tank) properties.
     """
     name: str
-    wells: Well
+    wells: list
     oil_model: OilModel
     water_model: WaterModel
     pi: float
@@ -51,7 +50,7 @@ class Tank(BaseModel):
         arbitrary_types_allowed = True
 
     def __init__(self, name: str,
-                 wells: Well,
+                 wells: list,
                  oil_model: OilModel,
                  water_model: WaterModel,
                  pi: float,
@@ -90,11 +89,11 @@ class Tank(BaseModel):
             - pd.Dataframe: A pressure DataFrame with properties PVT of oil and water
         """
         df_press = pd.DataFrame()
-        for well in self.wells.get_wells():
+        for well in self.wells:
             press_vector = well.press_data
             well_name = well.name
-            tank_name = well.tank
-            if press_vector is not None and self.name == tank_name:
+            tank_name = self.name
+            if press_vector is not None:
 
                 well_date = press_vector.data.index
                 well_oil_fvf = self.oil_model.get_bo_at_press(press_vector.data[PRESSURE_COL])
@@ -148,11 +147,11 @@ class Tank(BaseModel):
 
         """
         df_prod = pd.DataFrame()
-        for well in self.wells.get_wells():
+        for well in self.wells:
             prod_vector = well.prod_data
             well_name = well.name
-            tank_name = well.tank
-            if prod_vector is not None and self.name == tank_name:
+            tank_name = self.name
+            if prod_vector is not None:
                 well_date = prod_vector.data.index
                 well_oil_cum = prod_vector.data[OIL_CUM_COL]
                 well_water_cum = prod_vector.data[WATER_CUM_COL]

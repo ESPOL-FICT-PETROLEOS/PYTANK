@@ -324,103 +324,6 @@ class Analysis(BaseModel):
         # final mbal DataFrame
         return mbal_final_per_tank
 
-    def setup_fetkovich_aquifer(self,
-                                aq_radius,
-                                res_radius,
-                                aq_thickness,
-                                aq_por,
-                                ct,
-                                theta,
-                                k,
-                                water_visc
-                                ):
-        """
-        Updates the aquifer parameters for the Fetkovich model without creating a new instance of the Fetkovich class.
-
-        Parameters
-        ----------
-        aq_radius : float
-            Radius of the aquifer, ft.
-        res_radius : float
-            Radius of the reservoir, ft.
-        aq_thickness : float
-            Thickness of the aquifer, ft.
-        aq_por : float
-            Porosity of the aquifer (decimal).
-        ct : float
-            Total compressibility, psi^-1.
-        theta : float
-            Encroachment angle, degrees.
-        k : float
-            Permeability of the aquifer, md.
-        water_visc : float
-            Viscosity of water, cp.
-        """
-        # Encapsulation of mat_bal_df
-        mat_bal_data = self.mat_bal_df()
-        pr = list(mat_bal_data[PRESSURE_COL])
-        time_step = list(mat_bal_data["Time_Step"])
-
-        self.tank_class.aquifer = Fetkovich(
-            aq_radius=aq_radius,
-            res_radius=res_radius,
-            aq_thickness=aq_thickness,
-            aq_por=aq_por,
-            ct=ct,
-            theta=theta,
-            k=k,
-            water_visc=water_visc,
-            pr=pr,
-            time_step=time_step
-        )
-
-    def setup_carter_tracy_aquifer(self,
-                                   aq_por: float,
-                                   ct: float,
-                                   res_radius: float,
-                                   aq_thickness: float,
-                                   theta: float,
-                                   aq_perm: float,
-                                   water_visc: float
-                                   ):
-        """
-        Method to update aquifer values without the need to make an instance of Fetkovich Class.
-        Sets up the parameters for the Carter-Tracy aquifer model.
-
-        Parameters
-        ----------
-        aq_por : float
-            Porosity of the aquifer (decimal).
-        ct : float
-            Total compressibility, psi^-1.
-        res_radius : float
-            Radius of the reservoir, ft.
-        aq_thickness : float
-            Thickness of the aquifer, ft.
-        theta : float
-            Encroachment angle, degrees.
-        aq_perm : float
-            Permeability of the aquifer, md.
-        water_visc : float
-            Viscosity of water, cp.
-        """
-        # Encapsulation of mat_bal_df
-        mat_bal_data = self.mat_bal_df()
-        pr = list(mat_bal_data[PRESSURE_COL])
-        time_step = list(mat_bal_data["Time_Step"])
-
-        self.tank_class.aquifer = CarterTracy(
-            aq_por=aq_por,
-            ct=ct,
-            res_radius=res_radius,
-            aq_thickness=aq_thickness,
-            theta=theta,
-            aq_perm=aq_perm,
-            water_visc=water_visc,
-            pr=pr,
-            time=time_step
-        )
-
     def campbell(self, option: str) -> Union[pd.DataFrame, plt.Figure]:
         """
         Method to graphic the Campbell graph to be able to graphically see the energy /
@@ -574,9 +477,10 @@ class Analysis(BaseModel):
         Returns
         -------
         Union[pd.DataFrame, plt.Figure]
-            - If option is "data", returns a pandas DataFrame containing the Date, Observed Pressure, and Calculated Pressure.
-            - If option is "plot", returns a matplotlib Figure object containing a plot of the observed and calculated pressure
-              over time.
+            - If option is "data", returns a pandas DataFrame containing the Date, Observed Pressure,
+            and Calculated Pressure.
+            - If option is "plot", returns a matplotlib Figure object containing a plot of the observed
+            and calculated pressure over time.
 
         Raises
         ------
@@ -667,242 +571,218 @@ class Analysis(BaseModel):
         else:
             raise ValueError("Option no validate. Use 'data' or 'plot'.")
 
-    def eda(self, method: str, option: str = None) -> plt.Figure:
+    """
+    The following methods are to do an exploratory data analysis (EDA) of the Tank:
+    """
+    def plot_cum_prod_per_well(self) -> plt.Figure:
         """
-        Method that serves to carry out an exploratory analysis through the necessary data and graphs that show
-        the behavior of the tank properties.
-
-        Parameters
-        ----------
-        method : str
-            Specifies the type of analysis to perform. Can be one of the following:
-            - "production_per_well"
-            - "cumulative_production_per_date"
-            - "pressure_per_date"
-            - "pressure_per_cumulative_production"
-        option : str, optional
-            Depending on the selected `method`, this parameter can be used to specify additional options for the analysis.
-
-        Returns
-        -------
-        plt.Figure
-            A matplotlib Figure object containing the generated plot.
-
-        Examples
-        --------
-            instance = Analysis()
-            figure = instance.eda(method, option)
-            figure.show()
+        Method to generate a graph.
+        :return:
+        plt.Figure: Graph of Cumulative Production per Well of Tank.
         """
         # Production Data
         df_prod = self.tank_class.get_production_df()
         df_prod[DATE_COL] = pd.to_datetime(df_prod[DATE_COL])
         df_prod = df_prod.sort_values(by=DATE_COL)
+        # Well Group
+        df_prod_well = df_prod.groupby(WELL_COL)[[OIL_CUM_COL, WATER_CUM_COL]].sum()
 
+        fig, ax = plt.subplots(figsize=(10, 6))
+        well_ind = df_prod_well.index
+        bar_witd = 0.35
+        r1 = range(len(well_ind))
+        r2 = [x + bar_witd for x in r1]
+
+        ax.bar(r1, df_prod_well[OIL_CUM_COL], color="black", width=bar_witd, edgecolor='grey',
+               label="Oil Cumulative")
+        ax.bar(r2, df_prod_well[WATER_CUM_COL], color="blue", width=bar_witd, edgecolor='grey',
+               label="Water Cumulative")
+
+        ax.set_title("Cumulative Production per Well - " + str(self.tank_class.name.replace("_", " ").upper()),
+                     fontsize=16)
+        ax.set_xlabel("Well", fontsize=14)
+        ax.set_ylabel("Cumulative Production [Stb]", fontsize=14)
+        ax.set_xticks([r + bar_witd / 2 for r in range(len(well_ind))])
+        ax.set_xticklabels(well_ind, rotation=45, fontproperties=FontProperties(size=8.5, weight="bold"))
+        ax.legend(loc='upper left', fontsize=12)
+        plt.grid(True, linestyle="--", alpha=0.7)
+
+        # formatter for the axes in M
+        formatter = FuncFormatter(lambda x, pos: "{:.0f}M".format(x * 1e-6))
+        ax.yaxis.set_major_formatter(formatter)
+        plt.tight_layout()
+        return fig
+
+    def plot_cum_prod_time(self) -> plt.Figure:
+        """
+        Method to generate a graph.
+        :return:
+        plt.Figure: Graph of Oil and Water Cumulative Production vs Time.
+        """
+        # Average Pressure Data
+        df_press_avg = self.mat_bal_df()
+        fig1, ax1 = plt.subplots(figsize=(10, 6))
+        colors = ["black", "blue"]
+        columns = [OIL_CUM_TANK, WATER_CUM_TANK]
+
+        for i, col in enumerate(columns):
+            ax1.plot(df_press_avg[DATE_COL], df_press_avg[col], color=colors[i], label=col)
+
+        ax1.set_title("Cumulative Production per Date - " + str(self.tank_class.name.replace("_", " ").upper()),
+                      fontsize=16)
+        ax1.set_xlabel("Date", fontsize=14)
+        ax1.set_ylabel("Cumulative Production [MMStb]", fontsize=14)
+        ax1.legend(loc='upper left', fontsize=12)
+
+        plt.gcf().autofmt_xdate()
+        plt.grid(True, linestyle="--", alpha=0.7)
+
+        # formatter for the axes in M
+        formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
+        ax1.yaxis.set_major_formatter(formatter)
+        return fig1
+
+    def plot_cum_prod_tot_time(self) -> plt.Figure:
+        """
+        Method to generate a graph.
+        :return:
+        plt.Figure: Graph of Total Liquid Cumulative Production vs Time.
+        """
+        # Average Pressure Data
+        df_press_avg = self.mat_bal_df()
+
+        fig2, ax2 = plt.subplots(figsize=(10, 6))
+        colors = "skyblue"
+        total_liquid = df_press_avg[OIL_CUM_TANK] + df_press_avg[WATER_CUM_TANK]
+
+        ax2.plot(df_press_avg[DATE_COL], total_liquid, color=colors, label="Total Liquid")
+
+        ax2.set_title("Cumulative Total Liquid Production per Date - " + str(
+            self.tank_class.name.replace("_", " ").upper()),
+                      fontsize=16)
+        ax2.set_xlabel("Date", fontsize=14)
+        ax2.set_ylabel("Cumulative Production [MMStb]", fontsize=14)
+        ax2.legend(loc='upper left', fontsize=12)
+
+        plt.gcf().autofmt_xdate()
+        plt.grid(True, linestyle="--", alpha=0.7)
+
+        # formatter for the axes in M
+        formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
+        ax2.yaxis.set_major_formatter(formatter)
+        return fig2
+
+    def plot_press_time(self) -> plt.Figure:
+        """
+        Method to generate a graph.
+        :return:
+        plt.Figure: Graph of normal Pressure vs Time.
+        """
         # Pressure Data
         df_press = self.tank_class.get_pressure_df()
         df_press[DATE_COL] = pd.to_datetime(df_press[DATE_COL])
         df_press = df_press.sort_values(by=DATE_COL)
 
+        fig3, ax3 = plt.subplots(figsize=(10, 6))
+        color = "green"
+
+        ax3.plot(df_press[DATE_COL], df_press[PRESSURE_COL], color=color, label="Pressure")
+
+        ax3.set_title(
+            "Pressure per Date - " + str(df_press[TANK_COL][0].replace("_", " ").upper()),
+            fontsize=16)
+        ax3.set_xlabel("Date", fontsize=14)
+        ax3.set_ylabel("Pressure [PSI]", fontsize=14)
+        ax3.legend(loc='upper left', fontsize=12)
+
+        plt.gcf().autofmt_xdate()
+        plt.grid(True, linestyle="--", alpha=0.7)
+        return fig3
+
+    def plot_press_avg_time(self) -> plt.Figure:
+        """
+        Method to generate a graph.
+        :return:
+        plt.Figure: Graph of Average Pressure vs Time.
+        """
+        # Average Pressure Data
+        df_press_avg = self.mat_bal_df()
+        fig4, ax4 = plt.subplots(figsize=(10, 6))
+        color = "red"
+
+        ax4.plot(df_press_avg[DATE_COL], df_press_avg[PRESSURE_COL], color=color, label=" Avg Pressure")
+
+        ax4.set_title(
+            "Pressure per Date - " + str(self.tank_class.name.replace("_", " ").upper()),
+            fontsize=16)
+        ax4.set_xlabel("Date", fontsize=14)
+        ax4.set_ylabel("Average Pressure[PSI]", fontsize=14)
+        ax4.legend(loc='upper left', fontsize=12)
+
+        plt.gcf().autofmt_xdate()
+        plt.grid(True, linestyle="--", alpha=0.7)
+        return fig4
+
+    def plot_press_liq_cum(self) -> plt.Figure:
+        """
+        Method to generate a graph.
+        :return:
+        plt.Figure: Graph of Pressure vs Cumulative Liquids (Oil and Water).
+        """
         # Pressure date with Cumulative Production
         df_press_cum = self._calc_uw()
         df_press_cum[DATE_COL] = pd.to_datetime(df_press_cum[DATE_COL])
         df_press_cum = df_press_cum.sort_values(by=PRESSURE_COL)
 
+        fig6, ax6 = plt.subplots(figsize=(10, 6))
+        colors = ["black", "blue"]
+        columns = [OIL_CUM_COL, WATER_CUM_COL]
+
+        for i, col in enumerate(columns):
+            ax6.plot(df_press_cum[PRESSURE_COL], df_press_cum[col], color=colors[i], label=col)
+
+        ax6.set_title("Pressure vs Cumulative Production - " + str(self.tank_class.name.
+                                                                   replace("_", " ").upper()),
+                      fontsize=16)
+        ax6.set_xlabel("Pressure", fontsize=14)
+        ax6.set_ylabel("Cumulative Production", fontsize=14)
+        ax6.legend(loc='upper left', fontsize=12)
+
+        plt.gcf().autofmt_xdate()
+        plt.grid(True, linestyle="--", alpha=0.7)
+
+        # formatter for the axes in M
+        formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
+        ax6.yaxis.set_major_formatter(formatter)
+        return fig6
+
+    def plot_press_avg_liq_cum(self) -> plt.Figure:
+        """
+        Method to generate a graph.
+        :return:
+        Graph of Average Pressure vs Cumulative Liquids (Oil and Water).
+        """
         # Average Pressure Data
         df_press_avg = self.mat_bal_df()
+        df_press_avg[DATE_COL] = pd.to_datetime(df_press_avg[DATE_COL])
+        df_press_avg = df_press_avg.sort_values(by=PRESSURE_COL)
+        fig7, ax7 = plt.subplots(figsize=(10, 6))
+        colors = ["black", "blue"]
+        columns = [OIL_CUM_TANK, WATER_CUM_TANK]
 
-        # Production per Well
-        if method == "production_per_well":
-            # Well Group
-            df_prod_well = df_prod.groupby(WELL_COL)[[OIL_CUM_COL, WATER_CUM_COL]].sum()
+        for i, col in enumerate(columns):
+            ax7.plot(df_press_avg[PRESSURE_COL], df_press_avg[col], color=colors[i], label=col)
 
-            fig, ax = plt.subplots(figsize=(10, 6))
-            well_ind = df_prod_well.index
-            bar_witd = 0.35
-            r1 = range(len(well_ind))
-            r2 = [x + bar_witd for x in r1]
-
-            ax.bar(r1, df_prod_well[OIL_CUM_COL], color="black", width=bar_witd, edgecolor='grey',
-                   label="Oil Cumulative")
-            ax.bar(r2, df_prod_well[WATER_CUM_COL], color="blue", width=bar_witd, edgecolor='grey',
-                   label="Water Cumulative")
-
-            ax.set_title("Cumulative Production per Well - " + str(df_prod[TANK_COL][0].replace("_", " ").upper()),
-                         fontsize=16)
-            ax.set_xlabel("Well", fontsize=14)
-            ax.set_ylabel("Cumulative Production [Stb]", fontsize=14)
-            ax.set_xticks([r + bar_witd / 2 for r in range(len(well_ind))])
-            ax.set_xticklabels(well_ind, rotation=45, fontproperties=FontProperties(size=8.5, weight="bold"))
-            ax.legend(loc='upper left', fontsize=12)
-            plt.grid(True, linestyle="--", alpha=0.7)
-
-            # formatter for the axes in M
-            formatter = FuncFormatter(lambda x, pos: "{:.0f}M".format(x * 1e-6))
-            ax.yaxis.set_major_formatter(formatter)
-            plt.tight_layout()
-            return fig
-
-        # Cumulative production per Date
-        elif method == "cumulative_production_per_date":
-            # Oil and Water
-            if option == "liquids":
-                plt.close("all")
-                fig1, ax1 = plt.subplots(figsize=(10, 6))
-                colors = ["black", "blue"]
-                columns = [OIL_CUM_TANK, WATER_CUM_TANK]
-
-                for i, col in enumerate(columns):
-                    ax1.plot(df_press_avg[DATE_COL], df_press_avg[col], color=colors[i], label=col)
-
-                ax1.set_title("Cumulative Production per Date - " + str(df_prod[TANK_COL][0].replace("_", " ").upper()),
-                              fontsize=16)
-                ax1.set_xlabel("Date", fontsize=14)
-                ax1.set_ylabel("Cumulative Production [MMStb]", fontsize=14)
-                ax1.legend(loc='upper left', fontsize=12)
-
-                plt.gcf().autofmt_xdate()
-                plt.grid(True, linestyle="--", alpha=0.7)
-
-                # formatter for the axes in M
-                formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
-                ax1.yaxis.set_major_formatter(formatter)
-                return fig1
-
-            # Total Production
-            elif option == "total_liquids":
-                fig2, ax2 = plt.subplots(figsize=(10, 6))
-                colors = "skyblue"
-                total_liquid = df_press_avg[OIL_CUM_TANK] + df_press_avg[WATER_CUM_TANK]
-
-                ax2.plot(df_press_avg[DATE_COL], total_liquid, color=colors, label="Total Liquid")
-
-                ax2.set_title("Cumulative Total Liquid Production per Date - " + str(
-                    df_prod[TANK_COL][0].replace("_", " ").upper()),
-                              fontsize=16)
-                ax2.set_xlabel("Date", fontsize=14)
-                ax2.set_ylabel("Cumulative Production [MMStb]", fontsize=14)
-                ax2.legend(loc='upper left', fontsize=12)
-
-                plt.gcf().autofmt_xdate()
-                plt.grid(True, linestyle="--", alpha=0.7)
-
-                # formatter for the axes in M
-                formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
-                ax2.yaxis.set_major_formatter(formatter)
-                return fig2
-
-            else:
-                raise ValueError("Option no validate. Use 'liquids' or 'total_liquids'.")
-
-        # Pressure per Date
-        elif method == "pressure_per_date":
-            # Observed Pressure
-            if option == "observed":
-                fig3, ax3 = plt.subplots(figsize=(10, 6))
-                color = "green"
-
-                ax3.plot(df_press[DATE_COL], df_press[PRESSURE_COL], color=color, label="Pressure")
-
-                ax3.set_title(
-                    "Pressure per Date - " + str(df_press[TANK_COL][0].replace("_", " ").upper()),
-                    fontsize=16)
-                ax3.set_xlabel("Date", fontsize=14)
-                ax3.set_ylabel("Pressure [PSI]", fontsize=14)
-                ax3.legend(loc='upper left', fontsize=12)
-
-                plt.gcf().autofmt_xdate()
-                plt.grid(True, linestyle="--", alpha=0.7)
-                return fig3
-
-            # Average Pressure
-            elif option == "avg":
-                fig4, ax4 = plt.subplots(figsize=(10, 6))
-                color = "red"
-
-                ax4.plot(df_press_avg[DATE_COL], df_press_avg[PRESSURE_COL], color=color, label=" Avg Pressure")
-
-                ax4.set_title(
-                    "Pressure per Date - " + str(df_press_avg[TANK_COL][0].replace("_", " ").upper()),
-                    fontsize=16)
-                ax4.set_xlabel("Date", fontsize=14)
-                ax4.set_ylabel("Average Pressure[PSI]", fontsize=14)
-                ax4.legend(loc='upper left', fontsize=12)
-
-                plt.gcf().autofmt_xdate()
-                plt.grid(True, linestyle="--", alpha=0.7)
-                return fig4
-
-            # Both pressures
-            elif option == "both":
-                fig5, ax5 = plt.subplots(figsize=(10, 6))
-                ax5.plot(df_press[DATE_COL], df_press[PRESSURE_COL], color="green", label="Pressure")
-                ax5.plot(df_press_avg[DATE_COL], df_press_avg[PRESSURE_COL], color="red", label="Avg Pressure")
-
-                ax5.set_title("Pressure per Date - " + str(df_press[TANK_COL][0].replace("_", " ").upper()), )
-                ax5.set_ylabel("Pressure[PSI]", fontsize=14)
-                ax5.legend(loc='upper left', fontsize=12)
-
-                plt.gcf().autofmt_xdate()
-                plt.grid(True, linestyle="--", alpha=0.7)
-                return fig5
-
-            else:
-                raise ValueError("Option no validate. Use 'observed','avg' or 'both'.")
-
-        # Pressure per Cumulative Production
-        elif method == "pressure_per_cumulative_production":
-            # Observed Pressure
-            if option == "observed":
-                fig6, ax6 = plt.subplots(figsize=(10, 6))
-                colors = ["black", "blue"]
-                columns = [OIL_CUM_COL, WATER_CUM_COL]
-
-                for i, col in enumerate(columns):
-                    ax6.plot(df_press_cum[PRESSURE_COL], df_press_cum[col], color=colors[i], label=col)
-
-                ax6.set_title("Pressure vs Cumulative Production - " + str(df_prod[TANK_COL][0].
+        ax7.set_title("Average Pressure vs Cumulative Production - " + str(self.tank_class.name.
                                                                            replace("_", " ").upper()), fontsize=16)
-                ax6.set_xlabel("Pressure", fontsize=14)
-                ax6.set_ylabel("Cumulative Production", fontsize=14)
-                ax6.legend(loc='upper left', fontsize=12)
+        ax7.set_xlabel("Average Pressure", fontsize=14)
+        ax7.set_ylabel("Cumulative Production", fontsize=14)
+        ax7.legend(loc='upper left', fontsize=12)
 
-                plt.gcf().autofmt_xdate()
-                plt.grid(True, linestyle="--", alpha=0.7)
+        plt.gcf().autofmt_xdate()
+        plt.grid(True, linestyle="--", alpha=0.7)
 
-                # formatter for the axes in M
-                formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
-                ax6.yaxis.set_major_formatter(formatter)
-                return fig6
-
-            # Average Pressure
-            elif option == "avg":
-                df_press_avg[DATE_COL] = pd.to_datetime(df_press_avg[DATE_COL])
-                df_press_avg = df_press_avg.sort_values(by=PRESSURE_COL)
-                fig7, ax7 = plt.subplots(figsize=(10, 6))
-                colors = ["black", "blue"]
-                columns = [OIL_CUM_TANK, WATER_CUM_TANK]
-
-                for i, col in enumerate(columns):
-                    ax7.plot(df_press_avg[PRESSURE_COL], df_press_avg[col], color=colors[i], label=col)
-
-                ax7.set_title("Pressure vs Cumulative Production - " + str(df_prod[TANK_COL][0].
-                                                                           replace("_", " ").upper()), fontsize=16)
-                ax7.set_xlabel("Average Pressure", fontsize=14)
-                ax7.set_ylabel("Cumulative Production", fontsize=14)
-                ax7.legend(loc='upper left', fontsize=12)
-
-                plt.gcf().autofmt_xdate()
-                plt.grid(True, linestyle="--", alpha=0.7)
-
-                # formatter for the axes in M
-                formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
-                ax7.yaxis.set_major_formatter(formatter)
-                return fig7
-
-            else:
-                raise ValueError("Option no validate. Use 'observed' or 'avg'.")
-
-        else:
-            raise ValueError("Option no validate. Use: 'production_per_well', 'cumulative_production_per_date', "
-                             "'pressure_per_date' or 'pressure_per_cumulative_production'")
+        # formatter for the axes in M
+        formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
+        ax7.yaxis.set_major_formatter(formatter)
+        return fig7

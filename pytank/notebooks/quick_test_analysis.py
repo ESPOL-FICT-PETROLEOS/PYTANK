@@ -76,3 +76,4 @@ analysis2.setup_carter_tracy_aquifer(
 anali_carter = analysis2.analytic_method(72e+6, "plot")
 anali_carter.show()
 
+x = analysis1.eda()
