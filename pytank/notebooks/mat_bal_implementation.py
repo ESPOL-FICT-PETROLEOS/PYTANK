@@ -4,7 +4,7 @@ mat_bal_implementation.py
 This file containing the steps to use the PyTank library .
 """
 
-#%%
+# %%
 import pandas as pd
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.tank.tank import Tank
@@ -13,22 +13,22 @@ from pytank.analysis.poes import Analysis
 from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
 
 # transform the csv to dataframes
-df_pvt = pd.read_csv("C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/pvt.csv")
-df_production = pd.read_csv("C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/production.csv")
-df_pressures = pd.read_csv("C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/pressures.csv")
+df_pvt = pd.read_csv("C:/Users/User/PycharmProjects/PYTANK/pytank/resources/data_csv/pvt.csv")
+df_production = pd.read_csv("C:/Users/User/PycharmProjects/PYTANK/pytank/resources/data_csv/production.csv")
+df_pressures = pd.read_csv("C:/Users/User/PycharmProjects/PYTANK/pytank/resources/data_csv/pressures.csv")
 
 "------------------------------------- Well Module----------------------------------------"
-
 
 well = Wells(df_prod=df_production,
              df_press=df_pressures,
              freq_prod="MS",
              freq_press=None)
 all_wells = well.get_wells()
-my_well = ["tus pozos"]
-wells_info = well.well_founder(my_well)
+my_wells = ["A-1-P", "A-10-P", "A-11-P"]
+wells_info = well.search_wells(my_wells)
+print(wells_info)
 
-#%%
+# %%
 "--------------------------------- Fluid Models Module -----------------------------------"
 oil_model = OilModel(
     data_pvt=df_pvt,
@@ -41,7 +41,7 @@ water_model = WaterModel(
     unit=1
 )
 
-#%%
+# %%
 "------------------------------------- Tank Module ------------------------------------------"
 tank_name = "tank_center"
 tank1 = Tank(
@@ -58,7 +58,7 @@ tank1 = Tank(
 df_press = tank1.get_pressure_df()
 print(df_press)
 
-#%%
+# %%
 "------------------------------------ Analysis Module ---------------------------------------"
 analysis = Analysis(
     tank_class=tank1,
@@ -70,15 +70,14 @@ analysis = Analysis(
 camp = analysis.campbell("plot")
 camp.show()
 
-#%%
+# %%
 "Havlena"
 havlena_plot = analysis.havlena_odeh("plot")
 havlena_data = analysis.havlena_odeh("data")
 havlena_plot.show()
 print(havlena_data)
 
-
-#%%
+# %%
 "----------------------------------Aquifer Models--------------------------------------------"
 
 "With Aquifer - Fetkovich-------------------"
@@ -92,8 +91,8 @@ k = 25
 water_visc = 0.6
 
 mbal_tank1 = analysis.mat_bal_df()
-pr_list = mbal_tank1["PRESSURE_DATUM"]
-ts_list = mbal_tank1["Time_Step"]
+pr_list = list(mbal_tank1["PRESSURE_DATUM"])
+ts_list = list(mbal_tank1["Time_Step"])
 
 fet = Fetkovich(
     aq_radius=aq_radius,
@@ -138,7 +137,7 @@ analitic_meth_fet.show()
 havlena_fet = analysis_fet.havlena_odeh("plot")
 havlena_fet.show()
 
-#%%
+# %%
 "With Aquifer - Carter Tracy-----------------"
 res_radius = 2000
 aq_thickness = 13
@@ -147,7 +146,6 @@ ct = 0.000007
 theta = 140
 k = 25
 water_visc = 0.6
-
 
 carter = CarterTracy(
     aq_por=phi,
@@ -190,7 +188,7 @@ analitic_meth_car.show()
 havlena_car = analysis_carter.havlena_odeh("plot")
 havlena_car.show()
 
-#%%
+# %%
 "----GRAPHS---"
 plot1 = analysis_carter.plot_cum_prod_per_well()
 plot1.show()
@@ -212,4 +210,3 @@ plt6.show()
 
 plt7 = analysis_carter.plot_cum_prod_tot_time()
 plt7.show()
-

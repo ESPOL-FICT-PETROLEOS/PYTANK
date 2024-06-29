@@ -80,15 +80,14 @@ class Wells(BaseModel):
 
         return prod_data, press_data
 
-    def get_wells(self) -> dict:
+    def get_wells(self) -> list:
         """
-        Method to crea a dictionary of tanks with the list of corresponding wells
-        with pressure and production data (vectors)
+        Method to crea a list of wells with corresponding pressure and production data (vectors)
         :return:
-            - Dictionary: {Tank: List[Wells]}
+            - list: list_wells = [object(well)]
         """
         prod_data, press_data = self._process_data()
-        cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
+        cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]
         all_wells = set(prod_data["ITEM_NAME"]).union(press_data["WELLBORE"])
         list_wells = []
 
@@ -155,7 +154,7 @@ class Wells(BaseModel):
                     data=group_press
                 )
                 # if prod_vector is None and TANK_COL in group_press.columns:
-                    # tank_name = group_press[TANK_COL].iloc[0]
+                # tank_name = group_press[TANK_COL].iloc[0]
 
             # Create well lists
             info_well = _Well(
@@ -169,6 +168,7 @@ class Wells(BaseModel):
 
         return list_wells
 
-    def well_founder(self, list_wells_users: list) -> list:
-        all_wells = self.get_wells()
-        pass
+    def search_wells(self, your_wells: list) -> list:
+        well_base = self.get_wells()
+        result = [well for well in well_base if well.name in your_wells]
+        return result
