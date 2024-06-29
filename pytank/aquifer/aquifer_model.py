@@ -71,8 +71,8 @@ class Fetkovich:
             theta: float,
             k: float,
             water_visc: float,
-            pr: List[float],
-            time_step: List[float],
+            pr: list,
+            time_step: list,
             boundary_type: str = "no_flow",
             flow_type: str = "radial",
             width: float = None,
@@ -312,8 +312,8 @@ class CarterTracy:
             theta: float,
             aq_perm: float,
             water_visc: float,
-            pr: List[float],
-            time: List[float],
+            pr: list,
+            time: list,
     ):
         """
         Initializes the attributes of the CarterTracy class.
