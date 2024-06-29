@@ -37,7 +37,7 @@ def underground_withdrawal(
         gas_fvf,
         gas_oil_rs,
         gas_water_rs,
-):
+) -> np.array:
     """
     Calculates the total underground withdrawal of a well using its cumulative
     production information and fluid properties
@@ -64,8 +64,7 @@ def underground_withdrawal(
         Solution gas-water ratio in DataFrame or numeric value (scf/stb)
 
     Returns
-    -------
-
+    ------
     Numpy Array:
         Returns numpy array with the total underground withdrawal
 
@@ -150,7 +149,6 @@ def pressure_vol_avg(
         position="begin",
 ) -> pd.DataFrame:
     """
-
     Parameters
     ----------
     data: pandas DataFrame
@@ -777,7 +775,6 @@ def havlena_and_odeh(
 
     Returns
     -------
-    Matplotlib plot:
         Returns a Matplotlib plot of F/Eo vs Eg/Eo (Havlena and Odeh Straight line)"""
 
     # Check the data type of numerical arguments
@@ -861,18 +858,18 @@ def ebm(p,
     """
 
     :param:
-        - p: pressure [Psi]
-        - pi: initial pressure
-        - n_p: oil cumulative production
-        - wp: water cumulative production
-        - bo: oil volumetric factor
-        - cf: total compressibility
-        - cw: water compressibility
-        - sw0: initial water saturation
-        - boi: initial oil volumetric factor
-        - poes: inferred poes
-        - we: influx of water
-        - bw: water volumetric factor
+    - p: pressure
+    - pi: initial pressure
+    - n_p: oil cumulative production
+    - wp: water cumulative production
+    - bo: oil volumetric factor
+    - cf: total compressibility
+    - cw: water compressibility
+    - sw0: initial water saturation
+    - boi: initial oil volumetric factor
+    - poes: inferred poes
+    - we: influx of water
+    - bw: water volumetric factor
     :return:
         float: function_p
     """
@@ -900,14 +897,14 @@ def aquifer_fetkovich(
     """
     Simplified function of the Fetkovich class for calculating the accumulated influx of water
     :param:
-    - aq_radius: Aquifer ratio value (ft)
-    - res_radius: Reservoir ratio value (ft)
-    - aq_thickness: Aquifer thickness (ft)
-    - aq_por: Aquifer porosity (decimal)
+    - aq_radius: Aquifer ratio value
+    - res_radius: Reservoir ratio value
+    - aq_thickness: Aquifer thickness
+    - aq_por: Aquifer porosity
     - ct: Total compressibility
     - pr: Pressures of reservoir
     - theta: Aquifer angle degrees
-    - k: permeability value (mD)
+    - k: permeability value
     - water_visc: Viscosity value
     - last_press: previous pressure
     - cum: cumulative
@@ -958,28 +955,28 @@ def fetkovich_press(
     oil and water production, and aquifer influence.
 
     :param:
-        - p: Reservoir pressure
-        - n_p: Oil cumulative production
-        - wp: Water cumulative production
-        - cf: Total compressibility
-        - t: Temperature [F]
-        - salinity: Salinity value
-        - df_pvt: PVT DataFrame
-        - aq_radius: Aquifer ratio
-        - res_radius: Reservoir ratio
-        - aq_thickness: Aquifer thickness
-        - aq_por: Aquifer porosity
-        - theta: Angle of aquifer
-        - k: permeability
-        - water_visc: Water viscosity
-        - p_anterior: anterior pressure
-        - cum: cumulative
-        - pi: initial pressure
-        - sw0: initial water saturation
-        - poes: Inferred poes
-        - boi: initial oil volumetric factor
-        - ppvt_col: Column name for pressure in the PVT data frame.
-        - oil_fvf_col: Column name for oil formation volume factor in the PVT data frame.
+    - p: Reservoir pressure
+    - n_p: Oil cumulative production
+    - wp: Water cumulative production
+    - cf: Total compressibility
+    - t: Temperature
+    - salinity: Salinity value
+    - df_pvt: PVT DataFrame
+    - aq_radius: Aquifer ratio
+    - res_radius: Reservoir ratio
+    - aq_thickness: Aquifer thickness
+    - aq_por: Aquifer porosity
+    - theta: Angle of aquifer
+    - k: permeability
+    - water_visc: Water viscosity
+    - p_anterior: anterior pressure
+    - cum: cumulative
+    - pi: initial pressure
+    - sw0: initial water saturation
+    - poes: Inferred poes
+    - boi: initial oil volumetric factor
+    - ppvt_col: Column name for pressure in the PVT data frame.
+    - oil_fvf_col: Column name for oil formation volume factor in the PVT data frame.
     :return:
         - pressure
     """
@@ -1005,7 +1002,7 @@ def fetkovich_press(
     return ebm(p, pi, np, wp, bo, cf, cw, sw0, boi, poes, we, bw)
 
 
-def calculated_pressure(
+def calculated_pressure_fetkovich(
         np_frame: pd.Series,
         wp_frame: pd.Series,
         cf: float,
@@ -1033,7 +1030,7 @@ def calculated_pressure(
         - np_frame: Column of oil cumulative production
         - wp_frame: Column of water cumulative production
         - cf: Total compressibility
-        - t: Temperature [F]
+        - t: Temperature
         - salinity: Salinity value
         - df_pvt: PVT DataFrame
         - aq_radius: Aquifer ratio
@@ -1061,7 +1058,7 @@ def calculated_pressure(
         wp = wp_frame[i]
         p_anterior = calculated_p[i]
         # Calculate current reservoir pressure given all other material balance variables through numeric solving.
-        pressure = fsolve(
+        pressure = float(fsolve(
             fetkovich_press,
             x0,
             args=(
@@ -1087,7 +1084,7 @@ def calculated_pressure(
                 ppvt_col,
                 oil_fvf_col,
             ),
-        )[0]
+        )[0])
         x0 = pressure
         calculated_p.append(pressure)
         cw = comp_bw_nogas(pressure, t, salinity, unit=1)
@@ -1109,7 +1106,7 @@ def calculated_pressure(
     return calculated_p
 
 
-def Aquifer_Carter_Tracy(
+def aquifer_carter_tracy(
         aq_por: float,
         ct: float,
         res_radius: float,
@@ -1126,21 +1123,21 @@ def Aquifer_Carter_Tracy(
     """
         Simplified function of the Fetkovich class for calculating the accumulated influx of water
         :param:
-        - aq_por: Aquifer porosity (decimal).
-        - ct: Total compressibility.
-        - res_radius: Reservoir radius (ft).
-        - aq_thickness: Aquifer thickness (ft).
-        - theta: Aquifer angle in degrees.
-        - k: Permeability (mD).
+        - aq_por: Aquifer porosity
+        - ct: Total compressibility
+        - res_radius: Reservoir radius
+        - aq_thickness: Aquifer thickness
+        - theta: Aquifer angle in degrees
+        - k: Permeability
         - water_visc: Water viscosity.
-        - pr: List of reservoir pressures.
-        - time: Current time (days).
-        - past_time: Previous time (days).
-        - we: Cumulative water influx.
-        - pi: Initial pressure.
+        - pr: List of reservoir pressures
+        - time: Current time
+        - past_time: Previous time
+        - we: Cumulative water influx
+        - pi: Initial pressure
 
         :return:
-            - float: we cumulative influx of water
+            - float: cumulative influx of water
         """
     pr_array = pr
 
@@ -1207,28 +1204,28 @@ def carter_tracy_press(
     oil and water production, and aquifer influence.
 
     :param:
-        - p: Current reservoir pressure.
-        - np: Cumulative oil production.
-        - wp: Cumulative water production.
-        - cf: Formation compressibility.
-        - t: Temperature.
-        - salinity: Salinity.
-        - df_pvt: PVT data frame.
-        - res_radius: Reservoir radius (ft).
-        - aq_thickness: Aquifer thickness (ft).
-        - aq_por: Aquifer porosity (decimal).
-        - theta: Aquifer angle in degrees.
-        - k: Permeability (mD).
-        - water_visc: Water viscosity.
-        - time: Current time (days).
-        - past_time: Previous time (days).
-        - we: Cumulative water influx.
-        - pi: Initial pressure.
-        - sw0: Initial water saturation.
-        - poes: Estimated Original Oil in Place (OOIP).
-        - boi: Initial oil formation volume factor.
-        - ppvt_col: Column name for pressure in the PVT data frame.
-        - oil_fvf_col: Column name for oil formation volume factor in the PVT data frame.
+        - p: Current reservoir pressure
+        - np: Cumulative oil production
+        - wp: Cumulative water production
+        - cf: Formation compressibility
+        - t: Temperature
+        - salinity: Salinity
+        - df_pvt: PVT data frame
+        - res_radius: Reservoir radius
+        - aq_thickness: Aquifer thickness
+        - aq_por: Aquifer porosity
+        - theta: Aquifer angle in degrees
+        - k: Permeability
+        - water_visc: Water viscosity
+        - time: Current time
+        - past_time: Previous time
+        - we: Cumulative water influx
+        - pi: Initial pressure
+        - sw0: Initial water saturation
+        - poes: Estimated Original Oil in Place (OOIP)
+        - boi: Initial oil formation volume factor
+        - ppvt_col: Column name for pressure in the PVT data frame
+        - oil_fvf_col: Column name for oil formation volume factor in the PVT data frame
     :return:
         - pressure
     """
@@ -1237,7 +1234,7 @@ def carter_tracy_press(
     bw = Bo_bw(p, t, salinity, unit=1)
     cw = comp_bw_nogas(p, t, salinity, unit=1)
     ct = cw + cf
-    we = Aquifer_Carter_Tracy(
+    we = aquifer_carter_tracy(
         aq_por,
         ct,
         res_radius,
@@ -1273,16 +1270,16 @@ def calculate_pressure_with_carter_tracy(
         poes: float,
         ppvt_col: str,
         oil_fvf_col: str
-):
+) -> object:
     """
         This function calculates the reservoir pressure for each record in the df_ta2 dataframe
-        using scipy's fsolve function to solve the material balance equations iteratively.
+        using scipy's solve function to solve the material balance equations iteratively.
 
         :param:
             - np_frame: Column of oil cumulative production
             - wp_frame: Column of water cumulative production
             - cf: Total compressibility
-            - t: Temperature [F]
+            - t: Temperature
             - salinity: Salinity value
             - df_pvt: PVT DataFrame
             - res_radius: Reservoir ratio
@@ -1295,8 +1292,8 @@ def calculate_pressure_with_carter_tracy(
             - pi: initial pressure
             - sw0: initial water saturation
             - poes: Inferred original petroleum in situ
-            - ppvt_col: Column name for pressure in the PVT data frame.
-            - oil_fvf_col: Column name for oil formation volume factor in the PVT data frame.
+            - ppvt_col: Column name for pressure in the PVT data frame
+            - oil_fvf_col: Column name for oil formation volume factor in the PVT data frame
         """
     boi = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, pi)
     cum = 0
@@ -1307,7 +1304,7 @@ def calculate_pressure_with_carter_tracy(
         np = np_frame[i]
         wp = wp_frame[i]
         time = time_frame[i]
-        pressure = fsolve(
+        pressure = float(fsolve(
             carter_tracy_press,
             x0,
             args=(
@@ -1333,12 +1330,12 @@ def calculate_pressure_with_carter_tracy(
                 ppvt_col,
                 oil_fvf_col
             ),
-        )[0]
+        )[0])
         x0 = pressure
         calculated_p.append(pressure)
         cw = comp_bw_nogas(pressure, t, salinity, unit=1)
         ct = cf + cw
-        cum = Aquifer_Carter_Tracy(
+        cum = aquifer_carter_tracy(
             aq_por,
             ct,
             res_radius,

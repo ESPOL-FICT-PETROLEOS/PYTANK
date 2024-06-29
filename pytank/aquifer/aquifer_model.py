@@ -22,8 +22,45 @@ from typing import Optional, List
 # Fetkovich
 class Fetkovich:
     """
-    Class to calculate the cumulative influx of water through Fetkovich aquifer model.
+    To estimate water influx using the Fetkovich's method we need to estimate:
+    Wi, Wei and J.
+    Parameters
+    ----------
+    aq_radius : float
+        Radius of the aquifer, ft.
+    res_radius : float
+        Radius of the reservoir, ft.
+    aq_thickness : float
+        Thickness of the aquifer, ft.
+    aq_por : float
+        Porosity of the aquifer.
+    ct : float
+        Total compressibility coefficient, psi^-1.
+    theta : float
+        Encroachment angle.
+    k : float
+        Permeability of the aquifer, md.
+    water_visc : float
+        Viscosity of water, cp.
+    boundary_type : str, optional
+        Type of aquifer boundary, default is 'no_flow'. Options are 'no_flow', 'constant_pressure', 'infinite'.
+    flow_type : str, optional
+        Type of flow, default is 'radial'. Options are 'radial', 'linear'.
+    pr : list or numpy array, optional
+        Measured reservoir pressure, psi.
+    time_step : list or numpy array, optional
+        Time step, days.
+    width : float, optional
+        Width of the linear aquifer, ft. Required only for linear flow.
+    length : float, optional
+        Length of the linear aquifer, ft. Required only for linear flow.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Containing the cumulative water influx, bbl.
     """
+
     def __init__(
             self,
             aq_radius: float,
@@ -42,21 +79,38 @@ class Fetkovich:
             length: float = None,
     ):
         """
-        :param:
-            - aq_radius (float): Aquifer ratio value (ft)
-            - res_radius (float):  Reservoir ratio value (ft)
-            - aq_thickness (float):  Aquifer thickness (ft)
-            - aq_por (float): Aquifer porosity (decimal)
-            - ct (float): Total compressibility
-            - pr (list): Pressures list [psi] of reservoir
-            - theta (float): Aquifer angle degrees
-            - k (float): permeability value (mD)
-            - water_visc (float): Viscosity value
-            - time_step (list): Time lapses list
-            - boundary_type (str): Type of Boundary
-            - flow_type: Type of Flore regimen
-            - width (float) : None default
-            - length (float): None default
+        Initializes the attributes of the Fetkovich's class.
+
+    Parameters
+    ----------
+    aq_radius : float
+        Radius of the aquifer, ft.
+    res_radius : float
+        Radius of the reservoir, ft.
+    aq_thickness : float
+        Thickness of the aquifer, ft.
+    aq_por : float
+        Porosity of the aquifer.
+    ct : float
+        Total compressibility coefficient, psi^-1.
+    theta : float
+        Encroachment angle.
+    k : float
+        Permeability of the aquifer, md.
+    water_visc : float
+        Viscosity of water, cp.
+    boundary_type : str, optional
+        Type of aquifer boundary, default is 'no_flow'. Options are 'no_flow', 'constant_pressure', 'infinite'.
+    flow_type : str, optional
+        Type of flow, default is 'radial'. Options are 'radial', 'linear'.
+    pr : list or numpy array, optional
+        Measured reservoir pressure, psi.
+    time_step : list or numpy array, optional
+        Time step, days.
+    width : float, optional
+        Width of the linear aquifer, ft. Required only for linear flow.
+    length : float, optional
+        Length of the linear aquifer, ft. Required only for linear flow.
         """
         self.aq_radius = aq_radius
         self.res_radius = res_radius
@@ -213,7 +267,7 @@ class Fetkovich:
         :return:
         pd.Series: A column of values of Cumulative We.
         """
-        # Encapsulation of DataFrame using we method.
+        # Encapsulation of DataFrame using method We.
         we = self.we()
         return we["Cumulative We"]
 
@@ -221,7 +275,34 @@ class Fetkovich:
 class CarterTracy:
     """
     Class to calculate the cumulative influx of water through Carter Tracy aquifer model.
+
+    Parameters
+    ----------
+    aq_por : float
+        Porosity of the aquifer (decimal).
+    ct : float
+        Total compressibility, psi^-1.
+    res_radius : float
+        Radius of the reservoir, ft.
+    aq_thickness : float
+        Thickness of the aquifer, ft.
+    theta : float
+        Encroachment angle, degrees.
+    aq_perm : float
+        Permeability of the aquifer, md.
+    water_visc : float
+        Viscosity of water, cp.
+    pr : list, optional
+        Measured reservoir pressure, psi.
+    time : list, optional
+        Time lapses, days.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Containing the cumulative water influx, bbl.
     """
+
     def __init__(
             self,
             aq_por: float,
@@ -235,17 +316,28 @@ class CarterTracy:
             time: Optional[List[float]] = None,
     ):
         """
+        Initializes the attributes of the CarterTracy class.
 
-        :param
-        - aq_por (float): Aquifer porosity (decimal)
-        - ct (float): Total compressibility
-        - res_radius (float):  Reservoir ratio value (ft)
-        - aq_thickness (float):  Aquifer thickness (ft)
-        - theta (float): Aquifer angle degrees
-        - aq_perm (float): permeability value (mD)
-        - water_visc (float): Viscosity value
-        - pr (list): Pressures list [psi] of reservoir
-        - time (list): Time lapses list
+        Parameters
+        ----------
+        aq_por : float
+            Porosity of the aquifer (decimal).
+        ct : float
+            Total compressibility, psi^-1.
+        res_radius : float
+            Radius of the reservoir, ft.
+        aq_thickness : float
+            Thickness of the aquifer, ft.
+        theta : float
+            Encroachment angle, degrees.
+        aq_perm : float
+            Permeability of the aquifer, md.
+        water_visc : float
+            Viscosity of water, cp.
+        pr : list, optional
+            Measured reservoir pressure, psi.
+        time : list, optional
+            Time lapses, days.
         """
         self.aq_por = aq_por
         self.ct = ct

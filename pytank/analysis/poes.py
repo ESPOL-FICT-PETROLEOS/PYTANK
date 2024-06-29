@@ -46,7 +46,7 @@ from pytank.functions.utilities import interp_dates_row
 from pytank.functions.material_balance import (underground_withdrawal,
                                                pressure_vol_avg,
                                                ho_terms_equation,
-                                               calculated_pressure,
+                                               calculated_pressure_fetkovich,
                                                calculate_pressure_with_carter_tracy)
 from pytank.tank.tank import Tank
 from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
@@ -116,9 +116,9 @@ class Analysis(BaseModel):
     def __init__(self, tank_class, freq, position):
         """
         :param:
-        tank_class: Instance of Tank class.
-        freq:  Frequency of data to balance of material equation.
-        position: Position of frequency of date
+        - tank_class: Instance of Tank class.
+        - freq:  Frequency of data to balance of material equation.
+        - position: Position of frequency of date
         """
         super().__init__(tank_class=tank_class, freq=freq, position=position)
 
@@ -335,7 +335,26 @@ class Analysis(BaseModel):
                                 water_visc
                                 ):
         """
-        Method to update aquifer values without the need to make an instance of Fetkovich Class.
+        Updates the aquifer parameters for the Fetkovich model without creating a new instance of the Fetkovich class.
+
+        Parameters
+        ----------
+        aq_radius : float
+            Radius of the aquifer, ft.
+        res_radius : float
+            Radius of the reservoir, ft.
+        aq_thickness : float
+            Thickness of the aquifer, ft.
+        aq_por : float
+            Porosity of the aquifer (decimal).
+        ct : float
+            Total compressibility, psi^-1.
+        theta : float
+            Encroachment angle, degrees.
+        k : float
+            Permeability of the aquifer, md.
+        water_visc : float
+            Viscosity of water, cp.
         """
         # Encapsulation of mat_bal_df
         mat_bal_data = self.mat_bal_df()
@@ -356,16 +375,34 @@ class Analysis(BaseModel):
         )
 
     def setup_carter_tracy_aquifer(self,
-                                   aq_por,
-                                   ct,
-                                   res_radius,
-                                   aq_thickness,
-                                   theta,
-                                   aq_perm,
-                                   water_visc
+                                   aq_por: float,
+                                   ct: float,
+                                   res_radius: float,
+                                   aq_thickness: float,
+                                   theta: float,
+                                   aq_perm: float,
+                                   water_visc: float
                                    ):
         """
         Method to update aquifer values without the need to make an instance of Fetkovich Class.
+        Sets up the parameters for the Carter-Tracy aquifer model.
+
+        Parameters
+        ----------
+        aq_por : float
+            Porosity of the aquifer (decimal).
+        ct : float
+            Total compressibility, psi^-1.
+        res_radius : float
+            Radius of the reservoir, ft.
+        aq_thickness : float
+            Thickness of the aquifer, ft.
+        theta : float
+            Encroachment angle, degrees.
+        aq_perm : float
+            Permeability of the aquifer, md.
+        water_visc : float
+            Viscosity of water, cp.
         """
         # Encapsulation of mat_bal_df
         mat_bal_data = self.mat_bal_df()
@@ -389,23 +426,30 @@ class Analysis(BaseModel):
         Method to graphic the Campbell graph to be able to graphically see the energy /
         contribution of the aquifer.
 
-        :param:
-        option (str): The option that determines the type of result and graph to be displayed.
-        It can be "plot" or "data"
+        Parameters
+        ----------
+        option : str
+            Determines the type of result to be returned. Can be either "plot" or "data".
 
-        :return:
-        Union[pd.DataFrame, plt.Figure]:
-            - pd.Dataframe: If option is "data", returns a Dataframe.
-            - plt.Figure: If option is "plot", return a matplotlib figure object containing the plot
+        Returns
+        -------
+        Union[pd.DataFrame, plt.Figure]
+            - If option is "data", returns a pandas DataFrame containing the data.
+            - If option is "plot", returns a matplotlib Figure object containing the plot.
 
-        :raise:
-        ValueError: If the option is not "data" or "plot".
+        Raises
+        ------
+        ValueError
+            If the option is not "data" or "plot".
 
-        :examples:
+        Examples
+        --------
+        Case 1
             instance = Analysis()
             df = instance.campbell("data")
             print(df)
 
+        Case 2
             figure = instance.havlena_odeh("plot")
             figure.show()
         """
@@ -448,23 +492,30 @@ class Analysis(BaseModel):
         """
         Calculate results based on Havlena and Odeh Methods and show a graphic.
 
-        :param option:
-        option (str): The option that determines the type of result and graph to be displayed.
-        It can be "plot" or "data"
+        Parameters
+        ----------
+        option: str
+            The option that determines the type of result and graph to be displayed.
+            It can be "plot" or "data"
 
-        :return:
-        Union[pd.DataFrame, plt.Figure]:
-            - pd.Dataframe: If option is "data", returns a Dataframe.
-            - plt.Figure: If option is "plot", return a matplotlib figure object containing the plot.
+        Returns
+        -------
+        Union[pd.DataFrame, plt.Figure]
+            - If option is "data", returns a pandas DataFrame containing the data.
+            - If option is "plot", returns a matplotlib Figure object containing the plot.
 
-        :raise:
-        ValueError: It the option is not "plot" or "data"
+        Raises
+        ------
+        ValueError
+            It the option is not "plot" or "data"
 
-        :Examples:
+        Examples
+        --------
+        Case 1
             instance = Analysis()
             df = instance.havlena_odeh("data")
             print(df)
-
+        Case 2
             figure = instance.havlena_odeh("plot")
             figure.show()
         """
@@ -500,7 +551,7 @@ class Analysis(BaseModel):
             plt.grid(True, linestyle="--", alpha=0.7)
 
             # formatter for the axes in M
-            formatter = FuncFormatter(lambda x, pos: "{:.2f}M".format(x*1e-6))
+            formatter = FuncFormatter(lambda x, pos: "{:.2f}M".format(x * 1e-6))
             ax2.yaxis.set_major_formatter(formatter)
             return fig
 
@@ -511,18 +562,27 @@ class Analysis(BaseModel):
         """
         Method used to calculate the POES through an inferred POES that ensures that there is /
         the best match between the behavior of the observed pressure and the calculated pressure.
-        the calculation is done through calculated_pressure function
+        the calculation is done through calculated_pressure_fetkovich function
 
-        :param:
-        poes (float): Inferred N [MMStb] value
-        option (str): Can be:
-            - "data": Gets a DataFrame with the observed and calculated pressure columns.
-            - "plot: Gets a Graph with the behavior of observed and calculated pressure per date.
+        Parameters
+        ----------
+        poes : float
+            Inferred POES (Petroleum-in-Place) value in MMStb.
+        option : str
+            Determines the type of result to be returned. Can be either "data" or "plot".
 
-        :return:
-        Union[pd.DataFrame, plt.Figure]:
-            - pd.DataFrame: A DataFrame with data of Date, Observed Pressure and Calculated Pressure columns
-            - plt.Figure: A graph of observed and calculated pressure per Date to see its behavior.
+        Returns
+        -------
+        Union[pd.DataFrame, plt.Figure]
+            - If option is "data", returns a pandas DataFrame containing the Date, Observed Pressure, and Calculated Pressure.
+            - If option is "plot", returns a matplotlib Figure object containing a plot of the observed and calculated pressure
+              over time.
+
+        Raises
+        ------
+        ValueError
+            If the option is not "data" or "plot".
+
         """
 
         # Encapsulation of material balance DataFrame from mat_bal_df() method
@@ -535,24 +595,24 @@ class Analysis(BaseModel):
         if isinstance(self.tank_class.aquifer, Fetkovich):
             model_aq_name = "Fetkovich Model"
             # Call the function to calculate the new pressure
-            press_calc = calculated_pressure(df[OIL_CUM_TANK],
-                                             df[WATER_CUM_TANK],
-                                             self.tank_class.cf,
-                                             self.tank_class.water_model.temperature,
-                                             self.tank_class.water_model.salinity,
-                                             self.tank_class.oil_model.data_pvt,
-                                             self.tank_class.aquifer.aq_radius,
-                                             self.tank_class.aquifer.res_radius,
-                                             self.tank_class.aquifer.aq_thickness,
-                                             self.tank_class.aquifer.aq_por,
-                                             self.tank_class.aquifer.theta,
-                                             self.tank_class.aquifer.k,
-                                             self.tank_class.aquifer.water_visc,
-                                             self.tank_class.pi,
-                                             self.tank_class.swo,
-                                             poes,
-                                             PRESSURE_PVT_COL,
-                                             OIL_FVF_COL)
+            press_calc = calculated_pressure_fetkovich(df[OIL_CUM_TANK],
+                                                       df[WATER_CUM_TANK],
+                                                       self.tank_class.cf,
+                                                       self.tank_class.water_model.temperature,
+                                                       self.tank_class.water_model.salinity,
+                                                       self.tank_class.oil_model.data_pvt,
+                                                       self.tank_class.aquifer.aq_radius,
+                                                       self.tank_class.aquifer.res_radius,
+                                                       self.tank_class.aquifer.aq_thickness,
+                                                       self.tank_class.aquifer.aq_por,
+                                                       self.tank_class.aquifer.theta,
+                                                       self.tank_class.aquifer.k,
+                                                       self.tank_class.aquifer.water_visc,
+                                                       self.tank_class.pi,
+                                                       self.tank_class.swo,
+                                                       poes,
+                                                       PRESSURE_PVT_COL,
+                                                       OIL_FVF_COL)
 
         # Carter Tracy Aquifer Model
         elif isinstance(self.tank_class.aquifer, CarterTracy):
@@ -612,18 +672,24 @@ class Analysis(BaseModel):
         Method that serves to carry out an exploratory analysis through the necessary data and graphs that show
         the behavior of the tank properties.
 
-        parameter
-        method (str): A string can be:
+        Parameters
+        ----------
+        method : str
+            Specifies the type of analysis to perform. Can be one of the following:
             - "production_per_well"
             - "cumulative_production_per_date"
             - "pressure_per_date"
             - "pressure_per_cumulative_production"
-        option (str): Depending on the method, you can graph different scenarios
+        option : str, optional
+            Depending on the selected `method`, this parameter can be used to specify additional options for the analysis.
 
-        :return:
-            -plt.Figure: A graph of the given information.
+        Returns
+        -------
+        plt.Figure
+            A matplotlib Figure object containing the generated plot.
 
-        :examples:
+        Examples
+        --------
             instance = Analysis()
             figure = instance.eda(method, option)
             figure.show()
@@ -672,7 +738,7 @@ class Analysis(BaseModel):
             plt.grid(True, linestyle="--", alpha=0.7)
 
             # formatter for the axes in M
-            formatter = FuncFormatter(lambda x, pos: "{:.0f}M".format(x*1e-6))
+            formatter = FuncFormatter(lambda x, pos: "{:.0f}M".format(x * 1e-6))
             ax.yaxis.set_major_formatter(formatter)
             plt.tight_layout()
             return fig
