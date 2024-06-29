@@ -23,17 +23,16 @@ from pytank.functions.utilities import normalize_date_freq
 import warnings
 
 
-class _CreateWell(BaseModel):
+class _Well(BaseModel):
     """
     PRIVATE Class used to handle pressure and production vectors
     """
     name: str
-    tank: Optional[str] = None
     prod_data: Optional[ProdVector] = None
     press_data: Optional[PressVector] = None
 
 
-class Well(BaseModel):
+class Wells(BaseModel):
     """
     Class to assign the respective production and pressure data to each well
     """
@@ -91,7 +90,7 @@ class Well(BaseModel):
         prod_data, press_data = self._process_data()
         cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]
         all_wells = set(prod_data["ITEM_NAME"]).union(press_data["WELLBORE"])
-        tank_wells = []
+        list_wells = []
 
         for name in all_wells:
             prod_vector = None
@@ -105,11 +104,10 @@ class Well(BaseModel):
                         OIL_CUM_COL: OIL_CUM_COL,
                         WATER_CUM_COL: WATER_CUM_COL,
                         GAS_CUM_COL: GAS_CUM_COL,
-                        TANK_COL: TANK_COL
                     }
                 )
                 group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[WATER_CUM_COL]
-                group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM, TANK_COL]]
+                group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]]
 
                 # Normalize the frequency
                 if self.freq_prod is not None:
@@ -132,14 +130,14 @@ class Well(BaseModel):
                                 freq=None,
                                 data=group_prod_norm
                             )
-                    tank_name = group_prod_norm[TANK_COL].iloc[0]
+                    # tank_name = group_prod_norm[TANK_COL].iloc[0]
 
                 else:
                     prod_vector = ProdVector(
                         freq=self.freq_prod,
                         data=group_prod
                     )
-                    tank_name = group_prod[TANK_COL].iloc[0]
+                    # tank_name = group_prod[TANK_COL].iloc[0]
 
             if name in press_data["WELLBORE"].unique():
                 group_press = press_data[press_data["WELLBORE"] == name]
@@ -156,18 +154,21 @@ class Well(BaseModel):
                     freq=self.freq_press,
                     data=group_press
                 )
-                if prod_vector is None and TANK_COL in group_press.columns:
-                    tank_name = group_press[TANK_COL].iloc[0]
+                # if prod_vector is None and TANK_COL in group_press.columns:
+                    # tank_name = group_press[TANK_COL].iloc[0]
 
             # Create well lists
-            info_well = _CreateWell(
+            info_well = _Well(
                 name=name,
-                tank=tank_name,
                 prod_data=prod_vector,
                 press_data=press_vector
             )
 
             # Add wells list to tanks dict
-            tank_wells.append(info_well)
+            list_wells.append(info_well)
 
-        return tank_wells
+        return list_wells
+
+    def well_founder(self, list_wells_users: list) -> list:
+        all_wells = self.get_wells()
+        pass

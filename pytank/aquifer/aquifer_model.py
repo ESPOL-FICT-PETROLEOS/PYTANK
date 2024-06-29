@@ -16,7 +16,7 @@ import numpy as np
 import math
 from pytank.functions.utilities import variable_type
 from datetime import datetime
-from typing import Optional, List
+from typing import List
 
 
 # Fetkovich
@@ -71,10 +71,10 @@ class Fetkovich:
             theta: float,
             k: float,
             water_visc: float,
+            pr: List[float],
+            time_step: List[float],
             boundary_type: str = "no_flow",
             flow_type: str = "radial",
-            pr: Optional[List[float]] = None,
-            time_step: Optional[List[float]] = None,
             width: float = None,
             length: float = None,
     ):
@@ -117,15 +117,15 @@ class Fetkovich:
         self.aq_thickness = aq_thickness
         self.aq_por = aq_por
         self.ct = ct
-        self.pr = pr
         self.theta = theta
         self.k = k
         self.water_visc = water_visc
         self.boundary_type = boundary_type
         self.flow_type = flow_type
+        self.pr = pr
+        self.time_step = time_step
         self.width = width
         self.length = length
-        self.time_step = time_step
 
         # Check if the time list is in datetime format
         if all(isinstance(t, datetime) for t in time_step):
@@ -293,7 +293,7 @@ class CarterTracy:
     water_visc : float
         Viscosity of water, cp.
     pr : list, optional
-        Measured reservoir pressure, psi.
+        List of Measured reservoir pressure, psi.
     time : list, optional
         Time lapses, days.
 
@@ -312,8 +312,8 @@ class CarterTracy:
             theta: float,
             aq_perm: float,
             water_visc: float,
-            pr: Optional[List[float]] = None,
-            time: Optional[List[float]] = None,
+            pr: List[float],
+            time: List[float],
     ):
         """
         Initializes the attributes of the CarterTracy class.
