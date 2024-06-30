@@ -35,6 +35,16 @@ class _Well(BaseModel):
 class Wells(BaseModel):
     """
     Class to assign the respective production and pressure data to each well
+    Attributes
+    ----------
+    freq_prod : Optional[str]
+        Frequency of the production data. Can be None if the frequency is correct.
+    freq_press : Optional[str]
+        Frequency of the pressure data. It is not necessary.
+    df_prod : pandas.DataFrame
+        pd.Dataframe containing the production data.
+    df_press : pandas.DataFrame
+        pd.Dataframe containing the pressure data.
     """
     freq_prod: Optional[str] = None
     freq_press: Optional[str] = None
@@ -52,11 +62,18 @@ class Wells(BaseModel):
                  freq_prod: str = None,
                  freq_press: str = None):
         """
-        :param:
-            - df_prod: csv of production data
-            - df_press: csv of pressure data
-            - freq_prod: Frequency of production Data. Can be None if exists a correct frequency.
-            - freq_press: Frequency of pressure Data. Its no necessary.
+        Initializes the attributes of the Wells class.
+
+        Parameters
+        ----------
+        df_prod : pandas.DataFrame
+            pd.DataFrame containing the production data.
+        df_press : pandas.DataFrame
+            pd.DataFrame containing the pressure data.
+        freq_prod : str, optional
+            Frequency of the production data. Can be None if the frequency is correct.
+        freq_press : str, optional
+            Frequency of the pressure data. It is not necessary.
         """
         super().__init__(df_prod=df_prod,
                          df_press=df_press,
@@ -82,9 +99,12 @@ class Wells(BaseModel):
 
     def get_wells(self) -> list:
         """
-        Method to crea a list of wells with corresponding pressure and production data (vectors)
-        :return:
-            - list: list_wells = [object(well)]
+        Creates a list of wells with corresponding pressure and production data (vectors).
+
+        Returns
+        -------
+        List[Wells]
+            A list of `Wells` objects, where each object represents a well with its associated pressure and production data.
         """
         prod_data, press_data = self._process_data()
         cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]
@@ -169,6 +189,19 @@ class Wells(BaseModel):
         return list_wells
 
     def search_wells(self, your_wells: list) -> list:
+        """
+        Searches for wells in the list of all wells based on the provided well names.
+
+        Parameters
+        ----------
+        your_wells : List[str]
+            A list of well names to search for.
+
+        Returns
+        -------
+        List[Wells]
+            A list of `Wells` objects that match the provided well names.
+        """
         well_base = self.get_wells()
         result = [well for well in well_base if well.name in your_wells]
         return result

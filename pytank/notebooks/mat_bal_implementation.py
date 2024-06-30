@@ -26,7 +26,6 @@ well = Wells(df_prod=df_production,
 all_wells = well.get_wells()
 my_wells = ["A-1-P", "A-10-P", "A-11-P"]
 wells_info = well.search_wells(my_wells)
-print(wells_info)
 
 # %%
 "--------------------------------- Fluid Models Module -----------------------------------"
@@ -56,7 +55,6 @@ tank1 = Tank(
     aquifer=None
 )
 df_press = tank1.get_pressure_df()
-print(df_press)
 
 # %%
 "------------------------------------ Analysis Module ---------------------------------------"

@@ -105,6 +105,15 @@ class Analysis(BaseModel):
         - DataFrame with necessary information to material balance
         - Campbell
         - Exploratory data analysis (EDA) through graphics
+
+    Parameters
+    ----------
+    tank_class : Tank
+        Instance of the Tank class.
+    freq : str
+        Frequency of data for the material balance equation.
+    position : str
+        Position of the frequency of the date.
     """
     tank_class: Tank
     freq: str
@@ -115,10 +124,14 @@ class Analysis(BaseModel):
 
     def __init__(self, tank_class, freq, position):
         """
-        :param:
-        - tank_class: Instance of Tank class.
-        - freq:  Frequency of data to balance of material equation.
-        - position: Position of frequency of date
+        Parameters
+        ----------
+        tank_class : Tank
+            Instance of the Tank class.
+        freq : str
+            Frequency of data for the material balance equation.
+        position : str
+            Position of the frequency of the date.
         """
         super().__init__(tank_class=tank_class, freq=freq, position=position)
 
@@ -192,28 +205,30 @@ class Analysis(BaseModel):
 
     def mat_bal_df(self) -> pd.DataFrame:
         """
-        Obtain material balance parameters at a certain frequency
+        Obtains the material balance parameters at a certain frequency.
 
-        :return:
-            - pd.DataFrame: A Dataframe with the follow columns:
-                - Tank: Name of Tank
-                - START_DATETIME: Date
-                - PRESSURE_DATUM: Pressure value
-                - OIL_CUM_TANK: Oil cumulative production
-                - WATER_CUM_TANK: Water cumulative production
-                - GAS_CUM_TANK: Gas cumulative production
-                - Bo: Oil volumetric factor
-                - Bg: Gas volumetric factor
-                - GOR: Oil Solubility
-                - Bw: Water volumetric factor
-                - Rs_bw: Water Solubility
-                - Time_Step: Time lapses
-                - UW: F underground withdrawal
-                - Eo: Oil Expansion
-                - Eg: Gas Expansion
-                - Efw: Rock-fluid Expansion
-                - Cumulative We: Cumulative influx of water
-        """
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame with the following columns:
+            - Tank: Name of the tank.
+            - START_DATETIME: Date.
+            - PRESSURE_DATUM: Pressure value.
+            - OIL_CUM_TANK: Oil cumulative production.
+            - WATER_CUM_TANK: Water cumulative production.
+            - GAS_CUM_TANK: Gas cumulative production.
+            - Bo: Oil volumetric factor.
+            - Bg: Gas volumetric factor.
+            - GOR: Oil Solubility.
+            - Bw: Water volumetric factor.
+            - Rs_bw: Water Solubility.
+            - Time_Step: Time lapses.
+            - UW: Underground withdrawal.
+            - Eo: Oil Expansion.
+            - Eg: Gas Expansion.
+            - Efw: Rock-fluid Expansion.
+            - Cumulative We: Cumulative influx of water.
+    """
         # Encapsulation of DataFrame from internal private method
         avg = self._pressure_vol_avg()
 
