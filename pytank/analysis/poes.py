@@ -296,8 +296,10 @@ class Analysis(BaseModel):
             df_mbal[RS_W_COL] = self.tank_class.water_model.get_default_rs()
 
         # Creation of time lapses columns
-        df_mbal["Time_Step"] = 365.0
-        df_mbal.loc[df_mbal.index[1:], "Time_Step"] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
+        first_time_lapse = pd.Timedelta(days=pd.to_timedelta(df_mbal[DATE_COL].diff().iloc[2], unit="D").days)
+        df_mbal["Time_Step"] = first_time_lapse.days
+        df_mbal["Time_Step"] = df_mbal["Time_Step"].cumsum()
+        #df_mbal.loc[df_mbal.index[1:], "Time_Step"] = (df_mbal[DATE_COL].diff().dt.days.iloc[1:]).cumsum() + 365.0
         df_mbal = df_mbal.fillna(0.0)
 
         # Calculated values of Eo, Eg, Efw and F columns
