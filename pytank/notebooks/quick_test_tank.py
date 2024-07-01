@@ -1,7 +1,7 @@
 import pandas as pd
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.tank.tank import Tank
-from pytank.well.well import Well
+from pytank.well.well import Wells
 
 # Quicktest
 df_pvt = pd.read_csv("../resources/data_csv/pvt.csv")
@@ -11,7 +11,7 @@ freq = "MS"
 
 tank_name = "tank_center"
 
-well = Well(df_prod=df_production,
+well = Wells(df_prod=df_production,
             df_press=df_pressures,
             freq_prod=freq,
             freq_press=None)
@@ -42,4 +42,4 @@ tank1 = Tank(
 
 # Its only a test, this method is PRIVATE
 df_press = tank1.get_pressure_df()
-# print(df_press)
+print(df_press[["PRESSURE_DATUM", "OIL_CUM"]])

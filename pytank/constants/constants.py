@@ -34,7 +34,8 @@ OIL_CUM_TANK = "OIL_CUM_TANK"
 WATER_CUM_TANK = "WATER_CUM_TANK"
 GAS_CUM_TANK = "GAS_CUM_TANK"
 WE = "Cumulative We"
-
+OIL_RATE_COL = "OIL_RATE"
+WATER_RATE_COL = "WATER_RATE"
 
 # Frequency's of time
 VALID_FREQS = ["D", "W", "M", "MS", "Q", "Y", None]
@@ -76,7 +77,6 @@ _PRESS_SCHEMA_DICT = {
 
 _INJ_SCHEMA_DICT = {
     INJECTION_WATER: _VECTOR_VALIDATION}
-
 
 # SCHEMAS:
 PROD_SCHEMA = DataFrameSchema(_PROD_SCHEMA_DICT, strict="filter")
