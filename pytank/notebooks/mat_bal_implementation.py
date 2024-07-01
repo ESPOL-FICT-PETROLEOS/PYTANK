@@ -13,64 +13,66 @@ from pytank.analysis.poes import Analysis
 from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
 
 # transform the csv to dataframes
-df_pvt = pd.read_csv("C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/pvt.csv")
-df_production = pd.read_csv("C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/production.csv")
-df_pressures = pd.read_csv("C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/pressures.csv")
+df_pvt = pd.read_csv(
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "pvt.csv"
+)
+df_production = pd.read_csv(
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "production.csv"
+)
+df_pressures = pd.read_csv(
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "pressures.csv"
+)
 
 # %%
-"------------------------------------- Well Module----------------------------------------"
+"-------------------------- Well Module----------------------------"
 
-well = Wells(df_prod=df_production,
-             df_press=df_pressures,
-             freq_prod="MS",
-             freq_press=None)
+wells = Wells(df_prod=df_production,
+              df_press=df_pressures,
+              freq_prod="MS",
+              freq_press=None)
 
 # List of all wells
-all_wells = well.get_wells()
+all_wells = wells.get_wells()
 
 # List of wells for user selection
-my_wells = ["A-1-P", "A-10-P", "A-11-P", "A-12-P", "A-13-P", "A-14-P", "A-16-P", "A-17-P", "A-18-P",
-            "A-19-P", "A-21-P", "A-22-P", "A-23-P", "A-24-I", "A-4-P", "A-5-P", "A-6-P", "A-8-P", "A-9-P"]
+my_wells = [
+    "A-1-P", "A-10-P", "A-11-P", "A-12-P", "A-13-P", "A-14-P", "A-16-P",
+    "A-17-P", "A-18-P", "A-19-P", "A-21-P", "A-22-P", "A-23-P", "A-24-I",
+    "A-4-P", "A-5-P", "A-6-P", "A-8-P", "A-9-P"
+]
 
 # lis of wells with the pressure and production info for user selection
-wells_info = well.search_wells(my_wells)
+wells_info = wells.search_wells(my_wells)
 # %%
-"--------------------------------- Fluid Models Module -----------------------------------"
+"----------------------- Fluid Models Module -----------------------"
 oil_model = OilModel(
     data_pvt=df_pvt,
     temperature=25,
 )
 
-water_model = WaterModel(
-    salinity=3000,
-    temperature=200,
-    unit=1
-)
+water_model = WaterModel(salinity=3000, temperature=200, unit=1)
 
 # %%
-"------------------------------------- Tank Module ------------------------------------------"
+"---------------------------- Tank Module ---------------------------"
 tank_name = "tank_center"
-tank1 = Tank(
-    name=tank_name,
-    wells=wells_info,
-    oil_model=oil_model,
-    water_model=water_model,
-    pi=3700,
-    swo=0.25,
-    cw=3.5e-6,
-    cf=4.6e-6,
-    aquifer=None
-)
-df_press = tank1.get_pressure_df()
+pi = 3700
+tank1 = Tank(name=tank_name,
+             wells=wells_info,
+             oil_model=oil_model,
+             water_model=water_model,
+             pi=pi,
+             swo=0.25,
+             cw=3.5e-6,
+             cf=4.6e-6,
+             aquifer=None)
 
 # %%
-"------------------------------------ Analysis Module ---------------------------------------"
-analysis = Analysis(
-    tank_class=tank1,
-    freq="12MS",
-    position="end"
-)
-
+"-------------------------- Analysis Module ------------------------"
+frequency = "12M"
+analysis = Analysis(tank_class=tank1, freq=frequency, position="end")
 "Campbell"
 camp = analysis.campbell("plot")
 camp.show()
@@ -81,9 +83,8 @@ havlena_plot = analysis.havlena_odeh("plot")
 havlena_plot.show()
 
 # %%
-"----------------------------------Aquifer Models--------------------------------------------"
-
-"With Aquifer - Fetkovich-------------------"
+"-------------------------- Aquifer Models --------------------------"
+"----- With Aquifer - Fetkovich ------"
 aq_radius = 14000
 res_radius = 2000
 aq_thickness = 20
@@ -110,30 +111,20 @@ fet = Fetkovich(
     # time_step=ts_list
 )
 
-tank_fet = Tank(
-    name=tank_name,
-    wells=wells_info,
-    oil_model=oil_model,
-    water_model=water_model,
-    pi=3700,
-    swo=0.25,
-    cw=3.5e-6,
-    cf=4.6e-6,
-    aquifer=fet
-)
+tank_fet = Tank(name=tank_name,
+                wells=wells_info,
+                oil_model=oil_model,
+                water_model=water_model,
+                pi=pi,
+                swo=0.25,
+                cw=3.5e-6,
+                cf=4.6e-6,
+                aquifer=fet)
 
-analysis_fet = Analysis(
-    tank_class=tank_fet,
-    freq="12MS",
-    position="end"
-)
+analysis_fet = Analysis(tank_class=tank_fet, freq=frequency, position="end")
 
 "Analytic method"
-
-analitic_meth_fet = analysis_fet.analytic_method(
-    poes=67e+6,
-    option="plot"
-)
+analitic_meth_fet = analysis_fet.analytic_method(poes=67e+6, option="plot")
 analitic_meth_fet.show()
 
 "Havlena Method"
@@ -141,7 +132,7 @@ havlena_fet = analysis_fet.havlena_odeh("plot")
 havlena_fet.show()
 
 # %%
-"With Aquifer - Carter Tracy-----------------"
+"------ With Aquifer - Carter Tracy-------"
 res_radius = 2000
 aq_thickness = 13
 phi = 0.30
@@ -162,29 +153,20 @@ carter = CarterTracy(
     # time_step=ts_list
 )
 
-tank_carter = Tank(
-    name=tank_name,
-    wells=wells_info,
-    oil_model=oil_model,
-    water_model=water_model,
-    pi=3700,
-    swo=0.25,
-    cw=3.5e-6,
-    cf=4.6e-6,
-    aquifer=carter
-)
+tank_carter = Tank(name=tank_name,
+                   wells=wells_info,
+                   oil_model=oil_model,
+                   water_model=water_model,
+                   pi=pi,
+                   swo=0.25,
+                   cw=3.5e-6,
+                   cf=4.6e-6,
+                   aquifer=carter)
 
-analysis_carter = Analysis(
-    tank_class=tank_carter,
-    freq="12MS",
-    position="end"
-)
-
+analysis_carter = Analysis(tank_class=tank_carter, freq=frequency,
+                           position="end")
 "Analytic method"
-analitic_meth_car = analysis_carter.analytic_method(
-    poes=67e+6,
-    option="plot"
-)
+analitic_meth_car = analysis_carter.analytic_method(poes=67e+6, option="plot")
 analitic_meth_car.show()
 
 "Havlena Method"
@@ -215,3 +197,4 @@ plt7 = analysis_carter.plot_cum_prod_tot_time()
 plt7.show()
 
 plt8 = analysis_carter.plot_flow_rate_well()
+plt8.show()

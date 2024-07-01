@@ -2,20 +2,22 @@
 from pytank.aquifer import aquifer_fetkovich
 import pandas as pd
 import matplotlib.pyplot as plt
+
+
 def odia(n):
-    return(n*365)
+    return (n * 365)
 
 
-def EBM(p,np,wp,bo,cf,cw,sw0,boi, name,date):
+def EBM(p, np, wp, bo, cf, cw, sw0, boi, name, date):
     pi = 3676
-    F = (np*bo)+wp
-    Efw = boi*((cf + cw * sw0) / (1 - sw0)) * (pi - p)
-    Eo = bo-boi
-    Et = Eo+Efw
+    F = (np * bo) + wp
+    Efw = boi * ((cf + cw * sw0) / (1 - sw0)) * (pi - p)
+    Eo = bo - boi
+    Et = Eo + Efw
     x = date
     y = F / Et
     y2 = p
-    print(p,F,Eo)
+    print(p, F, Eo)
     #Grafica
     #slope, intercept, r, p, se = stats.linregress(x, y) #encontrar la pendiente
     #N1=slope
@@ -35,7 +37,8 @@ def EBM(p,np,wp,bo,cf,cw,sw0,boi, name,date):
     plt.show()
 
     # pr
-    pr = pi - (((F - intercept * Eo) - we)) / ((cf + cw * sw0 / (1 - sw0)) * boi * intercept)
+    pr = pi - (((F - intercept * Eo) - we)) / ((cf + cw * sw0 /
+                                                (1 - sw0)) * boi * intercept)
     print(pr)
     # Grafica2
     fig, ax = plt.subplots(figsize=(15, 10))
@@ -46,11 +49,12 @@ def EBM(p,np,wp,bo,cf,cw,sw0,boi, name,date):
 
     plt.show()
 
+
 #%% Load the mbal dataframe
 df_tank = pd.read_csv("mbal_Dataframe.csv")
-df_ta=pd.read_csv("mbal_Dataframe2.csv")
-D='START_DATETIME'
-df_ta=df_ta.drop([D], axis=1)
+df_ta = pd.read_csv("mbal_Dataframe2.csv")
+D = 'START_DATETIME'
+df_ta = df_ta.drop([D], axis=1)
 #%% Creation of a mbal dataframe for each tank
 df_tankcenter = df_tank[df_tank["Tank"] == "tank_center"]
 df_tankcenter2 = df_ta[df_ta["Tank"] == "tank_center"]
@@ -69,14 +73,17 @@ theta = 140
 k = 200
 water_visc = 0.55
 
-menu=int(input("Menu:h  \n 1.tank_north(avg) \n 2. tank_center \n 3.tank_center(avg)"))
-while menu !=0:
-    if menu ==1:
+menu = int(
+    input(
+        "Menu:h  \n 1.tank_north(avg) \n 2. tank_center \n 3.tank_center(avg)")
+)
+while menu != 0:
+    if menu == 1:
         name = "Tank north 1989-2003"
         #df_tanknorth2 = df_tanknorth2.loc[(df_tanknorth2['DATE'] >= '1989-08-01') & (df_tanknorth2['DATE'] < '2003-08-01')]
         date = df_tanknorth2['DATE']
         time = []
-        for i in range(len(df_tanknorth2['DATE']) ):
+        for i in range(len(df_tanknorth2['DATE'])):
             time.append(odia(i))
         p = df_tanknorth2['PRESSURE_DATUM']
         np = df_tanknorth2['oil_prod_cum']
@@ -91,9 +98,9 @@ while menu !=0:
         #df_tanknorth2['AWe'] = df_tanknorth2.get("AWe", w['Delta We'].to_list())
         #df_tanknorth2['Cwe'] = df_tanknorth2.get("Cwe", w['Cumulative We'].to_list())
         #we = df_tanknorth2['Cwe']
-        EBM(p,np,wp,bo,cf,cw,sw0,boi, name,date)
+        EBM(p, np, wp, bo, cf, cw, sw0, boi, name, date)
 
-    elif menu==2:
+    elif menu == 2:
         name = "Tank center"
         p = df_tankcenter['PRESSURE_DATUM']
         np = df_tankcenter['oil_prod_cum']
@@ -102,11 +109,11 @@ while menu !=0:
         bo = df_tankcenter['oil_fvf']
         bg = df_tankcenter['gas_fvf']
         rs = df_tankcenter['gas_oil_rs_col']
-        EBM(p,np,wp,bo,bg,cf,cw,sw0,rs,boi,name,date,we)
-    elif menu==3:
+        EBM(p, np, wp, bo, bg, cf, cw, sw0, rs, boi, name, date, we)
+    elif menu == 3:
         name = "Tank center 1988-1995 "
         #df_tankcenter2 = df_tankcenter2.loc[
-            #(df_tankcenter2['DATE'] >= '2002-09-01') & (df_tankcenter2['DATE'] < '2008-09-01')]
+        #(df_tankcenter2['DATE'] >= '2002-09-01') & (df_tankcenter2['DATE'] < '2008-09-01')]
         date = df_tankcenter2['DATE']
         time = []
         for i in range(len(df_tankcenter2['DATE'])):
@@ -120,15 +127,29 @@ while menu !=0:
         rs = df_tankcenter2['gas_oil_rs_col']
         pr = p.to_numpy()
         time_step = time
-        w = aquifer_fetkovich(aq_radius, res_radius, aq_thickness, phi, ct, pr, theta, k, water_visc, time_step,
-                              boundary_type='no_flow', flow_type='radial', width=None, length=None)
-        df_tankcenter2['AWe'] = df_tankcenter2.get("AWe", w['Delta We'].to_list())
-        df_tankcenter2['Cwe'] = df_tankcenter2.get("Cwe", w['Cumulative We'].to_list())
+        w = aquifer_fetkovich(aq_radius,
+                              res_radius,
+                              aq_thickness,
+                              phi,
+                              ct,
+                              pr,
+                              theta,
+                              k,
+                              water_visc,
+                              time_step,
+                              boundary_type='no_flow',
+                              flow_type='radial',
+                              width=None,
+                              length=None)
+        df_tankcenter2['AWe'] = df_tankcenter2.get("AWe",
+                                                   w['Delta We'].to_list())
+        df_tankcenter2['Cwe'] = df_tankcenter2.get(
+            "Cwe", w['Cumulative We'].to_list())
         we = df_tankcenter2['Cwe']
-        EBM(p,np,wp,bo,cf,cw,sw0,boi, name,we,date)
+        EBM(p, np, wp, bo, cf, cw, sw0, boi, name, we, date)
     else:
         print("Por favor digita una opcion correcta")
 
-    menu = int(input(
-        "Menu: 1.tank_north(avg) \n 2. tank_center \n 3.tank_center(avg)"))
-
+    menu = int(
+        input(
+            "Menu: 1.tank_north(avg) \n 2. tank_center \n 3.tank_center(avg)"))

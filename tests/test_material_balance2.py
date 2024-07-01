@@ -2,7 +2,6 @@
 from pytank.functions.material_balance import campbell_function, ho_terms_equation
 import pandas as pd
 
-
 #%% Load the the mbal dataframe
 df_mbal = pd.read_csv("../old/dataframes/mbal_tanks.csv")
 
@@ -25,61 +24,49 @@ pressure_init = 3000
 
 #%% Calculation of the Havlena and Odeh terms for each tank, as well as its respective
 # Campbell plot
-
 """ ----------------------------TANK NORTH-------------------------------------------"""
 
-df_mbal_tankNorth = ho_terms_equation(df_tanknorth, "oil_prod_cum", "water_prod_cum",
-                             "gas_prod_cum", "PRESSURE_DATUM", "oil_fvf", "gas_fvf",
-                             "gas_oil_rs", water_fvf, gas_water_rs,
-                        water_sat, water_comp, rock_comp, oil_fvf_init, gas_fvf_init,
-                                      tot_fvf_init, gas_oil_rs_init, pressure_init)
+df_mbal_tankNorth = ho_terms_equation(
+    df_tanknorth, "oil_prod_cum", "water_prod_cum", "gas_prod_cum",
+    "PRESSURE_DATUM", "oil_fvf", "gas_fvf", "gas_oil_rs", water_fvf,
+    gas_water_rs, water_sat, water_comp, rock_comp, oil_fvf_init, gas_fvf_init,
+    tot_fvf_init, gas_oil_rs_init, pressure_init)
 
 #%%
-campbell_plot_tankNorth = campbell_function(df_tanknorth, "oil_prod_cum",
-                                             "water_prod_cum", "gas_prod_cum",
-                                             "PRESSURE_DATUM", "F", "Eo", "Efw",
-                                             "oil_fvf", "gas_fvf", "gas_oil_rs",
-                                             water_fvf, gas_water_rs, water_sat,
-                                             water_comp, rock_comp, oil_fvf_init,
-                                            gas_fvf_init, tot_fvf_init, gas_oil_rs_init,
-                                            pressure_init)
-
+campbell_plot_tankNorth = campbell_function(
+    df_tanknorth, "oil_prod_cum", "water_prod_cum", "gas_prod_cum",
+    "PRESSURE_DATUM", "F", "Eo", "Efw", "oil_fvf", "gas_fvf", "gas_oil_rs",
+    water_fvf, gas_water_rs, water_sat, water_comp, rock_comp, oil_fvf_init,
+    gas_fvf_init, tot_fvf_init, gas_oil_rs_init, pressure_init)
 
 #%%
 """ ----------------------------TANK CENTER------------------------------------------"""
 
-df_mbal_tankCenter = ho_terms_equation(df_tankcenter, "oil_prod_cum", "water_prod_cum",
-                             "gas_prod_cum", "PRESSURE_DATUM", "oil_fvf", "gas_fvf",
-                             "gas_oil_rs", water_fvf, gas_water_rs,
-                        water_sat, water_comp, rock_comp, oil_fvf_init, gas_fvf_init,
-                                       tot_fvf_init, gas_oil_rs_init, pressure_init)
+df_mbal_tankCenter = ho_terms_equation(
+    df_tankcenter, "oil_prod_cum", "water_prod_cum", "gas_prod_cum",
+    "PRESSURE_DATUM", "oil_fvf", "gas_fvf", "gas_oil_rs", water_fvf,
+    gas_water_rs, water_sat, water_comp, rock_comp, oil_fvf_init, gas_fvf_init,
+    tot_fvf_init, gas_oil_rs_init, pressure_init)
 
 #%%
-campbell_plot_tankCenter = campbell_function(df_tankcenter, "oil_prod_cum",
-                                             "water_prod_cum", "gas_prod_cum",
-                                             "PRESSURE_DATUM", "F", "Eo", "Efw",
-                                             "oil_fvf", "gas_fvf", "gas_oil_rs",
-                                             water_fvf, gas_water_rs, water_sat,
-                                             water_comp, rock_comp, oil_fvf_init,
-                                             gas_fvf_init, tot_fvf_init, gas_oil_rs_init,
-                                             pressure_init)
-
+campbell_plot_tankCenter = campbell_function(
+    df_tankcenter, "oil_prod_cum", "water_prod_cum", "gas_prod_cum",
+    "PRESSURE_DATUM", "F", "Eo", "Efw", "oil_fvf", "gas_fvf", "gas_oil_rs",
+    water_fvf, gas_water_rs, water_sat, water_comp, rock_comp, oil_fvf_init,
+    gas_fvf_init, tot_fvf_init, gas_oil_rs_init, pressure_init)
 
 #%%
 """ ----------------------------TANK SOUTH-------------------------------------------"""
 
-df_mbal_tankSouth = ho_terms_equation(df_tanksouth, "oil_prod_cum", "water_prod_cum",
-                             "gas_prod_cum", "PRESSURE_DATUM", "oil_fvf", "gas_fvf",
-                             "gas_oil_rs", water_fvf, gas_water_rs,
-                        water_sat, water_comp, rock_comp, oil_fvf_init, gas_fvf_init,
-                                      tot_fvf_init, gas_oil_rs_init, pressure_init)
+df_mbal_tankSouth = ho_terms_equation(
+    df_tanksouth, "oil_prod_cum", "water_prod_cum", "gas_prod_cum",
+    "PRESSURE_DATUM", "oil_fvf", "gas_fvf", "gas_oil_rs", water_fvf,
+    gas_water_rs, water_sat, water_comp, rock_comp, oil_fvf_init, gas_fvf_init,
+    tot_fvf_init, gas_oil_rs_init, pressure_init)
 
 #%%
-campbell_plot_tankSouth = campbell_function(df_tanksouth, "oil_prod_cum",
-                                             "water_prod_cum", "gas_prod_cum",
-                                             "PRESSURE_DATUM", "F", "Eo", "Efw",
-                                             "oil_fvf", "gas_fvf", "gas_oil_rs",
-                                             water_fvf, gas_water_rs, water_sat,
-                                             water_comp, rock_comp, oil_fvf_init,
-                                            gas_fvf_init, tot_fvf_init, gas_oil_rs_init,
-                                            pressure_init)
+campbell_plot_tankSouth = campbell_function(
+    df_tanksouth, "oil_prod_cum", "water_prod_cum", "gas_prod_cum",
+    "PRESSURE_DATUM", "F", "Eo", "Efw", "oil_fvf", "gas_fvf", "gas_oil_rs",
+    water_fvf, gas_water_rs, water_sat, water_comp, rock_comp, oil_fvf_init,
+    gas_fvf_init, tot_fvf_init, gas_oil_rs_init, pressure_init)

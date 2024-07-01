@@ -14,20 +14,21 @@ libraries:
 import pandas as pd
 from pydantic import BaseModel
 from typing import Union, Optional
-from pytank.constants.constants import (OIL_FVF_COL,
-                                        GAS_FVF_COL,
-                                        RS_COL,
-                                        PRESSURE_COL,
-                                        OIL_CUM_COL,
-                                        GAS_CUM_COL,
-                                        WATER_CUM_COL,
-                                        DATE_COL,
-                                        WELL_COL,
-                                        WATER_FVF_COL,
-                                        RS_W_COL,
-                                        TANK_COL,
-                                        LIQ_CUM,
-                                        )
+from pytank.constants.constants import (
+    OIL_FVF_COL,
+    GAS_FVF_COL,
+    RS_COL,
+    PRESSURE_COL,
+    OIL_CUM_COL,
+    GAS_CUM_COL,
+    WATER_CUM_COL,
+    DATE_COL,
+    WELL_COL,
+    WATER_FVF_COL,
+    RS_W_COL,
+    TANK_COL,
+    LIQ_CUM,
+)
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
 
@@ -49,15 +50,10 @@ class Tank(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def __init__(self, name: str,
-                 wells: list,
-                 oil_model: OilModel,
-                 water_model: WaterModel,
-                 pi: float,
-                 swo: float,
-                 cw: float,
-                 cf: float,
-                 aquifer: Optional[Union[None, Fetkovich, CarterTracy]]):
+    def __init__(self, name: str, wells: list, oil_model: OilModel,
+                 water_model: WaterModel, pi: float, swo: float, cw: float,
+                 cf: float, aquifer: Optional[Union[None, Fetkovich,
+                                                    CarterTracy]]):
         """
         Init Method
         :param
@@ -83,10 +79,12 @@ class Tank(BaseModel):
 
     def _press_df_internal(self) -> pd.DataFrame:
         """
-        Private method that internally manages the pressure vector for use in the UW method.
+        Private method that internally manages the pressure vector for use in
+        the UW method.
 
         :return:
-            - pd.Dataframe: A pressure DataFrame with properties PVT of oil and water
+            - pd.Dataframe: A pressure DataFrame with properties PVT of oil
+             and water
         """
         df_press = pd.DataFrame()
         for well in self.wells:
@@ -96,16 +94,21 @@ class Tank(BaseModel):
             if press_vector is not None:
 
                 well_date = press_vector.data.index
-                well_oil_fvf = self.oil_model.get_bo_at_press(press_vector.data[PRESSURE_COL])
-                well_gas_fvf = self.oil_model.get_bg_at_press(press_vector.data[PRESSURE_COL])
-                well_rs = self.oil_model.get_rs_at_press(press_vector.data[PRESSURE_COL])
+                well_oil_fvf = self.oil_model.get_bo_at_press(
+                    press_vector.data[PRESSURE_COL])
+                well_gas_fvf = self.oil_model.get_bg_at_press(
+                    press_vector.data[PRESSURE_COL])
+                well_rs = self.oil_model.get_rs_at_press(
+                    press_vector.data[PRESSURE_COL])
 
                 # In case properties are calculated using correlations
                 if (self.water_model.salinity is not None
                         and self.water_model.temperature is not None
                         and self.water_model.unit is not None):
-                    well_bw = self.water_model.get_bw_at_press(press_vector.data[PRESSURE_COL])
-                    well_rs_w = self.water_model.get_rs_at_press(press_vector.data[PRESSURE_COL])
+                    well_bw = self.water_model.get_bw_at_press(
+                        press_vector.data[PRESSURE_COL])
+                    well_rs_w = self.water_model.get_rs_at_press(
+                        press_vector.data[PRESSURE_COL])
 
                     # In case there are default values for Bw and Rs_w
                 else:
@@ -125,12 +128,14 @@ class Tank(BaseModel):
                 temp_df_press[RS_W_COL] = well_rs_w
                 temp_df_press[TANK_COL] = tank_name
 
-                df_press = pd.concat([df_press, temp_df_press], ignore_index=True)
+                df_press = pd.concat([df_press, temp_df_press],
+                                     ignore_index=True)
         return df_press
 
     def get_pressure_df(self) -> pd.DataFrame:
         """
-        Gets a DatFrame with pressure data using the private _press_df_internal method
+        Gets a DatFrame with pressure data using the private _press_df_internal
+        method
         THIS METHOD IS MARKED PRIVATE FOR INTERNAL USE ONLY.
 
         :return:
@@ -140,7 +145,8 @@ class Tank(BaseModel):
 
     def _prod_df_internal(self) -> pd.DataFrame:
         """
-        Private method that internally manages production vector for use in the UW method.
+        Private method that internally manages production vector for use
+        in the UW method.
 
         :return:
             - pd.Dataframe: A production DataFrame
@@ -169,12 +175,14 @@ class Tank(BaseModel):
                 temp_df_prod[LIQ_CUM] = well_liq_cum
                 temp_df_prod[TANK_COL] = tank_name
 
-                df_prod = pd.concat([df_prod, temp_df_prod], ignore_index=True)
+                df_prod = pd.concat([df_prod, temp_df_prod],
+                                    ignore_index=True)
         return df_prod
 
     def get_production_df(self):
         """
-        Gets a DataFrame with production data using the private _prod_df_internal method
+        Gets a DataFrame with production data using the private
+        _prod_df_internal method
         THIS METHOD IS MARKED PRIVATE FOR INTERNAL USE ONLY.
 
         :return:

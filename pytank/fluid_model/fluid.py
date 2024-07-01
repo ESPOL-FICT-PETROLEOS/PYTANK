@@ -1,7 +1,8 @@
 """
 fluid.py
 
-This archive.py is to calculate the PVT properties of oil and water using linear interpolated.
+This archive.py is to calculate the PVT properties of oil and water using
+linear interpolated.
 
 libraries:
     - pydantic
@@ -13,11 +14,8 @@ from pydantic import BaseModel
 from scipy.interpolate import interp1d
 import pandera as pa
 from pandera.typing import DataFrame, Series
-from pytank.constants.constants import (PRESSURE_PVT_COL,
-                                        OIL_FVF_COL,
-                                        GAS_FVF_COL,
-                                        RS_COL
-                                        )
+from pytank.constants.constants import (PRESSURE_PVT_COL, OIL_FVF_COL,
+                                        GAS_FVF_COL, RS_COL)
 from pytank.functions.pvt_correlations import RS_bw, Bo_bw
 
 
@@ -25,7 +23,10 @@ class _PVTSchema(pa.DataFrameModel):
     """
     Private Class to validate the values in the columns of PVT data
     """
-    Pressure: Series[float] = pa.Field(ge=0, unique=True, coerce=True, nullable=False)
+    Pressure: Series[float] = pa.Field(ge=0,
+                                       unique=True,
+                                       coerce=True,
+                                       nullable=False)
     Bo: Series[float] = pa.Field(ge=0, coerce=True)
     Bg: Series[float] = pa.Field(ge=0, coerce=True, nullable=True)
     GOR: Series[float] = pa.Field(ge=0, coerce=True)
@@ -34,7 +35,8 @@ class _PVTSchema(pa.DataFrameModel):
 class OilModel(BaseModel):
     """
     :parameter:
-        - data_pvt: A DataFrame with the Oil PVT information that has been validated.
+        - data_pvt: A DataFrame with the Oil PVT information that has
+        been validated.
         - temperature (float): Temperature value [F].
     """
     data_pvt: DataFrame[_PVTSchema]
@@ -43,18 +45,22 @@ class OilModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def _interpolated_column_at_pressure(self, column_name: str, pressure: float) -> float:
+    def _interpolated_column_at_pressure(self, column_name: str,
+                                         pressure: float) -> float:
         """
 
         :param:
             - column_name: Column name of PVT property of PVT DataFrame.
-            - pressure: Pressure value to which the PVT property will be interpolated.
+            - pressure: Pressure value to which the PVT property will be
+            interpolated.
 
         :return:
             - float: Value of interpolated PVT property
         """
         df_pvt_local = self.data_pvt
-        interp_func = interp1d(df_pvt_local[PRESSURE_PVT_COL], df_pvt_local[column_name], fill_value="extrapolate")
+        interp_func = interp1d(df_pvt_local[PRESSURE_PVT_COL],
+                               df_pvt_local[column_name],
+                               fill_value="extrapolate")
         return interp_func(pressure)
 
     def get_bo_at_press(self, pressure) -> float:
@@ -62,7 +68,8 @@ class OilModel(BaseModel):
         Method to interpolate oil volumetric factor Bo
 
         :param:
-        pressure: Pressure value to which the PVT property will be interpolated.
+        pressure: Pressure value to which the PVT property will be
+        interpolated.
 
         :return:
             - float: Value of Bo interpolated
@@ -74,7 +81,8 @@ class OilModel(BaseModel):
         Method to interpolate gas volumetric factor Bg
 
         :param:
-        pressure: Pressure value to which the PVT property will be interpolated.
+        pressure: Pressure value to which the PVT property will be
+        interpolated.
 
         :return:
             - float: Value of Bg interpolated
@@ -86,7 +94,8 @@ class OilModel(BaseModel):
         Method to interpolate oil solubility Rs
 
         :param:
-        pressure: Pressure value to which the PVT property will be interpolated.
+        pressure: Pressure value to which the PVT property will be
+        interpolated.
 
         :return:
             - float: Value of Rs interpolated

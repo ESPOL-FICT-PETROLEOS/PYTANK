@@ -1,7 +1,8 @@
 """
 constants.py
 
-This archive.py containing the constant or columns names used in some methods and classes in the library
+This archive.py containing the constant or columns names used in some methods
+and classes in the library
 
 libraries:
     - pandera
@@ -48,20 +49,16 @@ _VECTOR_VALIDATION = Column(
     nullable=False,
 )
 
-_PRESSURE_VALIDATION = Column(
-    float,
-    Check(lambda s: s >= 0),
-    coerce=True,
-    nullable=False,
-    required=False
-)
+_PRESSURE_VALIDATION = Column(float,
+                              Check(lambda s: s >= 0),
+                              coerce=True,
+                              nullable=False,
+                              required=False)
 
-_STR_VALIDATION = Column(
-    str,
-    Check(lambda s: s == s),
-    coerce=True,
-    nullable=False
-)
+_STR_VALIDATION = Column(str,
+                         Check(lambda s: s == s),
+                         coerce=True,
+                         nullable=False)
 
 # SCHEMAS DICTIONARIES:
 _PROD_SCHEMA_DICT = {
@@ -75,8 +72,7 @@ _PRESS_SCHEMA_DICT = {
     PRESSURE_COL: _PRESSURE_VALIDATION,
 }
 
-_INJ_SCHEMA_DICT = {
-    INJECTION_WATER: _VECTOR_VALIDATION}
+_INJ_SCHEMA_DICT = {INJECTION_WATER: _VECTOR_VALIDATION}
 
 # SCHEMAS:
 PROD_SCHEMA = DataFrameSchema(_PROD_SCHEMA_DICT, strict="filter")

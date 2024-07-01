@@ -1,12 +1,11 @@
-from pytank.functions.material_balance import (
-                                               fw_expansion,
-                                               gas_expansion,
+from pytank.functions.material_balance import (fw_expansion, gas_expansion,
                                                ho_terms_equation,
                                                campbell_function,
                                                oil_expansion)
+from pytank.notebooks.quick_test_analysis import analysis2
 
 # Call dataframe of tank
-df_mbal = mbal.fillna(0.0)
+df_mbal = analysis2.mat_bal_df().fillna(0.0)
 
 # Some required data
 water_sat = 0.15
@@ -32,65 +31,33 @@ eo = oil_expansion(
 print(eo)
 
 # Calculate Gas Expansion
-eg = gas_expansion(df_mbal,
-                   "Bo",
-                   "Bg",
-                   gas_fvf_init,
-                   tot_fvf_init
-                   )
+eg = gas_expansion(df_mbal, "Bo", "Bg", gas_fvf_init,
+                   tot_fvf_init)
 print(eg)
 
 # Calculate Rock and Fluid Expansion
-efw = fw_expansion(df_mbal,
-                   "Bo",
-                   "PRESSURE_DATUM",
-                   water_sat,
+efw = fw_expansion(df_mbal, "Bo", "PRESSURE_DATUM", water_sat,
                    water_comp,
-                   rock_comp,
-                   oil_fvf_init,
-                   pressure_init)
+                   rock_comp, oil_fvf_init, pressure_init)
 print(efw)
 
 # Calculate Ho Terms
-ho = ho_terms_equation(df_mbal,
-                       "OIL_CUM_TANK",
+ho = ho_terms_equation(df_mbal, "OIL_CUM_TANK",
                        "WATER_CUM_TANK",
-                       "GAS_CUM_TANK",
-                       "PRESSURE_DATUM",
-                       "Bo",
-                       "Bg",
-                       "GOR",
-                       "Bw",
-                       gas_water_rs,
-                       water_sat,
-                       water_comp,
+                       "GAS_CUM_TANK", "PRESSURE_DATUM",
+                       "Bo", "Bg", "GOR",
+                       "Bw", gas_water_rs, water_sat, water_comp,
                        rock_comp,
-                       oil_fvf_init,
-                       gas_fvf_init,
-                       tot_fvf_init,
-                       gas_oil_rs_init,
-                       pressure_init)
+                       oil_fvf_init, gas_fvf_init, tot_fvf_init,
+                       gas_oil_rs_init, pressure_init)
 print(ho.columns)
 
 # Campbell Function
-camp = campbell_function(df_mbal,
-                         "OIL_CUM_TANK",
+camp = campbell_function(df_mbal, "OIL_CUM_TANK",
                          "WATER_CUM_TANK",
-                         "GAS_CUM_TANK",
-                         "PRESSURE_DATUM",
-                         "F",
-                         "Eo",
-                         "Efw",
-                         "Bo",
-                         "Bg",
-                         "GOR",
-                         "Bw",
-                         gas_water_rs,
-                         water_sat,
-                         water_comp,
-                         rock_comp,
-                         oil_fvf_init,
-                         gas_fvf_init,
-                         tot_fvf_init,
-                         gas_oil_rs_init,
-                         pressure_init)
+                         "GAS_CUM_TANK", "PRESSURE_DATUM",
+                         "F", "Eo", "Efw",
+                         "Bo", "Bg", "GOR",
+                         "Bw", gas_water_rs, water_sat,
+                         water_comp, rock_comp, oil_fvf_init, gas_fvf_init,
+                         tot_fvf_init, gas_oil_rs_init, pressure_init)
