@@ -14,24 +14,18 @@ oil_model = OilModel(
     temperature=25,
 )
 
-water_model = WaterModel(
-    salinity=3000,
-    temperature=200,
-    unit=1
-)
+water_model = WaterModel(salinity=3000, temperature=200, unit=1)
 
-tank1 = Tank(
-    name=tank_name,
-    wells=well,
-    oil_model=oil_model,
-    water_model=water_model,
-    pi=3700,
-    swo=0.15,
-    cw=3.5e-6,
-    cf=3.6e-6,
-    aquifer=None
-)
+tank1 = Tank(name=tank_name,
+             wells=well,
+             oil_model=oil_model,
+             water_model=water_model,
+             pi=3700,
+             swo=0.15,
+             cw=3.5e-6,
+             cf=3.6e-6,
+             aquifer=None)
 
 analysis = Analysis(tank_class=tank1, freq="12MS", position="end")
 graph = analysis.campbell(option="plot")
-#graph.show()
+# graph.show()

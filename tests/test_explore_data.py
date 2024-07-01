@@ -6,4 +6,3 @@ pvt_file = "../pytank/resources/data_csv/pvt.csv"
 
 figura = RatePerWell(production_file, pressure_file, pvt_file)
 print(figura)
-

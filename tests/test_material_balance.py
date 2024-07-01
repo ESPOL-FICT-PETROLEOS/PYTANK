@@ -14,9 +14,8 @@ def test_uw_only_prod(prod_data_1):
     rs = 100
     rsw = 0
 
-    uw_calculated = underground_withdrawal(df, "Np", "Wp", "Gp",
-                                           oil_fvf, water_fvf, gas_fvf,
-                                           rs, rsw)
+    uw_calculated = underground_withdrawal(df, "Np", "Wp", "Gp", oil_fvf,
+                                           water_fvf, gas_fvf, rs, rsw)
 
     uw_expected = np.array([1300, 2600, 3900])
 
@@ -36,9 +35,8 @@ def test_uw_variable_bo(prod_data_1):
     rs = 100
     rsw = 0
 
-    uw_calculated = underground_withdrawal(df, "Np", "Wp", "Gp",
-                                           "Bo", water_fvf, gas_fvf,
-                                           rs, rsw)
+    uw_calculated = underground_withdrawal(df, "Np", "Wp", "Gp", "Bo",
+                                           water_fvf, gas_fvf, rs, rsw)
 
     uw_expected = np.array([1300, 2700, 4200])
 
@@ -59,9 +57,8 @@ def test_uw_negative_gas_values(prod_data_1):
     rsw = 0
 
     with pytest.raises(ArithmeticError):
-        _ = underground_withdrawal(df, "Np", "Wp", "Gp",
-                                   oil_fvf, water_fvf, gas_fvf,
-                                   rs, rsw)
+        _ = underground_withdrawal(df, "Np", "Wp", "Gp", oil_fvf, water_fvf,
+                                   gas_fvf, rs, rsw)
 
 
 def test_uw_wrong_input_df():
@@ -75,9 +72,8 @@ def test_uw_wrong_input_df():
     rsw = 0
 
     with pytest.raises(TypeError) as exception_info:
-        _ = underground_withdrawal(df, "Np", "Wp", "Gp",
-                                   oil_fvf, water_fvf, gas_fvf,
-                                   rs, rsw)
+        _ = underground_withdrawal(df, "Np", "Wp", "Gp", oil_fvf, water_fvf,
+                                   gas_fvf, rs, rsw)
 
     exception_expected = "The input data should be a pandas dataframe"
 
@@ -95,9 +91,8 @@ def test_uw_wrong_fluid_input(prod_data_1):
     rsw = 0
 
     with pytest.raises(TypeError) as exception_info:
-        _ = underground_withdrawal(df, "Np", "Wp", "Gp",
-                                   oil_fvf, water_fvf, gas_fvf,
-                                   rs, rsw)
+        _ = underground_withdrawal(df, "Np", "Wp", "Gp", oil_fvf, water_fvf,
+                                   gas_fvf, rs, rsw)
 
     exception_expected = f"{oil_fvf} should be either a numeric value or string " \
                          f"indicating a column in the DataFrame"
@@ -116,9 +111,8 @@ def test_uw_wrong_column(prod_data_1):
     rsw = 0
 
     with pytest.raises(KeyError):
-        _ = underground_withdrawal(df, "NpP", "Wp", "Gp",
-                                   oil_fvf, water_fvf, gas_fvf,
-                                   rs, rsw)
+        _ = underground_withdrawal(df, "NpP", "Wp", "Gp", oil_fvf, water_fvf,
+                                   gas_fvf, rs, rsw)
 
 
 def test_press_avg_data_1(press_data_uw_1):
@@ -133,8 +127,8 @@ def test_press_avg_data_1(press_data_uw_1):
 
     result = pressure_vol_avg(df, "Well", "Date", "Pressure", "UW", freq)
 
-    assert (pytest.approx(result["Pressure"], nan_ok=True)
-            == result_expected["Pressure"])
+    assert (pytest.approx(result["Pressure"],
+                          nan_ok=True) == result_expected["Pressure"])
     assert all(result_expected["Date"] == result["Date"])
 
 
@@ -151,10 +145,11 @@ def test_press_avg_data_1_middle(press_data_uw_1):
     data = {"Date": new_date, "Pressure": [3697.517, 2809.678, np.nan, 1500]}
     result_expected = pd.DataFrame(data)
 
-    result = pressure_vol_avg(df, "Well", "Date", "Pressure", "UW", freq, "middle")
+    result = pressure_vol_avg(df, "Well", "Date", "Pressure", "UW", freq,
+                              "middle")
 
-    assert (pytest.approx(result["Pressure"], nan_ok=True)
-            == result_expected["Pressure"])
+    assert (pytest.approx(result["Pressure"],
+                          nan_ok=True) == result_expected["Pressure"])
     assert all(result_expected["Date"] == result["Date"])
 
 
@@ -172,8 +167,9 @@ def test_press_avg_data_1_end(press_data_uw_1):
     data = {"Date": new_date, "Pressure": [3697.517, 2809.678, np.nan, 1500]}
     result_expected = pd.DataFrame(data)
 
-    result = pressure_vol_avg(df, "Well", "Date", "Pressure", "UW", freq, "end")
+    result = pressure_vol_avg(df, "Well", "Date", "Pressure", "UW", freq,
+                              "end")
 
-    assert (pytest.approx(result["Pressure"], nan_ok=True)
-            == result_expected["Pressure"])
+    assert (pytest.approx(result["Pressure"],
+                          nan_ok=True) == result_expected["Pressure"])
     assert all(result_expected["Date"] == result["Date"])

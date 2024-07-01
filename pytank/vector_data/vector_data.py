@@ -1,8 +1,8 @@
 """
 vector_data.py
 
-This module defines the VectorData Class for handling vector data with specific validations schemas /
-and date indices.
+This module defines the VectorData Class for handling vector data with
+specific validations schemas and date indices.
 
 The logic is structured using classes and methods.
 
@@ -30,7 +30,8 @@ from pytank.constants.constants import (
 
 class VectorData(BaseModel):
     """
-    Class used to handle vector data with a specific validation scheme and date index.
+    Class used to handle vector data with a specific validation scheme
+    and date index.
 
     :parameter:
         - is_result: Indicates whether the vector is a result.
@@ -61,7 +62,8 @@ class VectorData(BaseModel):
         :return:
             - data_schema
         """
-        new_schema = add_date_index_validation(values["data_schema"], values["freq"])
+        new_schema = add_date_index_validation(values["data_schema"],
+                                               values["freq"])
 
         cls.data_schema = new_schema
         return new_schema.validate(v)
@@ -95,13 +97,11 @@ class VectorData(BaseModel):
         :return:
         A comparative
         """
-        return all(
-            [
-                self.start_date == other.start_date,
-                self.end_date == other.end_date,
-                self.freq == other.freq,
-            ]
-        )
+        return all([
+            self.start_date == other.start_date,
+            self.end_date == other.end_date,
+            self.freq == other.freq,
+        ])
 
     def get_date_index(self) -> pd.DatetimeIndex:
         """
@@ -114,13 +114,11 @@ class VectorData(BaseModel):
         """
         Compare two VectorDara Objects
         """
-        return all(
-            [
-                self.data_schema == other.data_schema,
-                self.start_date == other.start_date,
-                self.end_date == other.end_date,
-            ]
-        )
+        return all([
+            self.data_schema == other.data_schema,
+            self.start_date == other.start_date,
+            self.end_date == other.end_date,
+        ])
 
     def _len_(self):
         """
@@ -131,13 +129,16 @@ class VectorData(BaseModel):
 
     def _add_(self, other):
         """
-        Allows the addition of two VectorData objects or a VectorData with a number or a series.
+        Allows the addition of two VectorData objects or a VectorData with a
+        number or a series.
         """
         if isinstance(other, VectorData):
             if self == other:
-                """If the two VectorData have the same schema, then we can just add
-                them together using a groupby sum on the date index"""
-                new_data = pd.concat([self.data, other.data]).groupby(level=0).sum()
+                # If the two VectorData have the same schema, then we
+                # can just add them together using a groupby sum on
+                # the date index
+                new_data = pd.concat([self.data,
+                                      other.data]).groupby(level=0).sum()
                 return VectorData(
                     data_schema=self.data_schema,
                     freq=self.freq,
@@ -145,30 +146,29 @@ class VectorData(BaseModel):
                     data=new_data,
                 )
             elif self.equal_date_index(other):
-                """If the two VectorData have the same date index, but different
-                schemas, then we need to add them together using a concat on the
-                columns that are in neither dataframe and a groupby sum on the columns
-                that are in both dataframes"""
-                common_cols = self.data.columns.intersection(other.data.columns)
+                # If the two VectorData have the same date index, but different
+                # schemas, then we need to add them together using a concat
+                # on thecolumns that are in neither dataframe and a groupby
+                # sum on the columnsthat are in both dataframes
+                common_cols = self.data.columns.intersection(
+                    other.data.columns)
                 left_cols = self.data.columns.difference(other.data.columns)
                 right_cols = other.data.columns.difference(self.data.columns)
                 new_data_common = pd.DataFrame()
                 new_data_left = pd.DataFrame()
                 new_data_right = pd.DataFrame()
                 if len(common_cols) > 0:
-                    new_data_common = (
-                        pd.concat([self.data[common_cols], other.data[common_cols]])
-                        .groupby(level=0)
-                        .sum()
-                    )
+                    new_data_common = (pd.concat(
+                        [self.data[common_cols],
+                         other.data[common_cols]]).groupby(level=0).sum())
                 if len(left_cols) > 0:
                     new_data_left = self.data[left_cols]
                 if len(right_cols) > 0:
                     new_data_right = other.data[right_cols]
 
                 new_data = pd.concat(
-                    [new_data_common, new_data_left, new_data_right], axis=1
-                )
+                    [new_data_common, new_data_left, new_data_right],
+                    axis=1)
                 return VectorData(
                     data_schema=pa.infer_schema(new_data),
                     freq=self.freq,
@@ -177,7 +177,8 @@ class VectorData(BaseModel):
                 )
             else:
                 raise ValueError(
-                    "The date index of the two VectorData objects are not equal"
+                    "The date index of the two VectorData objects are not "
+                    "equal"
                 )
         elif isinstance(other, (int, float)):
             new_data = self.data + other

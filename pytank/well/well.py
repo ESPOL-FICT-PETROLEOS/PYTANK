@@ -1,7 +1,8 @@
 """
 well.py
 
-This module defines the Well Class to group production and pressure information per well.
+This module defines the Well Class to group production and pressure
+information per well.
 
 The logic is structured using classes and methods.
 
@@ -9,13 +10,9 @@ The logic is structured using classes and methods.
 import pandas as pd
 from pydantic import BaseModel
 from typing import Optional
-from pytank.constants.constants import (OIL_CUM_COL,
-                                        WATER_CUM_COL,
-                                        GAS_CUM_COL,
-                                        LIQ_CUM,
-                                        PRESSURE_COL,
-                                        DATE_COL
-                                        )
+from pytank.constants.constants import (OIL_CUM_COL, WATER_CUM_COL,
+                                        GAS_CUM_COL, LIQ_CUM, PRESSURE_COL,
+                                        DATE_COL)
 from pytank.vector_data.vector_data import ProdVector, PressVector
 from pandera.errors import SchemaError
 from pytank.functions.utilities import normalize_date_freq
@@ -37,7 +34,8 @@ class Wells(BaseModel):
     Attributes
     ----------
     freq_prod : Optional[str]
-        Frequency of the production data. Can be None if the frequency is correct.
+        Frequency of the production data. Can be None if the frequency is
+        correct.
     freq_press : Optional[str]
         Frequency of the pressure data. It is not necessary.
     df_prod : pandas.DataFrame
@@ -53,7 +51,9 @@ class Wells(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    warnings.filterwarnings("ignore", message="DataFrame.fillna with 'method' is deprecated")
+    warnings.filterwarnings(
+        "ignore", message="DataFrame.fillna with 'method' "
+                          "is deprecated")
 
     def __init__(self,
                  df_prod: pd.DataFrame,
@@ -70,7 +70,8 @@ class Wells(BaseModel):
         df_press : pandas.DataFrame
             pd.DataFrame containing the pressure data.
         freq_prod : str, optional
-            Frequency of the production data. Can be None if the frequency is correct.
+            Frequency of the production data. Can be None if the frequency
+            is correct.
         freq_press : str, optional
             Frequency of the pressure data. It is not necessary.
         """
@@ -81,7 +82,8 @@ class Wells(BaseModel):
 
     def _process_data(self):
         """
-        PRIVATE internal method to handle the production and pressure data (dates)
+        PRIVATE internal method to handle the production and pressure
+        data (dates)
         :return:
             - Production DataFrame
             - Pressure DataFrame
@@ -98,13 +100,14 @@ class Wells(BaseModel):
 
     def get_wells(self) -> list:
         """
-        Creates a list of wells with corresponding pressure and production data (vectors).
+        Creates a list of wells with corresponding pressure and production
+        data (vectors).
 
         Returns
         -------
         List[Wells]
-            A list of `Wells` objects, where each object represents a well with its associated pressure and
-            production data.
+            A list of `Wells` objects, where each object represents a well
+            with its associated pressure and production data.
         """
         prod_data, press_data = self._process_data()
         cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]
@@ -123,65 +126,58 @@ class Wells(BaseModel):
                         OIL_CUM_COL: OIL_CUM_COL,
                         WATER_CUM_COL: WATER_CUM_COL,
                         GAS_CUM_COL: GAS_CUM_COL,
-                    }
-                )
-                group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[WATER_CUM_COL]
-                group_prod = group_prod[[OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]]
+                    })
+                group_prod[LIQ_CUM] = group_prod[OIL_CUM_COL] + group_prod[
+                    WATER_CUM_COL]
+                group_prod = group_prod[[
+                    OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM
+                ]]
 
                 # Normalize the frequency
                 if self.freq_prod is not None:
-                    group_prod_norm = normalize_date_freq(df=group_prod,
-                                                          freq=self.freq_prod,
-                                                          cols_fill_na=cols_fills_na,
-                                                          method_no_cols="ffill")
+                    group_prod_norm = normalize_date_freq(
+                        df=group_prod,
+                        freq=self.freq_prod,
+                        cols_fill_na=cols_fills_na,
+                        method_no_cols="ffill")
                     try:
-                        prod_vector = ProdVector(
-                            freq=self.freq_prod,
-                            data=group_prod_norm
-                        )
+                        prod_vector = ProdVector(freq=self.freq_prod,
+                                                 data=group_prod_norm)
                     except SchemaError as e:
-                        expected_error_msg = 'ValueError("Need at least 3 dates to infer frequency")'
+                        expected_error_msg = \
+                            ('ValueError("Need at least 3 dates to '
+                             'infer frequency")')
                         if str(e) == expected_error_msg:
                             group_prod.index.freq = self.freq_prod
 
                             # Create a production vector
-                            prod_vector = ProdVector(
-                                freq=None,
-                                data=group_prod_norm
-                            )
+                            prod_vector = ProdVector(freq=None,
+                                                     data=group_prod_norm)
                     # tank_name = group_prod_norm[TANK_COL].iloc[0]
 
                 else:
-                    prod_vector = ProdVector(
-                        freq=self.freq_prod,
-                        data=group_prod
-                    )
+                    prod_vector = ProdVector(freq=self.freq_prod,
+                                             data=group_prod)
                     # tank_name = group_prod[TANK_COL].iloc[0]
 
             if name in press_data["WELLBORE"].unique():
                 group_press = press_data[press_data["WELLBORE"] == name]
 
-                group_press = group_press.rename(
-                    columns={
-                        PRESSURE_COL: PRESSURE_COL,
-                    }
-                )
+                group_press = group_press.rename(columns={
+                    PRESSURE_COL: PRESSURE_COL,
+                })
                 group_press.set_index(DATE_COL, inplace=True)
 
                 # Create a pressure vector
-                press_vector = PressVector(
-                    freq=self.freq_press,
-                    data=group_press
-                )
+                press_vector = PressVector(freq=self.freq_press,
+                                           data=group_press)
                 # if prod_vector is None and TANK_COL in group_press.columns:
                 # tank_name = group_press[TANK_COL].iloc[0]
 
             # Create well lists
-            info_well = _Well(
-                name=name,
-                prod_data=prod_vector,
-                press_data=press_vector
-            )
+            info_well = _Well(name=name,
+                              prod_data=prod_vector,
+                              press_data=press_vector)
 
             # Add wells list to tanks dict
             list_wells.append(info_well)
@@ -190,7 +186,8 @@ class Wells(BaseModel):
 
     def search_wells(self, your_wells: list) -> list:
         """
-        Searches for wells in the list of all wells based on the provided well names.
+        Searches for wells in the list of all wells based on the provided well
+        names.
 
         Parameters
         ----------

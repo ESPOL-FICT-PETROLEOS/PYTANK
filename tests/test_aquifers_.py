@@ -5,9 +5,11 @@ import pytest
 @pytest.fixture()
 def prod_data_1():
 
-    data = {"Np": [1000, 2000, 3000],  # bls
-            "Gp": [100000, 200000, 300000],  # scf, assuming rs of 100 scf/STB
-            "Wp": [100, 200, 300]}  # bls
+    data = {
+        "Np": [1000, 2000, 3000],  # bls
+        "Gp": [100000, 200000, 300000],  # scf, assuming rs of 100 scf/STB
+        "Wp": [100, 200, 300]
+    }  # bls
 
     df = pd.DataFrame(data)
 

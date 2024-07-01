@@ -13,7 +13,7 @@ den_sto = 40  # Density of stock-tank oil [lb/cu ft]
 p_res = 3000  # Initial reservoir pressure [psia]
 salinity = 35000  # Water Salinity [ppm]
 Jump = 100
-units=1
+units = 1
 #%%
-tabla = pvt_table(p_sep, t_sep, api, rsp, sg_sep, tres, den_sto, p_res, salinity, Jump,
-                  units)
+tabla = pvt_table(p_sep, t_sep, api, rsp, sg_sep, tres, den_sto, p_res,
+                  salinity, Jump, units)
