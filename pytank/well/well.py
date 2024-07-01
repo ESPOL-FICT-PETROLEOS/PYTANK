@@ -19,9 +19,9 @@ from pytank.functions.utilities import normalize_date_freq
 import warnings
 
 
-class _Well(BaseModel):
+class Well(BaseModel):
     """
-    PRIVATE Class used to handle pressure and production vectors
+    Class used to handle pressure and production vectors
     """
     name: str
     prod_data: Optional[ProdVector] = None
@@ -153,12 +153,10 @@ class Wells(BaseModel):
                             # Create a production vector
                             prod_vector = ProdVector(freq=None,
                                                      data=group_prod_norm)
-                    # tank_name = group_prod_norm[TANK_COL].iloc[0]
 
                 else:
                     prod_vector = ProdVector(freq=self.freq_prod,
                                              data=group_prod)
-                    # tank_name = group_prod[TANK_COL].iloc[0]
 
             if name in press_data["WELLBORE"].unique():
                 group_press = press_data[press_data["WELLBORE"] == name]
@@ -171,13 +169,11 @@ class Wells(BaseModel):
                 # Create a pressure vector
                 press_vector = PressVector(freq=self.freq_press,
                                            data=group_press)
-                # if prod_vector is None and TANK_COL in group_press.columns:
-                # tank_name = group_press[TANK_COL].iloc[0]
 
             # Create well lists
-            info_well = _Well(name=name,
-                              prod_data=prod_vector,
-                              press_data=press_vector)
+            info_well = Well(name=name,
+                             prod_data=prod_vector,
+                             press_data=press_vector)
 
             # Add wells list to tanks dict
             list_wells.append(info_well)

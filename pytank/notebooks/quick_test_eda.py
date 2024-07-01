@@ -1,7 +1,7 @@
 import pandas as pd
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.tank.tank import Tank
-from pytank.analysis.poes import Analysis
+from pytank.analysis.analysis import Analysis
 from pytank.notebooks.quick_test_tank import well
 
 # Quicktest
@@ -27,5 +27,5 @@ tank1 = Tank(name=tank_name,
              aquifer=None)
 
 analysis = Analysis(tank_class=tank1, freq="12MS", position="end")
-graph = analysis.campbell(option="plot")
+graph = analysis.campbell_plot(option="plot")
 # graph.show()
