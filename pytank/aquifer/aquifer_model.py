@@ -16,7 +16,7 @@ import numpy as np
 import math
 from pytank.functions.utilities import variable_type
 from datetime import datetime
-from typing import List
+from typing import Optional
 
 
 # Fetkovich
@@ -71,10 +71,10 @@ class Fetkovich:
             theta: float,
             k: float,
             water_visc: float,
-            pr: list,
-            time_step: list,
             boundary_type: str = "no_flow",
             flow_type: str = "radial",
+            pr: Optional[list] = None,
+            time_step: Optional[list] = None,
             width: float = None,
             length: float = None,
     ):
@@ -126,6 +126,16 @@ class Fetkovich:
         self.time_step = time_step
         self.width = width
         self.length = length
+
+    def _set_pr_and_time_step(self, pr, time_step):
+        """
+        Private method to assign values ​​to the pr and time_step properties of the aquifer
+        :param
+        pr: List of Measured reservoir pressure, psi.
+        time_step: List of Time lapses, days.
+        """
+        self.pr = pr
+        self.time_step = time_step
 
         # Check if the time list is in datetime format
         if all(isinstance(t, datetime) for t in time_step):
@@ -294,7 +304,7 @@ class CarterTracy:
         Viscosity of water, cp.
     pr : list, optional
         List of Measured reservoir pressure, psi.
-    time : list, optional
+    time_step : list, optional
         Time lapses, days.
 
     Returns
@@ -312,8 +322,8 @@ class CarterTracy:
             theta: float,
             aq_perm: float,
             water_visc: float,
-            pr: list,
-            time: list,
+            pr: Optional[list] = None,
+            time_step: Optional[list] = None,
     ):
         """
         Initializes the attributes of the CarterTracy class.
@@ -336,7 +346,7 @@ class CarterTracy:
             Viscosity of water, cp.
         pr : list, optional
             Measured reservoir pressure, psi.
-        time : list, optional
+        time_step : list, optional
             Time lapses, days.
         """
         self.aq_por = aq_por
@@ -346,24 +356,34 @@ class CarterTracy:
         self.theta = theta
         self.aq_perm = aq_perm
         self.water_visc = water_visc
-        self.time = time
-        self.pr = variable_type(pr)
+        self.time = time_step
+        self.pr = pr
 
+    def _set_pr_and_time_step(self, pr, time_step):
+        """
+        Private method to assign values ​​to the pr and time_step properties of the aquifer
+        :param
+        pr: List of Measured reservoir pressure, psi.
+        time_step: List of Time lapses, days.
+        """
+
+        self.pr = pr
+        self.time_step = time_step
         # Check if the time list is in datetime format
-        if all(isinstance(t, datetime) for t in time):
+        if all(isinstance(t, datetime) for t in time_step):
             # If all elements are already datetime objects, convert to cumulative days
-            self.time = [(t - time[0]).days for t in time]
-        elif all(isinstance(t, pd.Timestamp) for t in time):
+            self.time = [(t - time_step[0]).days for t in time_step]
+        elif all(isinstance(t, pd.Timestamp) for t in time_step):
             # If elements are Timestamp objects, convert to datetime and then to cumulative days
-            datetime_list = [pd.to_datetime(t) for t in time]
+            datetime_list = [pd.to_datetime(t) for t in time_step]
             self.time = [(t - datetime_list[0].days for t in datetime_list)]
-        elif all(isinstance(t, str) for t in time):
+        elif all(isinstance(t, str) for t in time_step):
             # If all elements are strings, convert to datetime and then to cumulative days
-            datetime_list = [datetime.strptime(t, "%Y-%m-%d") for t in time]
+            datetime_list = [datetime.strptime(t, "%Y-%m-%d") for t in time_step]
             self.time = [(t - datetime_list[0]).days for t in datetime_list]
         else:
             # Convert dates to cumulative days using variable_types
-            self.time = variable_type(time)
+            self.time = variable_type(time_step)
 
         # Automatically influx of water data upon object creation
         self.we()

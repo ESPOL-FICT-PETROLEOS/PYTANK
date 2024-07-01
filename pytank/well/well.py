@@ -14,7 +14,6 @@ from pytank.constants.constants import (OIL_CUM_COL,
                                         GAS_CUM_COL,
                                         LIQ_CUM,
                                         PRESSURE_COL,
-                                        TANK_COL,
                                         DATE_COL
                                         )
 from pytank.vector_data.vector_data import ProdVector, PressVector
@@ -104,7 +103,8 @@ class Wells(BaseModel):
         Returns
         -------
         List[Wells]
-            A list of `Wells` objects, where each object represents a well with its associated pressure and production data.
+            A list of `Wells` objects, where each object represents a well with its associated pressure and
+            production data.
         """
         prod_data, press_data = self._process_data()
         cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]

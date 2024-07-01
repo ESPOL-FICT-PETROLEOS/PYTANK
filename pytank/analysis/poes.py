@@ -15,6 +15,7 @@ libraries:
 """
 import pandas as pd
 import pandera as pa
+import numpy as np
 from matplotlib.font_manager import FontProperties
 from matplotlib.ticker import FuncFormatter
 from pandera.typing import Series
@@ -41,7 +42,9 @@ from pytank.constants.constants import (OIL_FVF_COL,
                                         GAS_CUM_TANK,
                                         OIL_EXP,
                                         RES_EXP,
-                                        WE)
+                                        WE,
+                                        OIL_RATE_COL,
+                                        WATER_RATE_COL)
 from pytank.functions.utilities import interp_dates_row
 from pytank.functions.material_balance import (underground_withdrawal,
                                                pressure_vol_avg,
@@ -325,6 +328,13 @@ class Analysis(BaseModel):
             mbal_final_per_tank[WE] = 0.0
 
         elif isinstance(self.tank_class.aquifer, Fetkovich):
+            """
+            If the aquifer instance is Fetkovich, take the pressure and time values 
+            that Fetkovich needs from mbal_final_per_tank
+            """
+            pr = list(mbal_final_per_tank[PRESSURE_COL])
+            time_step = list(mbal_final_per_tank["Time_Step"])
+            self.tank_class.aquifer._set_pr_and_time_step(pr, time_step)
             df = self.tank_class.aquifer.we()
             mbal_final_per_tank = mbal_final_per_tank.join(df["Cumulative We"])
             # list_we = list(df["Cumulative We"])
@@ -332,6 +342,13 @@ class Analysis(BaseModel):
             # mbal_final_per_tank = pd.concat([df["Cumulative We"], mbal_final_per_tank], axis=1)
 
         elif isinstance(self.tank_class.aquifer, CarterTracy):
+            """
+            If the aquifer instance is Fetkovich, take the pressure and time values t
+            that Fetkovich needs from mbal_final_per_tank
+            """
+            pr = list(mbal_final_per_tank[PRESSURE_COL])
+            time_step = list(mbal_final_per_tank["Time_Step"])
+            self.tank_class.aquifer._set_pr_and_time_step(pr, time_step)
             df = self.tank_class.aquifer.we()
             mbal_final_per_tank = mbal_final_per_tank.join(df["Cumulative We"])
             # mbal_final_per_tank = pd.concat([df["Cumulative We"], mbal_final_per_tank], axis=1)
@@ -628,6 +645,74 @@ class Analysis(BaseModel):
         plt.tight_layout()
         return fig
 
+    def plot_flow_rate_well(self):
+        """
+        Method to generate a graph.
+        :return:
+        plt.Figure: A graph of Flow Rate vs Time per Rate of Tank.
+        """
+        # Production Data
+        df_prod = self.tank_class.get_production_df()
+        df_prod[DATE_COL] = pd.to_datetime(df_prod[DATE_COL])
+        df_prod = df_prod.sort_values(by=DATE_COL)
+
+        # days
+        # df_prod["Days"] = df_prod[DATE_COL].diff().dt.days.fillna(0)
+        # df_prod.loc[df_prod["Days"] == 0, "Days"] = 365
+
+        # Calculate daily production rates from cumulative productions.
+        df_prod[OIL_RATE_COL] = df_prod.groupby(WELL_COL)[OIL_CUM_COL].diff().fillna(0)
+        df_prod[WATER_RATE_COL] = df_prod.groupby(WELL_COL)[WATER_CUM_COL].diff().fillna(0)
+
+        fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(10, 12), sharex=True)
+
+        wells = df_prod[WELL_COL].unique()
+        colors = plt.cm.get_cmap("tab10", len(wells))
+
+        # Plot of Oil Flow Rate
+        for i, well in enumerate(wells):
+            well_data = df_prod[df_prod[WELL_COL] == well]
+            dates = well_data[DATE_COL]
+
+            # Oil rate
+            ax1.plot(dates, well_data[OIL_RATE_COL], label=f"{well}", color=colors(i))
+            ax1.set_title("Oil Flow Rate vs Time by Well - " +
+                          str(self.tank_class.name.replace("_", " ").upper()), fontsize=16)
+            ax1.set_ylabel("Flow Rate [Stb/year]", fontsize=14)
+            ax1.legend(loc='upper left', fontsize=12)
+            ax1.grid(True, linestyle="--", alpha=0.7)
+
+            # Water rate
+            ax2.plot(dates, well_data[WATER_RATE_COL], label=f"{well}", color=colors(i))
+            ax2.set_title("Water Flow Rate vs Time by Well - " +
+                          str(self.tank_class.name.replace("_", " ").upper()), fontsize=16)
+            ax2.set_ylabel("Flow Rate [Stb/year]", fontsize=14)
+            ax2.set_xlabel("Date", fontsize=14)
+            ax2.legend(loc='upper left', fontsize=12)
+            ax2.grid(True, linestyle="--", alpha=0.7)
+
+        fig.autofmt_xdate()
+        plt.tight_layout()
+
+        # Set Y-axis limit'
+        y_max = max(df_prod[OIL_RATE_COL].max(), df_prod[WATER_RATE_COL].max())
+        y_max = (y_max // 20000 + 1) * 20000
+
+        ax1.set_ylim(0, y_max)
+        ax1.set_yticks(np.arange(0, y_max + 1, 20000))
+
+        ax2.set_ylim(0, y_max)
+        ax2.set_yticks(np.arange(0, y_max + 1, 20000))
+
+        # formatter for the axes in K
+        formatter = FuncFormatter(lambda x, pos: "{:.0f}K".format(x * 1e-3))
+        ax1.yaxis.set_major_formatter(formatter)
+
+        # formatter for the axes in K
+        formatter = FuncFormatter(lambda x, pos: "{:.0f}K".format(x * 1e-3))
+        ax2.yaxis.set_major_formatter(formatter)
+        return fig
+
     def plot_cum_prod_time(self) -> plt.Figure:
         """
         Method to generate a graph.
@@ -643,7 +728,8 @@ class Analysis(BaseModel):
         for i, col in enumerate(columns):
             ax1.plot(df_press_avg[DATE_COL], df_press_avg[col], color=colors[i], label=col)
 
-        ax1.set_title("Cumulative Production per Date - " + str(self.tank_class.name.replace("_", " ").upper()),
+        ax1.set_title("Cumulative Production per Date - " +
+                      str(self.tank_class.name.replace("_", " ").upper()),
                       fontsize=16)
         ax1.set_xlabel("Date", fontsize=14)
         ax1.set_ylabel("Cumulative Production [MMStb]", fontsize=14)
@@ -801,3 +887,54 @@ class Analysis(BaseModel):
         formatter = FuncFormatter(lambda x, pos: "{:.1f}M".format(x * 1e-6))
         ax7.yaxis.set_major_formatter(formatter)
         return fig7
+
+    def plot_flow_rate_tank(self):
+        """Method to generate a graph.
+        :return:
+        plt.Figure: A graph of Flow Rate vs Time by Tank.
+        """
+        # Production Data
+        # Average Pressure Data
+        df_prod = self.mat_bal_df()
+        df_prod[DATE_COL] = pd.to_datetime(df_prod[DATE_COL])
+        df_prod = df_prod.sort_values(by=DATE_COL)
+
+        # Days
+        # df_prod["Days"] = df_prod[DATE_COL].diff().dt.days.fillna(0)
+        # df_prod.loc[df_prod["Days"] == 0, "Days"] = 365
+
+        # Calculate daily production rates from cumulative productions.
+        df_prod[OIL_RATE_COL] = df_prod[OIL_CUM_TANK].diff().fillna(0)
+        df_prod[WATER_RATE_COL] = df_prod[WATER_CUM_TANK].diff().fillna(0)
+
+        fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(10, 12), sharex=True)
+
+        # Oil rate
+        ax1.plot(df_prod[DATE_COL], df_prod[OIL_RATE_COL], color="black", label="Oil flow Rate")
+        ax1.set_title("Oil Flow Rate vs Time by " +
+                      str(self.tank_class.name.replace("_", " ").upper()), fontsize=16)
+        ax1.set_ylabel("Flow Rate [Stb/year]", fontsize=14)
+        ax1.legend(loc='upper left', fontsize=12)
+        ax1.grid(True, linestyle="--", alpha=0.7)
+
+        # Water rate
+        ax2.plot(df_prod[DATE_COL], df_prod[WATER_RATE_COL], color="blue", label="Water flow rate")
+        ax2.set_title("Water Flow Rate vs Time by " +
+                      str(self.tank_class.name.replace("_", " ").upper()), fontsize=16)
+        ax2.set_ylabel("Flow Rate [Stb/year]", fontsize=14)
+        ax2.set_xlabel("Date", fontsize=14)
+        ax2.legend(loc='upper left', fontsize=12)
+        ax2.grid(True, linestyle="--", alpha=0.7)
+
+        # formatter for the axes in K
+        formatter = FuncFormatter(lambda x, pos: "{:.0f}K".format(x * 1e-3))
+        ax1.yaxis.set_major_formatter(formatter)
+
+        # formatter for the axes in K
+        formatter = FuncFormatter(lambda x, pos: "{:.0f}K".format(x * 1e-3))
+        ax2.yaxis.set_major_formatter(formatter)
+
+        fig.autofmt_xdate()
+        plt.tight_layout()
+
+        return fig
