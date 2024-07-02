@@ -1,5 +1,5 @@
 """
-poes.py
+analysis.py
 
 This archive.py defines to calculated POES from material balance equation.
 
@@ -379,115 +379,85 @@ class Analysis(BaseModel):
         # final mbal DataFrame
         return mbal_final_per_tank
 
-    def campbell(self, option: str) -> Union[pd.DataFrame, plt.Figure]:
+    # ---------------------- CAMPBELL GRAPH --------------------------------
+    def campbell_plot(self) -> plt.Figure:
         """
         Method to graphic the Campbell graph to be able to graphically see
         the energy contribution of the aquifer.
 
-        Parameters ---------- option : str Determines the type of result to
-        be returned. Can be either "plot" or "data".
-
-        Returns ------- Union[pd.DataFrame, plt.Figure] - If option is
-        "data", returns a pandas DataFrame containing the data. - If option
-        is "plot", returns a matplotlib Figure object containing the plot.
-
-        Raises
-        ------
-        ValueError
-            If the option is not "data" or "plot".
-
-        Examples
-        --------
-        Case 1
-            instance = Analysis()
-            df = instance.campbell("data")
-            print(df)
-
-        Case 2
-            figure = instance.havlena_odeh("plot")
-            figure.show()
+        Returns
+        -------
+        plt.Figure: A matplotlib Figure object containing the plot.
         """
         mbal_df = self.mat_bal_df()
         y = mbal_df[UW_COL] / (mbal_df[OIL_EXP] + mbal_df[RES_EXP])
         x = mbal_df[OIL_CUM_TANK]
         data = pd.DataFrame({"Np": x, "F/Eo+Efw": y})
 
-        if option == "data":
-            return data
+        # Graph
+        slope, intercept, r, p, se = stats.linregress(
+            data["Np"], data["F/Eo+Efw"])
+        fig, ax1 = plt.subplots()
+        ax1.scatter(x, y)
+        reg_line = (slope * data["Np"]) + intercept
+        ax1.plot(data["Np"],
+                 reg_line,
+                 color="green",
+                 label="Regression line")
+        ax1.set_xlabel("Np Cumulative Oil Production [MMStb]")
+        ax1.set_ylabel("F/Eo+Efw")
+        ax1.set_title("Campbell plot of " +
+                      str(self.tank_class.name.
+                          replace("_", " ")))
+        textstr = (
+            "Graph that gives an "
+            "\nidea of the energy "
+            "\ncontribution of an aquifer"
+        )
+        props = dict(boxstyle="round", facecolor="grey", alpha=0.5)
+        ax1.text(
+            0.05,
+            0.95,
+            textstr,
+            transform=ax1.transAxes,
+            fontsize=9,
+            verticalalignment="top",
+            horizontalalignment="left",
+            bbox=props,
+        )
+        ax1.legend(frameon=True, framealpha=0.9, loc="upper right")
+        plt.grid(True, linestyle="--", alpha=0.7)
 
-        # Graphic
-        elif option == "plot":
-            slope, intercept, r, p, se = stats.linregress(
-                data["Np"], data["F/Eo+Efw"])
-            fig, ax1 = plt.subplots()
-            ax1.scatter(x, y)
-            reg_line = (slope * data["Np"]) + intercept
-            ax1.plot(data["Np"],
-                     reg_line,
-                     color="green",
-                     label="Regression line")
-            ax1.set_xlabel("Np Cumulative Oil Production [MMStb]")
-            ax1.set_ylabel("F/Eo+Efw")
-            ax1.set_title("Campbell plot of " +
-                          str(self.tank_class.name.replace("_", " ")))
-            textstr = (
-                "Graph that gives an "
-                "\nidea of the energy "
-                "\ncontribution of an aquifer"
-            )
-            props = dict(boxstyle="round", facecolor="grey", alpha=0.5)
-            ax1.text(
-                0.05,
-                0.95,
-                textstr,
-                transform=ax1.transAxes,
-                fontsize=9,
-                verticalalignment="top",
-                horizontalalignment="left",
-                bbox=props,
-            )
-            ax1.legend(frameon=True, framealpha=0.9, loc="upper right")
-            plt.grid(True, linestyle="--", alpha=0.7)
+        formattery = FuncFormatter(
+            lambda x, pos: "{:.1f}Mm".format(x * 1e-9))
+        ax1.yaxis.set_major_formatter(formattery)
 
-            formattery = FuncFormatter(
-                lambda x, pos: "{:.1f}Mm".format(x * 1e-9))
-            ax1.yaxis.set_major_formatter(formattery)
+        formatterx = FuncFormatter(
+            lambda x, pos: "{:.1f}M".format(x * 1e-6))
+        ax1.xaxis.set_major_formatter(formatterx)
+        return fig
 
-            formatterx = FuncFormatter(
-                lambda x, pos: "{:.1f}M".format(x * 1e-6))
-            ax1.xaxis.set_major_formatter(formatterx)
-            return fig
+    def campbell_data(self) -> pd.DataFrame:
+        """
+        Method to give the Campbell data..
+        :return:
+        pd.DataFrame: A pandas DataFrame containing the data with Np and
+        F/Eo+Efw columns.
+        """
+        mbal_df = self.mat_bal_df()
+        y = mbal_df[UW_COL] / (mbal_df[OIL_EXP] + mbal_df[RES_EXP])
+        x = mbal_df[OIL_CUM_TANK]
+        data = pd.DataFrame({"Np": x, "F/Eo+Efw": y})
+        return data
 
-        else:
-            raise ValueError("Option no validate. Use 'data' or 'plot'.")
-
-    def havlena_odeh(self, option: str) -> Union[pd.DataFrame, plt.Figure]:
+    # ------------------ HAVLENA AND ODEH METHOD ----------------------------
+    def havlena_odeh_plot(self) -> plt.Figure:
         """
         Calculate results based on Havlena and Odeh Methods and show a graphic.
 
-        Parameters
-        ----------
-        option: str The option that determines the
-        type of result and graph to be displayed. It can be "plot" or "data"
-
-        Returns ------- Union[pd.DataFrame, plt.Figure] - If option is
-        "data", returns a pandas DataFrame containing the data. - If option
-        is "plot", returns a matplotlib Figure object containing the plot.
-
-        Raises
-        ------
-        ValueError
-            It the option is not "plot" or "data"
-
-        Examples
-        --------
-        Case 1
-            instance = Analysis()
-            df = instance.havlena_odeh("data")
-            print(df)
-        Case 2
-            figure = instance.havlena_odeh("plot")
-            figure.show()
+        Returns
+        -------
+        plt.Figure: A graph F - WE vs Et
         """
         # Data Processing
         mbal_df = self.mat_bal_df()
@@ -497,67 +467,71 @@ class Analysis(BaseModel):
         slope, intercept, r, p, se = stats.linregress(data["Eo+Efw"],
                                                       data["F-We"])
 
-        # Data
-        if option == "data":
-            poes = str(f"N [MMStb]: {slope / 1000000:.4f}")
-            print(poes)
-            return data
-
         # Graphic
-        elif option == "plot":
-            fig, ax2 = plt.subplots()
-            ax2.scatter(data["Eo+Efw"], data["F-We"], color="blue")
-            reg_line = (slope * data["Eo+Efw"]) + intercept
-            ax2.plot(data["Eo+Efw"],
-                     reg_line,
-                     color="red",
-                     label="Regression line")
-            ax2.set_xlabel("Eo+Efw")
-            ax2.set_ylabel("F-We")
-            ax2.set_title("Havlena y Odeh plot of " +
-                          str(self.tank_class.name.
-                              replace("_", " ")))
+        fig, ax2 = plt.subplots()
+        ax2.scatter(data["Eo+Efw"], data["F-We"], color="blue")
+        reg_line = (slope * data["Eo+Efw"]) + intercept
+        ax2.plot(data["Eo+Efw"],
+                 reg_line,
+                 color="red",
+                 label="Regression line")
+        ax2.set_xlabel("Eo+Efw")
+        ax2.set_ylabel("F-We")
+        ax2.set_title("Havlena y Odeh plot of " +
+                      str(self.tank_class.name.
+                          replace("_", " ")))
 
-            # Text in the graph
-            textstr = "N [MMStb]: {:.2f}".format(slope / 1000000)
-            props = dict(boxstyle="round", facecolor="yellow", alpha=0.5)
-            ax2.text(
-                0.05,
-                0.95,
-                textstr,
-                transform=ax2.transAxes,
-                fontsize=10,
-                verticalalignment="top",
-                horizontalalignment="left",
-                bbox=props,
-            )
-            ax2.legend(frameon=True, framealpha=0.9, loc="upper right")
-            plt.grid(True, linestyle="--", alpha=0.7)
+        # Text in the graph
+        textstr = "N [MMStb]: {:.2f}".format(slope / 1000000)
+        props = dict(boxstyle="round", facecolor="yellow", alpha=0.5)
+        ax2.text(
+            0.05,
+            0.95,
+            textstr,
+            transform=ax2.transAxes,
+            fontsize=10,
+            verticalalignment="top",
+            horizontalalignment="left",
+            bbox=props,
+        )
+        ax2.legend(frameon=True, framealpha=0.9, loc="upper right")
+        plt.grid(True, linestyle="--", alpha=0.7)
 
-            # formatter for the axes in M
-            formatter = FuncFormatter(
-                lambda x, pos: "{:.2f}M".format(x * 1e-6))
-            ax2.yaxis.set_major_formatter(formatter)
-            return fig
+        # formatter for the axes in M
+        formatter = FuncFormatter(
+            lambda x, pos: "{:.2f}M".format(x * 1e-6))
+        ax2.yaxis.set_major_formatter(formatter)
+        return fig
 
-        else:
-            raise ValueError("Option no validate. Use 'data' or 'plot'.")
+    def havlena_oded_data(self) -> pd.DataFrame:
+        """
+        Calculate values based on Havlena and Odeh Methods and show a df.
+        :return:
+        pd.Dataframe: DataFrame with F-We and Eo+Efw columns.
+        """
+        mbal_df = self.mat_bal_df()
+        y = mbal_df[UW_COL] - mbal_df[WE]
+        x = mbal_df[OIL_EXP] + mbal_df[RES_EXP]
+        data = pd.DataFrame({"Eo+Efw": x, "F-We": y})
+        return data
 
+    # ----------------------- ANALYTIC METHOD -------------------------------
     def analytic_method(self, poes: float,
                         option: str) -> Union[pd.DataFrame, plt.Figure]:
         """
         Method used to calculate the POES through an inferred POES that
         ensures that there is the best match between the behavior of the
         observed pressure and the calculated pressure. the calculation is
-        done through calculated_pressure_fetkovich function
+        done through calculated_pressure_fetkovich and calculated_pressure_
+        carter_tracy functions.
 
         Parameters
         ----------
         poes : float
             Inferred POES (Petroleum-in-Place) value in MMStb.
         option : str
-            Determines the type of result to be returned. Can be either "data"
-            or "plot".
+            Determines the type of result to be returned. Can be either
+            "data" or "plot".
 
         Returns
         -------
@@ -652,7 +626,8 @@ class Analysis(BaseModel):
                      press_calc,
                      c="g",
                      label="Calculated Pressure")
-            plt.title(f"Pressure vs Time with {model_aq_name}", fontsize=25)
+            plt.title(f"Pressure vs Time with {model_aq_name}",
+                      fontsize=25)
             plt.xlabel("Time (Years)", fontsize=17)
             plt.ylabel("Pressure (PSI)", fontsize=17)
             ax8.set_ylim(0, 4000)
@@ -668,8 +643,8 @@ class Analysis(BaseModel):
 
     # The following methods are to do an exploratory data analysis -
     # (EDA) of the Tank:
-
-    def plot_cum_prod_per_well(self) -> plt.Figure:
+    # ---------------------- GRAPH SECTION ----------------------------
+    def plot_cum_prod_well(self) -> plt.Figure:
         """
         Method to generate a graph.
         :return:
@@ -766,8 +741,8 @@ class Analysis(BaseModel):
                      color=colors(i))
             ax1.set_title(
                 "Oil Flow Rate vs Time by Well - " +
-                str(self.tank_class.name.replace("_", " ").upper()),
-                fontsize=16,
+                str(self.tank_class.name.replace("_", " ").
+                    upper()), fontsize=16,
             )
             ax1.set_ylabel("Flow Rate [Stb/year]", fontsize=14)
             ax1.legend(loc="upper left", fontsize=12)
@@ -780,8 +755,8 @@ class Analysis(BaseModel):
                      color=colors(i))
             ax2.set_title(
                 "Water Flow Rate vs Time by Well - " +
-                str(self.tank_class.name.replace("_", " ").upper()),
-                fontsize=16,
+                str(self.tank_class.name.replace("_", " ").
+                    upper()), fontsize=16,
             )
             ax2.set_ylabel("Flow Rate [Stb/year]", fontsize=14)
             ax2.set_xlabel("Date", fontsize=14)
@@ -895,10 +870,10 @@ class Analysis(BaseModel):
         fig3, ax3 = plt.subplots(figsize=(10, 6))
         color = "green"
 
-        ax3.plot(df_press[DATE_COL],
-                 df_press[PRESSURE_COL],
-                 color=color,
-                 label="Pressure")
+        ax3.scatter(df_press[DATE_COL],
+                    df_press[PRESSURE_COL],
+                    color=color,
+                    label="Pressure")
 
         ax3.set_title(
             "Pressure per Date - " +

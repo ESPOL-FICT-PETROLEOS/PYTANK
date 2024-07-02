@@ -1,7 +1,7 @@
 from pytank.notebooks.quick_test_tank import (tank1, well, tank_name,
                                               oil_model, water_model)
 # from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
-from pytank.analysis.poes import Analysis
+from pytank.analysis.analysis import Analysis
 from pytank.tank.tank import Tank
 
 # No Aquifer Case
@@ -41,7 +41,7 @@ analysis2.setup_fetkovich_aquifer(
 )
 
 anali_fet = analysis2.analytic_method(72e+6, "plot")
-havle = analysis2.havlena_odeh("plot")
+havle = analysis2.havlena_odeh_plot("plot")
 havle.show()
 
 # With Carter Tracy

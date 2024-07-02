@@ -9,7 +9,7 @@ import pandas as pd
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.tank.tank import Tank
 from pytank.well.well import Wells
-from pytank.analysis.poes import Analysis
+from pytank.analysis.analysis import Analysis
 from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
 
 # transform the csv to dataframes
@@ -53,7 +53,9 @@ oil_model = OilModel(
     temperature=25,
 )
 
-water_model = WaterModel(salinity=3000, temperature=200, unit=1)
+water_model = WaterModel(salinity=3000,
+                         temperature=200,
+                         unit=1)
 
 # %%
 "---------------------------- Tank Module ---------------------------"
@@ -74,12 +76,12 @@ tank1 = Tank(name=tank_name,
 frequency = "12M"
 analysis = Analysis(tank_class=tank1, freq=frequency, position="end")
 "Campbell"
-camp = analysis.campbell("plot")
+camp = analysis.campbell_plot()
 camp.show()
 
 # %%
 "Havlena"
-havlena_plot = analysis.havlena_odeh("plot")
+havlena_plot = analysis.havlena_odeh_plot()
 havlena_plot.show()
 
 # %%
@@ -128,7 +130,7 @@ analitic_meth_fet = analysis_fet.analytic_method(poes=67e+6, option="plot")
 analitic_meth_fet.show()
 
 "Havlena Method"
-havlena_fet = analysis_fet.havlena_odeh("plot")
+havlena_fet = analysis_fet.havlena_odeh_plot()
 havlena_fet.show()
 
 # %%
@@ -170,7 +172,7 @@ analitic_meth_car = analysis_carter.analytic_method(poes=67e+6, option="plot")
 analitic_meth_car.show()
 
 "Havlena Method"
-havlena_car = analysis_carter.havlena_odeh("plot")
+havlena_car = analysis_carter.havlena_odeh_plot()
 havlena_car.show()
 
 # %%
