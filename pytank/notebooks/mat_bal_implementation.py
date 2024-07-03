@@ -11,31 +11,31 @@ from pytank.tank.tank import Tank
 from pytank.well.well import Wells
 from pytank.analysis.analysis import Analysis
 from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
+from pytank.functions.helpers import create_wells, search_wells
 
 # transform the csv to dataframes
 df_pvt = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "C:/Users/ksls2/PycharmProjects/PYTANK/pytank/resources/data_csv/"
     "pvt.csv"
 )
 df_production = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "C:/Users/ksls2/PycharmProjects/PYTANK/pytank/resources/data_csv/"
     "production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "C:/Users/ksls2/PycharmProjects/PYTANK/pytank/resources/data_csv/"
     "pressures.csv"
 )
 
 # %%
 "-------------------------- Well Module----------------------------"
 
-wells = Wells(df_prod=df_production,
-              df_press=df_pressures,
-              freq_prod="MS",
-              freq_press=None)
+wells = create_wells(df_prod=df_production,
+                     df_press=df_pressures,
+                     freq_prod="MS",
+                     freq_press=None)
 
 # List of all wells
-all_wells = wells.get_wells()
 
 # List of wells for user selection
 my_wells = [
@@ -45,7 +45,8 @@ my_wells = [
 ]
 
 # lis of wells with the pressure and production info for user selection
-wells_info = wells.search_wells(my_wells)
+wells_info = search_wells(wells,my_wells)
+print(wells_info)
 # %%
 "----------------------- Fluid Models Module -----------------------"
 oil_model = OilModel(
