@@ -1,4 +1,14 @@
-# %%
+"""
+get_wells.py
+
+This script shows a way in which the user can process the production and
+pressure data for each well, creating a general list of wells with their
+corresponding information.
+
+libraries:
+    pandas
+    pandera
+"""
 # Importing necessary libraries and modules
 import warnings
 from collections import defaultdict

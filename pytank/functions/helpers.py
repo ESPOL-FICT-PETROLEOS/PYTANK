@@ -1,5 +1,4 @@
 import pandas as pd
-from pydantic import BaseModel
 from typing import Optional, List
 from pytank.constants.constants import (OIL_CUM_COL, WATER_CUM_COL,
                                         GAS_CUM_COL, LIQ_CUM, PRESSURE_COL,
@@ -11,7 +10,9 @@ import warnings
 from pytank.well.well import Well
 
 
-def create_wells(df_prod: pd.DataFrame, df_press: pd.DataFrame, freq_prod: Optional[str] = None,
+def create_wells(df_prod: pd.DataFrame,
+                 df_press: pd.DataFrame,
+                 freq_prod: Optional[str] = None,
                  freq_press: Optional[str] = None) -> List[Well]:
     """
     Parameters
@@ -133,8 +134,8 @@ def search_wells(wells: List[Well], well_names: List[str]) -> List[Well]:
 
     Parameters
     ----------
-    your_wells : List[str]
-        A list of well names to search for.
+    wells: List of all wells
+    well_names: List of well names to search for.
 
     Returns
     -------
@@ -142,4 +143,14 @@ def search_wells(wells: List[Well], well_names: List[str]) -> List[Well]:
         A list of `Wells` objects that match the provided well names.
     """
     result = [well for well in wells if well.name in well_names]
+
+    # Well no found
+    found_well_names = [well.name for well in result]
+    not_found_wells = [name for name in well_names if name
+                       not in found_well_names]
+    # Warning
+    if not_found_wells:
+        warnings.warn(f"The following wells were not found in the list: "
+                      f"{', '.join(not_found_wells)}")
+
     return result
