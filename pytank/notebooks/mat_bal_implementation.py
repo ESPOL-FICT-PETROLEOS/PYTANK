@@ -8,22 +8,21 @@ This file containing the steps to use the PyTank library .
 import pandas as pd
 from pytank.fluid_model.fluid import OilModel, WaterModel
 from pytank.tank.tank import Tank
-from pytank.well.well import Wells
 from pytank.analysis.analysis import Analysis
 from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
 from pytank.functions.helpers import create_wells, search_wells
 
 # transform the csv to dataframes
 df_pvt = pd.read_csv(
-    "C:/Users/ksls2/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
     "pvt.csv"
 )
 df_production = pd.read_csv(
-    "C:/Users/ksls2/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
     "production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/ksls2/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
     "pressures.csv"
 )
 
@@ -41,12 +40,11 @@ wells = create_wells(df_prod=df_production,
 my_wells = [
     "A-1-P", "A-10-P", "A-11-P", "A-12-P", "A-13-P", "A-14-P", "A-16-P",
     "A-17-P", "A-18-P", "A-19-P", "A-21-P", "A-22-P", "A-23-P", "A-24-I",
-    "A-4-P", "A-5-P", "A-6-P", "A-8-P", "A-9-P"
+    "A-4-P", "A-5-P", "A-6-P", "A-8-P", "A-9-P", "PEPITO"
 ]
 
 # lis of wells with the pressure and production info for user selection
-wells_info = search_wells(wells,my_wells)
-print(wells_info)
+wells_info = search_wells(wells, my_wells)
 # %%
 "----------------------- Fluid Models Module -----------------------"
 oil_model = OilModel(
@@ -75,10 +73,15 @@ tank1 = Tank(name=tank_name,
 # %%
 "-------------------------- Analysis Module ------------------------"
 frequency = "12M"
-analysis = Analysis(tank_class=tank1, freq=frequency, position="end")
+analysis = Analysis(tank_class=tank1,
+                    freq=frequency,
+                    position="end")
 "Campbell"
 camp = analysis.campbell_plot()
 camp.show()
+
+data = analysis.mat_bal_df()
+print(data)
 
 # %%
 "Havlena"
@@ -201,3 +204,6 @@ plt7.show()
 
 plt8 = analysis_carter.plot_flow_rate_well()
 plt8.show()
+
+plt9 = analysis_carter.plot_cum_prod_well()
+plt9.show()
