@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "pytank"
+version = "0.1.0"
+description = "Library to calculate POES by material balance equations of sub-saturaded Reservories"
+authors = [
+    "Erick Michael Villarroel Tenelema <erickv2499@gmail.com>",
+    "Kevin Steeven Lopez Soria <ksls2000@outlook.es"
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.1.4"
+scipy = "^1.11.4"
+numpy = "^1.26.3"
+matplotlib = "^3.8.2"
+pytest = "^7.4.4"
+pandera = "^0.18.3"
+
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^7.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+include = [
+    "static/PyTank_logo.png",
+    "pytank/resources/data_csv/injection.csv",
+    "pytank/resources/data_csv/pressures.csv",
+    "pytank/resources/data_csv/production.csv",
+    "pytank/resources/data_csv/pvt.csv",
+    "LICENSE"]
