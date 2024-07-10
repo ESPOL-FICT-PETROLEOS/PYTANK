@@ -13,7 +13,7 @@ from typing import Optional
 from pytank.constants.constants import (OIL_CUM_COL, WATER_CUM_COL,
                                         GAS_CUM_COL, LIQ_CUM, PRESSURE_COL,
                                         DATE_COL)
-from pytank.vector_data.vector_data import ProdVector, PressVector
+from pytank.vector_data import ProdVector, PressVector
 from pandera.errors import SchemaError
 from pytank.functions.utilities import normalize_date_freq
 import warnings

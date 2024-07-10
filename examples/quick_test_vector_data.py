@@ -1,5 +1,5 @@
 import pandas as pd
-from pytank.vector_data.vector_data import ProdVector
+from pytank.vector_data import ProdVector
 from pytank.constants.constants import (
     OIL_CUM_COL,
     WATER_CUM_COL,

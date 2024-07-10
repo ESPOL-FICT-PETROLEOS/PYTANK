@@ -28,12 +28,12 @@ warnings.filterwarnings("ignore",
                         message="DataFrame.fillna with 'method' is deprecated")
 
 # Data to process production info
-df_production = pd.read_csv("../resources/data_csv/production.csv")
+df_production = pd.read_csv("../resources/examples_data/production.csv")
 df_production[DATE_COL] = pd.to_datetime(df_production[DATE_COL])
 df_production.set_index(df_production[DATE_COL], inplace=True)
 
 # Data to process pressure info
-df_pressures = pd.read_csv("../resources/data_csv/pressures.csv")
+df_pressures = pd.read_csv("../resources/examples_data/pressures.csv")
 df_pressures.rename(columns={
     "DATE": "START_DATETIME",
     "WELLBORE": "ITEM_NAME"

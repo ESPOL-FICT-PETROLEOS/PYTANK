@@ -8,7 +8,7 @@
 **A tool for estimating the original volume of oil in reserves, using an object-oriented programming approach (POO).**
 
 ```python
-from pytank.fluid_model.fluid import OilModel, WaterModel
+from pytank.fluid_model.fluid_model import OilModel, WaterModel
 from pytank.tank.tank import Tank
 from pytank.well.well import Wells
 from pytank.analysis.analysis import Analysis
@@ -20,22 +20,22 @@ wells = Wells(df_prod,
               freq_press)
 
 oil_model = OilModel(
-    data_pvt,
-    temperature)
+ data_pvt,
+ temperature)
 
 water_model = WaterModel(salinity,
                          temperature,
                          unit)
 
 tank = Tank(name,
-             wells,
-             oil_model,
-             water_modell,
-             pi,
-             swo,
-             cw,
-             cf,
-             aquifer)
+            wells,
+            oil_model,
+            water_modell,
+            pi,
+            swo,
+            cw,
+            cf,
+            aquifer)
 ```
 **PyTank** is a library that implements different scientific 
 scientific modules based on the Object Oriented Programming (OOP) 

@@ -17,6 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from scipy import stats
+import warnings
 from scipy.optimize import fsolve
 from pytank.functions.pvt_correlations import Bo_bw, comp_bw_nogas
 from pytank.functions.pvt_interp import interp_pvt_matbal
@@ -184,6 +185,13 @@ def pressure_vol_avg(
         If there are underground withdrawal values that are not monotonically
         increasing
     """
+    # Avoid warnings
+    warnings.filterwarnings(
+        "ignore",
+        category=FutureWarning,
+        message="'M' is deprecated and will be removed in a future version,"
+                " please use 'ME' instead.")
+
     df = data.copy()
 
     # Make consistency checks
