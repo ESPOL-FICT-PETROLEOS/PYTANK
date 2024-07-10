@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
+from pytank.aquifer_model import Fetkovich, CarterTracy
 import pytest
 
 

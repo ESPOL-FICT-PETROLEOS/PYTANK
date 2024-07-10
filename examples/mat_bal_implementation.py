@@ -14,13 +14,13 @@ from pytank.functions.helpers import create_wells, search_wells
 
 # transform the csv to dataframes
 df_pvt = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pvt.csv"
+    "C:/Users/User/PycharmProjects/PYTANK/examples_data/pvt.csv"
 )
 df_production = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/production.csv"
+    "C:/Users/User/PycharmProjects/PYTANK/examples_data/production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pressures.csv"
+    "C:/Users/User/PycharmProjects/PYTANK/examples_data/pressures.csv"
 )
 
 # %%
@@ -42,6 +42,8 @@ my_wells = [
 
 # lis of wells with the pressure and production info for user selection
 wells_info = search_wells(wells, my_wells)
+
+print(wells_info)
 # %%
 "----------------------- Fluid Models Module -----------------------"
 oil_model = OilModel(
@@ -66,6 +68,7 @@ tank1 = Tank(name=tank_name,
              cw=3.5e-6,
              cf=4.6e-6,
              aquifer=None)
+
 
 # %%
 "-------------------------- Analysis Module ------------------------"

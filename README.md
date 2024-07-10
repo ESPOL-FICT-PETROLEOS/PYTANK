@@ -1,6 +1,6 @@
 <div align="center">
   <!-- <img src="https://github.com/reservoirpy/reservoirpy/raw/master/static/rpy_banner_bw.png"><br> !-->
-  <img src="./static/PyTank_Logo.jpg"><br>
+  <img src="./static/logo.png"><br>
 </div>
 
 # PyTank (v0.1.1) ??
