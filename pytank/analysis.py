@@ -56,8 +56,8 @@ from pytank.functions.material_balance import (
     calculated_pressure_fetkovich,
     calculate_pressure_with_carter_tracy,
 )
-from pytank.tank.tank import Tank
-from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
+from pytank.tank import Tank
+from pytank.aquifer_model import Fetkovich, CarterTracy
 
 
 class _PressSchema(pa.DataFrameModel):

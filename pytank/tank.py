@@ -29,8 +29,8 @@ from pytank.constants.constants import (
     TANK_COL,
     LIQ_CUM,
 )
-from pytank.fluid_model.fluid import OilModel, WaterModel
-from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
+from pytank.fluid_model import OilModel, WaterModel
+from pytank.aquifer_model import Fetkovich, CarterTracy
 
 
 class Tank(BaseModel):

@@ -3,11 +3,11 @@ from typing import Optional, List
 from pytank.constants.constants import (OIL_CUM_COL, WATER_CUM_COL,
                                         GAS_CUM_COL, LIQ_CUM, PRESSURE_COL,
                                         DATE_COL)
-from pytank.vector_data.vector_data import ProdVector, PressVector
+from pytank.vector_data import ProdVector, PressVector
 from pandera.errors import SchemaError
 from pytank.functions.utilities import normalize_date_freq
 import warnings
-from pytank.well.well import Well
+from pytank.well import Well
 
 
 def create_wells(df_prod: pd.DataFrame,

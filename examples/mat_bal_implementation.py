@@ -6,24 +6,21 @@ This file containing the steps to use the PyTank library .
 
 # %%
 import pandas as pd
-from pytank.fluid_model.fluid import OilModel, WaterModel
-from pytank.tank.tank import Tank
-from pytank.analysis.analysis import Analysis
-from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
+from pytank.fluid_model import OilModel, WaterModel
+from pytank.tank import Tank
+from pytank.analysis import Analysis
+from pytank.aquifer_model import Fetkovich, CarterTracy
 from pytank.functions.helpers import create_wells, search_wells
 
 # transform the csv to dataframes
 df_pvt = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/pytank/resources/data_csv/"
-    "pvt.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pvt.csv"
 )
 df_production = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/pytank/resources/data_csv/"
-    "production.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/pytank/resources/data_csv/"
-    "pressures.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pressures.csv"
 )
 
 # %%

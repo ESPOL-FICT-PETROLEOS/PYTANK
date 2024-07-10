@@ -133,7 +133,7 @@ class Fetkovich:
     def _set_pr_and_time_step(self, pr, time_step):
         """
         Private method to assign value o the pr and time_step properties of
-        the aquifer
+        the aquifer Fetkovich
         :param
         pr: List of Measured reservoir pressure, psi.
         time_step: List of Time lapses, days.
@@ -185,8 +185,9 @@ class Fetkovich:
         pr_array = variable_type(self.pr)
         delta_t = variable_type(self.time_step)
 
-        """if not all(pr_array[i] >= pr_array[i + 1] for i in range(len(pr_array) - 1)):
-            raise ValueError("Pressure array must be in descendant order")"""
+        # if not all(pr_array[i] >= pr_array[i + 1]
+        #           for i in range(len(pr_array) - 1)):
+        #    raise ValueError("Pressure array must be in descendant order")
 
         # Check if pressure array is not in descendant order throw an error
         if not all(pr_array > 0):
@@ -201,8 +202,8 @@ class Fetkovich:
                                  "please verify your input")
 
         # Calculate the initial volume of water in the aquifers (Wi)
-        wi = ((math.pi / 5.615) * (self.aq_radius ** 2 - self.res_radius ** 2) *
-              self.aq_thickness * self.aq_por)
+        wi = ((math.pi / 5.615) * (self.aq_radius ** 2 - self.res_radius ** 2)
+              * self.aq_thickness * self.aq_por)
 
         # Calculate the maximum possible water influx (Wei)
         f = self.theta / 360
@@ -369,8 +370,8 @@ class CarterTracy:
 
     def _set_pr_and_time_step(self, pr, time_step):
         """
-        Private method to assign values ​​to the pr and time_step
-        properties of the aquifer
+        Private method to assign value to the pr and time_step
+        properties of the aquifer Carter Tracy
         :param
         pr: List of Measured reservoir pressure, psi.
         time_step: List of Time lapses, days.
@@ -416,9 +417,10 @@ class CarterTracy:
         pr_array = variable_type(self.pr)
         t_array = variable_type(self.time)
 
-        """# Check if pressure array is not in descendant order throw an error
-        if not all(pr_array[i] >= pr_array[i + 1] for i in range(len(pr_array) - 1)):
-            raise ValueError("Pressure array must be in descendant order")"""
+        # Check if pressure array is not in descendant order throw an error
+        # if not all(pr_array[i] >= pr_array[i + 1]
+        #           for i in range(len(pr_array) - 1)):
+        #    raise ValueError("Pressure array must be in descendant order")
 
         # Check if pressure array is not in descendant order throw an error
         if not all(pr_array > 0):
@@ -459,8 +461,8 @@ class CarterTracy:
         # Estimate the dimensionless pressure derivative
         e = 716.441 + (46.7984 * (td * 0.5)) + (270.038 * td) + (71.0098 *
                                                                  (td * 1.5))
-        d = ((1296.86 * (td ** 0.5)) + (1204.73 * td) + (618.618 * (td * 1.5)) +
-             (538.072 * (td * 2)) + (142.41 * (td ** 2.5)))
+        d = ((1296.86 * (td ** 0.5)) + (1204.73 * td) + (618.618 * (td * 1.5))
+             + (538.072 * (td * 2)) + (142.41 * (td ** 2.5)))
         pr_deriv = np.where(td > 100, 1 / (2 * np.maximum(td, 1e-15)),
                             e / np.maximum(d, 1e-15))
 

@@ -1,5 +1,5 @@
 """
-fluid.py
+fluid_model.py
 
 This archive.py is to calculate the PVT properties of oil and water using
 linear interpolated.
@@ -14,8 +14,10 @@ from pydantic import BaseModel
 from scipy.interpolate import interp1d
 import pandera as pa
 from pandera.typing import DataFrame, Series
-from pytank.constants.constants import (PRESSURE_PVT_COL, OIL_FVF_COL,
-                                        GAS_FVF_COL, RS_COL)
+from pytank.constants.constants import (PRESSURE_PVT_COL,
+                                        OIL_FVF_COL,
+                                        GAS_FVF_COL,
+                                        RS_COL)
 from pytank.functions.pvt_correlations import RS_bw, Bo_bw
 
 
