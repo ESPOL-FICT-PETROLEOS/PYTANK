@@ -138,13 +138,13 @@ def underground_withdrawal(
 
 
 def pressure_vol_avg(
-        data: pd.DataFrame,
-        entity_col,
-        date_col,
-        press_col,
-        uw_col,
-        avg_freq="MS",
-        position="begin",
+    data: pd.DataFrame,
+    entity_col,
+    date_col,
+    press_col,
+    uw_col,
+    avg_freq="1MS",
+    position="begin",
 ) -> pd.DataFrame:
     """
     Parameters
@@ -216,7 +216,7 @@ def pressure_vol_avg(
                                       ]].diff().fillna(df[[uw_col,
                                                            press_col]]))
 
-    gr_press = df.groupby(pd.Grouper(key=date_col, freq=avg_freq.replace("M", "ME")))
+    gr_press = df.groupby(pd.Grouper(key=date_col, freq=avg_freq))
     result_avg_press = {date_col: [], press_col: []}
 
     for group_name, group in gr_press:
@@ -234,7 +234,7 @@ def pressure_vol_avg(
         if len(g_1) > 0:
             avg_1 = (g_1[press_col] * g_1[delta_uw_col] /
                      g_1[delta_press_col]).sum() / (
-                            g_1[delta_uw_col] / g_1[delta_press_col]).sum()
+                         g_1[delta_uw_col] / g_1[delta_press_col]).sum()
 
         # This group has no UW and pressure changes, the average of these
         # values will be processed normally
@@ -256,7 +256,7 @@ def pressure_vol_avg(
         pass
     else:
         # Get the DateOffset object based on the average frequency
-        date_offset = pd.tseries.frequencies.to_offset(avg_freq.replace("M", "ME"))
+        date_offset = pd.tseries.frequencies.to_offset(avg_freq)
         # Get the information to replicate the date grouping and
         # change accordingly
         start_date = result[date_col].min()
@@ -264,7 +264,7 @@ def pressure_vol_avg(
         # This date range should be the same as the one generated
         # by the Grouper
         new_dates = pd.date_range(start_date, end_date,
-                                  freq=avg_freq.replace("M", "ME")) + date_offset
+                                  freq=avg_freq) + date_offset
         # Calculate the time deltas comparing to the original dates
         dates_delta = new_dates - result[date_col]
 
