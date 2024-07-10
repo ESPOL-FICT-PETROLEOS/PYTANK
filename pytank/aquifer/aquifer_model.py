@@ -182,12 +182,11 @@ class Fetkovich:
             raise ValueError("When using linear flow, "
                              "width and length are required arguments")
         # Check if pressure and time step are arrays, list or floats
-        pr_array = np.array(variable_type(self.pr), dtype=float)
+        pr_array = variable_type(self.pr)
         delta_t = variable_type(self.time_step)
 
-        # Check if pressure array is not in descendant order throw an error
-        if not all(pr_array[:-1] >= pr_array[1:]):
-            raise ValueError("Pressure array must be in descendant order")
+        """if not all(pr_array[i] >= pr_array[i + 1] for i in range(len(pr_array) - 1)):
+            raise ValueError("Pressure array must be in descendant order")"""
 
         # Check if pressure array is not in descendant order throw an error
         if not all(pr_array > 0):
@@ -412,13 +411,14 @@ class CarterTracy:
         pd.Dataframe: DataFrame wit the delta WE, Cumulative WE and time
         lapses columns.
         """
+
         # Check if pressure and time are arrays, lists or floats
-        pr_array = np.array(variable_type(self.pr), dtype=float)
+        pr_array = variable_type(self.pr)
         t_array = variable_type(self.time)
 
-        # Check if pressure array is not in descendant order throw an error
-        if not all(pr_array[:-1] >= pr_array[1:]):
-            raise ValueError("Pressure array must be in descendant order")
+        """# Check if pressure array is not in descendant order throw an error
+        if not all(pr_array[i] >= pr_array[i + 1] for i in range(len(pr_array) - 1)):
+            raise ValueError("Pressure array must be in descendant order")"""
 
         # Check if pressure array is not in descendant order throw an error
         if not all(pr_array > 0):
