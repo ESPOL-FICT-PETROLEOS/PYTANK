@@ -14,15 +14,15 @@ from pytank.functions.helpers import create_wells, search_wells
 
 # transform the csv to dataframes
 df_pvt = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
     "pvt.csv"
 )
 df_production = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
     "production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/pytank/resources/data_csv/"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/pytank/resources/data_csv/"
     "pressures.csv"
 )
 
@@ -40,7 +40,7 @@ wells = create_wells(df_prod=df_production,
 my_wells = [
     "A-1-P", "A-10-P", "A-11-P", "A-12-P", "A-13-P", "A-14-P", "A-16-P",
     "A-17-P", "A-18-P", "A-19-P", "A-21-P", "A-22-P", "A-23-P", "A-24-I",
-    "A-4-P", "A-5-P", "A-6-P", "A-8-P", "A-9-P"
+    "A-4-P", "A-5-P", "A-6-P", "A-8-P", "A-9-P", "PEPITO"
 ]
 
 # lis of wells with the pressure and production info for user selection
@@ -81,6 +81,7 @@ camp = analysis.campbell_plot()
 camp.show()
 
 data = analysis.mat_bal_df()
+print(data)
 
 # %%
 "Havlena"
@@ -99,6 +100,10 @@ theta = 290
 k = 25
 water_visc = 0.6
 
+# mbal_tank1 = analysis.mat_bal_df()
+# pr_list = list(mbal_tank1["PRESSURE_DATUM"])
+# ts_list = list(mbal_tank1["Time_Step"])
+
 fet = Fetkovich(
     aq_radius=aq_radius,
     res_radius=res_radius,
@@ -108,6 +113,8 @@ fet = Fetkovich(
     theta=theta,
     k=k,
     water_visc=water_visc,
+    # pr=pr_list,
+    # time_step=ts_list
 )
 
 tank_fet = Tank(name=tank_name,
@@ -148,7 +155,8 @@ carter = CarterTracy(
     theta=theta,
     aq_perm=k,
     water_visc=water_visc,
-
+    # pr=pr_list,
+    # time_step=ts_list
 )
 
 tank_carter = Tank(name=tank_name,

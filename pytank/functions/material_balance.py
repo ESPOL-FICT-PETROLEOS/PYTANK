@@ -22,22 +22,20 @@ from pytank.functions.pvt_correlations import Bo_bw, comp_bw_nogas
 from pytank.functions.pvt_interp import interp_pvt_matbal
 from pytank.functions.utilities import (material_bal_var_type,
                                         material_bal_numerical_data)
-
-
 # This part of this module contains functions that are used to calculate the
 # poes through the graphical method (Havlena and Odeh"
 
 
 def underground_withdrawal(
-        data: pd.DataFrame,
-        oil_cum_col: str,
-        water_cum_col: str,
-        gas_cum_col: str,
-        oil_fvf,
-        water_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        gas_water_rs,
+    data: pd.DataFrame,
+    oil_cum_col: str,
+    water_cum_col: str,
+    gas_cum_col: str,
+    oil_fvf,
+    water_fvf,
+    gas_fvf,
+    gas_oil_rs,
+    gas_water_rs,
 ) -> np.array:
     """
     Calculates the total underground withdrawal of a well using its cumulative
@@ -138,13 +136,13 @@ def underground_withdrawal(
 
 
 def pressure_vol_avg(
-        data: pd.DataFrame,
-        entity_col,
-        date_col,
-        press_col,
-        uw_col,
-        avg_freq="MS",
-        position="begin",
+    data: pd.DataFrame,
+    entity_col,
+    date_col,
+    press_col,
+    uw_col,
+    avg_freq="1MS",
+    position="begin",
 ) -> pd.DataFrame:
     """
     Parameters
@@ -216,7 +214,7 @@ def pressure_vol_avg(
                                       ]].diff().fillna(df[[uw_col,
                                                            press_col]]))
 
-    gr_press = df.groupby(pd.Grouper(key=date_col, freq=avg_freq.replace("M", "ME")))
+    gr_press = df.groupby(pd.Grouper(key=date_col, freq=avg_freq))
     result_avg_press = {date_col: [], press_col: []}
 
     for group_name, group in gr_press:
@@ -234,7 +232,7 @@ def pressure_vol_avg(
         if len(g_1) > 0:
             avg_1 = (g_1[press_col] * g_1[delta_uw_col] /
                      g_1[delta_press_col]).sum() / (
-                            g_1[delta_uw_col] / g_1[delta_press_col]).sum()
+                         g_1[delta_uw_col] / g_1[delta_press_col]).sum()
 
         # This group has no UW and pressure changes, the average of these
         # values will be processed normally
@@ -256,7 +254,7 @@ def pressure_vol_avg(
         pass
     else:
         # Get the DateOffset object based on the average frequency
-        date_offset = pd.tseries.frequencies.to_offset(avg_freq.replace("M", "ME"))
+        date_offset = pd.tseries.frequencies.to_offset(avg_freq)
         # Get the information to replicate the date grouping and
         # change accordingly
         start_date = result[date_col].min()
@@ -264,7 +262,7 @@ def pressure_vol_avg(
         # This date range should be the same as the one generated
         # by the Grouper
         new_dates = pd.date_range(start_date, end_date,
-                                  freq=avg_freq.replace("M", "ME")) + date_offset
+                                  freq=avg_freq) + date_offset
         # Calculate the time deltas comparing to the original dates
         dates_delta = new_dates - result[date_col]
 
@@ -333,7 +331,7 @@ def oil_expansion(data: pd.DataFrame, oil_fvf, gas_fvf, gas_oil_rs,
     material_bal_numerical_data(num_arg)
 
     tot_fvf_col = df[oil_fvf_col] + (
-            (df[rs_col] - gas_oil_rs_init) * df[gas_fvf_col])
+        (df[rs_col] - gas_oil_rs_init) * df[gas_fvf_col])
     eo = tot_fvf_col - oil_fvf_init
     return eo
 
@@ -396,14 +394,14 @@ def gas_expansion(data: pd.DataFrame, oil_fvf, gas_fvf, gas_fvf_init,
 
 
 def fw_expansion(
-        data: pd.DataFrame,
-        oil_fvf,
-        p_col: str,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        pressure_init,
+    data: pd.DataFrame,
+    oil_fvf,
+    p_col: str,
+    water_sat,
+    water_comp,
+    rock_comp,
+    oil_fvf_init,
+    pressure_init,
 ) -> pd.Series:
     """
     Calculates the expansion of connate water and rock(formation) using its
@@ -464,24 +462,24 @@ def fw_expansion(
 
 
 def ho_terms_equation(
-        data: pd.DataFrame,
-        oil_cum_col: str,
-        water_cum_col: str,
-        gas_cum_col: str,
-        p_col: str,
-        oil_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        water_fvf,
-        gas_water_rs,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        gas_fvf_init,
-        tot_fvf_init,
-        gas_oil_rs_init,
-        pressure_init,
+    data: pd.DataFrame,
+    oil_cum_col: str,
+    water_cum_col: str,
+    gas_cum_col: str,
+    p_col: str,
+    oil_fvf,
+    gas_fvf,
+    gas_oil_rs,
+    water_fvf,
+    gas_water_rs,
+    water_sat,
+    water_comp,
+    rock_comp,
+    oil_fvf_init,
+    gas_fvf_init,
+    tot_fvf_init,
+    gas_oil_rs_init,
+    pressure_init,
 ) -> pd.DataFrame:
     """
     Calculates the terms of the Havlena and Odeh equation using the cumulative
@@ -584,27 +582,27 @@ def ho_terms_equation(
 
 
 def campbell_function(
-        data: pd.DataFrame,
-        oil_cum_col: str,
-        water_cum_col: str,
-        gas_cum_col: str,
-        p_col: str,
-        uw_col: str,
-        eo_col: str,
-        efw_col: str,
-        oil_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        water_fvf,
-        gas_water_rs,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        gas_fvf_init,
-        tot_fvf_init,
-        gas_oil_rs_init,
-        pressure_init,
+    data: pd.DataFrame,
+    oil_cum_col: str,
+    water_cum_col: str,
+    gas_cum_col: str,
+    p_col: str,
+    uw_col: str,
+    eo_col: str,
+    efw_col: str,
+    oil_fvf,
+    gas_fvf,
+    gas_oil_rs,
+    water_fvf,
+    gas_water_rs,
+    water_sat,
+    water_comp,
+    rock_comp,
+    oil_fvf_init,
+    gas_fvf_init,
+    tot_fvf_init,
+    gas_oil_rs_init,
+    pressure_init,
 ):
     """
     This function is able to plot the campbell plot for a required reservoir
@@ -708,27 +706,27 @@ def campbell_function(
 
 
 def havlena_and_odeh(
-        data: pd.DataFrame,
-        oil_cum_col: str,
-        water_cum_col: str,
-        gas_cum_col: str,
-        p_col: str,
-        uw_col: str,
-        eo_col: str,
-        eg_col: str,
-        oil_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        water_fvf,
-        gas_water_rs,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        gas_fvf_init,
-        tot_fvf_init,
-        gas_oil_rs_init,
-        pressure_init,
+    data: pd.DataFrame,
+    oil_cum_col: str,
+    water_cum_col: str,
+    gas_cum_col: str,
+    p_col: str,
+    uw_col: str,
+    eo_col: str,
+    eg_col: str,
+    oil_fvf,
+    gas_fvf,
+    gas_oil_rs,
+    water_fvf,
+    gas_water_rs,
+    water_sat,
+    water_comp,
+    rock_comp,
+    oil_fvf_init,
+    gas_fvf_init,
+    tot_fvf_init,
+    gas_oil_rs_init,
+    pressure_init,
 ):
     """
     This function is able to plot the Havlena and Odeh straight line,
@@ -938,8 +936,8 @@ def aquifer_fetkovich(aq_radius: float, res_radius: float, aq_thickness: float,
         Cumulative influx of water, bbl.
     """
     delta_t = 365
-    wi = (math.pi / 5.615) * (aq_radius ** 2 -
-                              res_radius ** 2) * aq_thickness * aq_por
+    wi = (math.pi / 5.615) * (aq_radius**2 -
+                              res_radius**2) * aq_thickness * aq_por
     f = theta / 360
     wei = ct * wi * pi * f
     rd = aq_radius / res_radius
@@ -953,28 +951,28 @@ def aquifer_fetkovich(aq_radius: float, res_radius: float, aq_thickness: float,
 
 
 def fetkovich_press(
-        p: float,
-        np: float,
-        wp: float,
-        cf: float,
-        t: float,
-        salinity: float,
-        df_pvt: pd.DataFrame,
-        aq_radius: float,
-        res_radius: float,
-        aq_thickness: float,
-        aq_por: float,
-        theta: float,
-        k: float,
-        water_visc: float,
-        p_anterior: float,
-        cum: float,
-        pi: float,
-        sw0: float,
-        poes: float,
-        boi: float,
-        ppvt_col: str,
-        oil_fvf_col: str,
+    p: float,
+    np: float,
+    wp: float,
+    cf: float,
+    t: float,
+    salinity: float,
+    df_pvt: pd.DataFrame,
+    aq_radius: float,
+    res_radius: float,
+    aq_thickness: float,
+    aq_por: float,
+    theta: float,
+    k: float,
+    water_visc: float,
+    p_anterior: float,
+    cum: float,
+    pi: float,
+    sw0: float,
+    poes: float,
+    boi: float,
+    ppvt_col: str,
+    oil_fvf_col: str,
 ):
     """
     Calculates the reservoir pressure based on oil properties, oil and water
@@ -1055,24 +1053,24 @@ def fetkovich_press(
 
 
 def calculated_pressure_fetkovich(
-        np_frame: pd.Series,
-        wp_frame: pd.Series,
-        cf: float,
-        t: float,
-        salinity: float,
-        df_pvt: pd.DataFrame,
-        aq_radius: float,
-        res_radius: float,
-        aq_thickness: float,
-        aq_por: float,
-        theta: float,
-        k: float,
-        water_visc: float,
-        pi: float,
-        sw0: float,
-        poes: float,
-        ppvt_col: str,
-        oil_fvf_col: str,
+    np_frame: pd.Series,
+    wp_frame: pd.Series,
+    cf: float,
+    t: float,
+    salinity: float,
+    df_pvt: pd.DataFrame,
+    aq_radius: float,
+    res_radius: float,
+    aq_thickness: float,
+    aq_por: float,
+    theta: float,
+    k: float,
+    water_visc: float,
+    pi: float,
+    sw0: float,
+    poes: float,
+    ppvt_col: str,
+    oil_fvf_col: str,
 ) -> list:
     """
     Calculates the reservoir pressure for each record in the df_ta2
@@ -1186,18 +1184,18 @@ def calculated_pressure_fetkovich(
 
 
 def aquifer_carter_tracy(
-        aq_por: float,
-        ct: float,
-        res_radius: float,
-        aq_thickness: float,
-        theta: float,
-        k: float,
-        water_visc: float,
-        pr: float,
-        time: float,
-        past_time: float,
-        we: float,
-        pi: float,
+    aq_por: float,
+    ct: float,
+    res_radius: float,
+    aq_thickness: float,
+    theta: float,
+    k: float,
+    water_visc: float,
+    pr: float,
+    time: float,
+    past_time: float,
+    we: float,
+    pi: float,
 ) -> float:
     """
     Calculates the accumulated influx of water using a simplified version of
@@ -1239,10 +1237,10 @@ def aquifer_carter_tracy(
 
     # Calculate the van Everdingen-Hurst water influx constant
     f = theta / 360
-    b = 1.119 * aq_por * ct * (res_radius ** 2) * aq_thickness * f
+    b = 1.119 * aq_por * ct * (res_radius**2) * aq_thickness * f
 
     # Estimate dimensionless time (tD)
-    cte = 0.006328 * k / (aq_por * water_visc * ct * (res_radius ** 2))
+    cte = 0.006328 * k / (aq_por * water_visc * ct * (res_radius**2))
     td = time * cte
     td2 = past_time * cte
     # Calculate the total pressure drop (Pi-Pn) as an array, for each
