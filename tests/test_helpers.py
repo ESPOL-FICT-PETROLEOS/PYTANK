@@ -1,8 +1,8 @@
 import pytest
 import pandas as pd
 from pytank.functions.helpers import create_wells, search_wells
-from pytank.vector_data.vector_data import ProdVector, PressVector
-from pytank.well.well import Well
+from pytank.vector_data import ProdVector, PressVector
+from pytank.well import Well
 
 
 # Test function create_wells
