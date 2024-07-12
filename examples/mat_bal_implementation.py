@@ -79,6 +79,17 @@ frequency = "12M"
 analysis = Analysis(tank_class=tank1,
                     freq=frequency,
                     position="end")
+press_avg = analysis._pressure_vol_avg()
+print(press_avg)
+
+"--- P vs T ---"
+plt5 = analysis.plot_press_avg_liq_cum()
+plt5.show()
+
+plt = analysis.plot_press_avg_time()
+plt.show()
+
+# %%
 "Campbell"
 camp = analysis.campbell_plot()
 camp.show()
@@ -182,14 +193,8 @@ plot1.show()
 plot2 = analysis_carter.plot_press_time()
 plot2.show()
 
-plot3 = analysis_carter.plot_press_avg_time()
-plot3.show()
-
 plot4 = analysis_carter.plot_press_liq_cum()
 plot4.show()
-
-plt5 = analysis_carter.plot_press_avg_liq_cum()
-plt5.show()
 
 plt6 = analysis_carter.plot_cum_prod_time()
 plt6.show()

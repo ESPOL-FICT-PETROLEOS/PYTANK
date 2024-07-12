@@ -257,6 +257,7 @@ class Analysis(BaseModel):
             _ProdSchema.validate(self.tank_class.get_production_df()))
 
         # Linear interpolated of average pressure
+        # todo
         avg[PRESSURE_COL] = avg[PRESSURE_COL].interpolate(method="linear")
 
         cols_input = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]
@@ -911,7 +912,7 @@ class Analysis(BaseModel):
         fig4, ax4 = plt.subplots(figsize=(10, 6))
         color = "red"
 
-        ax4.plot(
+        ax4.scatter(
             df_press_avg[DATE_COL],
             df_press_avg[PRESSURE_COL],
             color=color,
