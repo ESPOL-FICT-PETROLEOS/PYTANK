@@ -9,7 +9,7 @@ df_production = pd.read_csv("../examples_data/production.csv")
 df_pressures = pd.read_csv("../examples_data/pressures.csv")
 freq = "MS"
 
-tank_name = "tank_center"
+tank_name = "Zone_B"
 
 wells = create_wells(df_prod=df_production,
                      df_press=df_pressures,
