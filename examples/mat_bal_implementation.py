@@ -11,18 +11,22 @@ from pytank.tank import Tank
 from pytank.analysis import Analysis
 from pytank.aquifer_model import Fetkovich, CarterTracy
 from pytank.functions.helpers import create_wells, search_wells
+# from examples_data.read_data import pvt_data, production_data, pressure_data
 
 # transform the csv to dataframes
 df_pvt = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/examples_data/pvt.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pvt.csv"
 )
 df_production = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/examples_data/production.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/examples_data/pressures.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pressures.csv"
 )
 
+"""df_pvt = pvt_data
+df_production = production_data
+df_pressures = pressure_data"""
 # %%
 "-------------------------- Well Module----------------------------"
 
@@ -43,7 +47,6 @@ my_wells = [
 # lis of wells with the pressure and production info for user selection
 wells_info = search_wells(wells, my_wells)
 
-print(wells_info)
 # %%
 "----------------------- Fluid Models Module -----------------------"
 oil_model = OilModel(
@@ -57,7 +60,7 @@ water_model = WaterModel(salinity=3000,
 
 # %%
 "---------------------------- Tank Module ---------------------------"
-tank_name = "tank_center"
+tank_name = "Zone_B"
 pi = 3700
 tank1 = Tank(name=tank_name,
              wells=wells_info,

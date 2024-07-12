@@ -459,6 +459,17 @@ class Analysis(BaseModel):
         -------
         plt.Figure: A graph F - WE vs Et
         """
+        name_aquifer = ""
+        # Creation of WE value according to the aquifer model
+        if self.tank_class.aquifer is None:
+            name_aquifer = " without Aquifer"
+
+        elif isinstance(self.tank_class.aquifer, Fetkovich):
+            name_aquifer = " with Fetkovich Aquifer Model"
+
+        elif isinstance(self.tank_class.aquifer, CarterTracy):
+            name_aquifer = " with Carter Tracy Aquifer Model"
+
         # Data Processing
         mbal_df = self.mat_bal_df()
         y = mbal_df[UW_COL] - mbal_df[WE]
@@ -479,7 +490,7 @@ class Analysis(BaseModel):
         ax2.set_ylabel("F-We")
         ax2.set_title("Havlena y Odeh plot of " +
                       str(self.tank_class.name.
-                          replace("_", " ")))
+                          replace("_", " ")) + name_aquifer)
 
         # Text in the graph
         textstr = "N [MMStb]: {:.2f}".format(slope / 1000000)
@@ -557,7 +568,7 @@ class Analysis(BaseModel):
         model_aq_name = ""
         # Fetkovich Aquifer Model
         if isinstance(self.tank_class.aquifer, Fetkovich):
-            model_aq_name = "Fetkovich Model"
+            model_aq_name = "Fetkovich Aquifer Model"
             # Call the function to calculate the new pressure
             press_calc = calculated_pressure_fetkovich(
                 df[OIL_CUM_TANK],
@@ -582,7 +593,7 @@ class Analysis(BaseModel):
 
         # Carter Tracy Aquifer Model
         elif isinstance(self.tank_class.aquifer, CarterTracy):
-            model_aq_name = "Carter-Tracy Model"
+            model_aq_name = "Carter Tracy Aquifer Model"
             press_calc = calculate_pressure_with_carter_tracy(
                 df[OIL_CUM_TANK],
                 df[WATER_CUM_TANK],
@@ -636,6 +647,7 @@ class Analysis(BaseModel):
             ax8.grid(axis="both", color="lightgray", linestyle="dashed")
             plt.legend(fontsize=15)
             plt.gcf().autofmt_xdate()
+            fig8.suptitle("ANALYTIC METHOD", fontsize=22)
             return fig8
 
         else:
