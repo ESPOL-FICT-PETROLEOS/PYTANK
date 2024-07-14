@@ -15,13 +15,13 @@ from pytank.functions.helpers import create_wells, search_wells
 
 # transform the csv to dataframes
 df_pvt = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/examples_data/pvt.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pvt.csv"
 )
 df_production = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/examples_data/production.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/examples_data/pressures.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pressures.csv"
 )
 
 """df_pvt = pvt_data
@@ -78,7 +78,8 @@ tank1 = Tank(name=tank_name,
 frequency = "12M"
 analysis = Analysis(tank_class=tank1,
                     freq=frequency,
-                    position="end", smooth=True)
+                    position="end",
+                    smooth=True)
 
 "--- P vs T ---"
 plt5 = analysis.plot_press_avg_liq_cum()
@@ -97,10 +98,10 @@ camp.show()
 # Plot with points selected
 camp_custom = analysis.campbell_plot(
     custom_line=False,
-    #x1=4000000,
-    #y1=200000000,
-    #x2=7000000,
-    #y2=400000000,
+    # x1=4000000,
+    # y1=200000000,
+    # x2=7000000,
+    # y2=400000000,
 )
 camp_custom.show()
 # %%
@@ -113,16 +114,16 @@ havlena_plot.show()
 # Plot with points selected
 havlena_custom = analysis.havlena_odeh_plot(
     custom_line=False,
-    #x1=0.0025,
-    #y1=1500000,
-    #x2=0.018,
-    #y2=4000000
+    # x1=0.0025,
+    # y1=1500000,
+    # x2=0.018,
+    # y2=4000000
 )
 havlena_custom.show()
 # %%
 "-------------------------- Aquifer Models --------------------------"
 "----- With Aquifer - Fetkovich ------"
-"""aq_radius = 14000
+aq_radius = 14000
 res_radius = 2000
 aq_thickness = 20
 phi = 0.25
@@ -152,7 +153,10 @@ tank_fet = Tank(name=tank_name,
                 cf=4.6e-6,
                 aquifer=fet)
 
-analysis_fet = Analysis(tank_class=tank_fet, freq=frequency, position="end",smooth=True)
+analysis_fet = Analysis(tank_class=tank_fet,
+                        freq=frequency,
+                        position="end",
+                        smooth=True)
 
 "Analytic method"
 analytic_meth_fet = analysis_fet.analytic_method(poes=67e+6, option="plot")
@@ -166,10 +170,10 @@ havlena_fet.show()
 
 havlena_fet_custom = analysis_fet.havlena_odeh_plot(
     custom_line=False,
-    #x1=0.02,
-    #y1=100000,
-    #x2=0.045,
-    #y2=4500000
+    # x1=0.02,
+    # y1=100000,
+    # x2=0.045,
+    # y2=4500000
 )
 havlena_fet_custom.show()
 
@@ -204,8 +208,10 @@ tank_carter = Tank(name=tank_name,
                    cf=4.6e-6,
                    aquifer=carter)
 
-analysis_carter = Analysis(tank_class=tank_carter, freq=frequency,
-                           position="end", smooth=True)
+analysis_carter = Analysis(tank_class=tank_carter,
+                           freq=frequency,
+                           position="end",
+                           smooth=True)
 "Analytic method"
 analytic_meth_car = analysis_carter.analytic_method(poes=67e+6, option="plot")
 analytic_meth_car.show()
@@ -246,4 +252,3 @@ plt8.show()
 
 plt9 = analysis_carter.plot_cum_prod_well()
 plt9.show()
-"""
