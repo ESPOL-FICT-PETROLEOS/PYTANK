@@ -23,6 +23,7 @@ from pandera.typing import Series
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from scipy import stats
+from scipy.interpolate import splrep, BSpline
 from typing import Union
 from pytank.constants.constants import (
     OIL_FVF_COL,
@@ -124,16 +125,20 @@ class Analysis(BaseModel):
         Frequency of data for the material balance equation.
     position : str
         Position of the frequency of the date.
+    smooth : bool
+        Determinate if user want to adjust data
     """
 
     tank_class: Tank
     freq: str
     position: str
+    smooth: bool
 
     class Config:
         arbitrary_types_allowed = True
 
-    def __init__(self, tank_class, freq, position):
+    def __init__(self, tank_class, freq, position, smooth):
+
         """
         Parameters
         ----------
@@ -144,7 +149,7 @@ class Analysis(BaseModel):
         position : str
             Position of the frequency of the date.
         """
-        super().__init__(tank_class=tank_class, freq=freq, position=position)
+        super().__init__(tank_class=tank_class, freq=freq, position=position, smooth=smooth)
 
     def _calc_uw(self) -> pd.DataFrame:
         """
@@ -221,7 +226,18 @@ class Analysis(BaseModel):
                 self.freq,
                 self.position,
             )).reset_index(0))
+        if self.smooth is False:
+            df_press_avg[PRESSURE_COL] = df_press_avg[PRESSURE_COL].interpolate(method="linear")
+        else:
+            df_press_avg['n_date'] = (df_press_avg[DATE_COL] - df_press_avg[DATE_COL].min()) / np.timedelta64(1, 'D')
+            valid_data = df_press_avg.dropna(subset=[PRESSURE_COL])
+            t, c, k = splrep(valid_data['n_date'], valid_data[PRESSURE_COL], s=15, k=2)
+            spline = BSpline(t, c, k)
+            x_fit = np.linspace(min(df_press_avg['n_date']), max(df_press_avg['n_date']), len(df_press_avg[PRESSURE_COL]))
+            y_fit = spline(x_fit)
+            df_press_avg[PRESSURE_COL] = y_fit
         return df_press_avg
+
 
     def mat_bal_df(self) -> pd.DataFrame:
         """
@@ -258,7 +274,16 @@ class Analysis(BaseModel):
 
         # Linear interpolated of average pressure
         # todo
-        avg[PRESSURE_COL] = avg[PRESSURE_COL].interpolate(method="linear")
+        """if self.smooth is False:
+                    avg[PRESSURE_COL] = avg[PRESSURE_COL].interpolate(method="linear")
+                else:
+                    avg['n_date'] = (avg[DATE_COL] - avg[DATE_COL].min()) / np.timedelta64(1, 'D')
+                    valid_data = avg.dropna(subset=[PRESSURE_COL])
+                    t, c, k = splrep(valid_data['n_date'], valid_data[PRESSURE_COL], s=15, k=2)
+                    spline = BSpline(t, c, k)
+                    x_fit = np.linspace(min(avg['n_date']), max(avg['n_date']), len(avg[PRESSURE_COL]))
+                    y_fit = spline(x_fit)
+                    avg[PRESSURE_COL] = y_fit"""
 
         cols_input = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]
         cols_output = ["oil_vol", "water_vol", "gas_vol"]
