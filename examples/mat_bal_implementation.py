@@ -79,8 +79,6 @@ frequency = "12M"
 analysis = Analysis(tank_class=tank1,
                     freq=frequency,
                     position="end")
-press_avg = analysis._pressure_vol_avg()
-print(press_avg)
 
 "--- P vs T ---"
 plt5 = analysis.plot_press_avg_liq_cum()
@@ -91,16 +89,36 @@ plt.show()
 
 # %%
 "Campbell"
-camp = analysis.campbell_plot()
+# Plot without points selected
+camp = analysis.campbell_plot(custom_line=False)
 camp.show()
 
-data = analysis.mat_bal_df()
-
+#%%
+# Plot with points selected
+camp_custom = analysis.campbell_plot(
+    custom_line=True,
+    x1=4000000,
+    y1=200000000,
+    x2=7000000,
+    y2=400000000,
+)
+camp_custom.show()
 # %%
 "Havlena"
+# Plot without points selected
 havlena_plot = analysis.havlena_odeh_plot()
 havlena_plot.show()
 
+#%%
+# Plot with points selected
+havlena_custom = analysis.havlena_odeh_plot(
+    custom_line=True,
+    x1=0.0025,
+    y1=1500000,
+    x2=0.018,
+    y2=4000000
+)
+havlena_custom.show()
 # %%
 "-------------------------- Aquifer Models --------------------------"
 "----- With Aquifer - Fetkovich ------"
@@ -137,12 +155,23 @@ tank_fet = Tank(name=tank_name,
 analysis_fet = Analysis(tank_class=tank_fet, freq=frequency, position="end")
 
 "Analytic method"
-analitic_meth_fet = analysis_fet.analytic_method(poes=67e+6, option="plot")
-analitic_meth_fet.show()
+analytic_meth_fet = analysis_fet.analytic_method(poes=67e+6, option="plot")
+analytic_meth_fet.show()
 
 "Havlena Method"
-havlena_fet = analysis_fet.havlena_odeh_plot()
+havlena_fet = analysis_fet.havlena_odeh_plot(
+    custom_line=False,
+)
 havlena_fet.show()
+
+havlena_fet_custom = analysis_fet.havlena_odeh_plot(
+    custom_line=True,
+    x1=0.02,
+    y1=100000,
+    x2=0.045,
+    y2=4500000
+)
+havlena_fet_custom.show()
 
 # %%
 "------ With Aquifer - Carter Tracy-------"
@@ -178,13 +207,23 @@ tank_carter = Tank(name=tank_name,
 analysis_carter = Analysis(tank_class=tank_carter, freq=frequency,
                            position="end")
 "Analytic method"
-analitic_meth_car = analysis_carter.analytic_method(poes=67e+6, option="plot")
-analitic_meth_car.show()
+analytic_meth_car = analysis_carter.analytic_method(poes=67e+6, option="plot")
+analytic_meth_car.show()
 
 "Havlena Method"
-havlena_car = analysis_carter.havlena_odeh_plot()
+havlena_car = analysis_carter.havlena_odeh_plot(
+    custom_line=False,
+)
 havlena_car.show()
 
+havlena_car_custom = analysis_carter.havlena_odeh_plot(
+    custom_line=True,
+    x1=0.01,
+    y1=1700000,
+    x2=0.045,
+    y2=3500000
+)
+havlena_car_custom.show()
 # %%
 "----GRAPHS---"
 plot1 = analysis_carter.plot_flow_rate_tank()

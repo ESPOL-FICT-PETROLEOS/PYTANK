@@ -19,9 +19,7 @@ tank1 = Tank(name=tank_name,
 
 analysis = Analysis(tank_class=tank1, freq="12MS", position="end")
 
-graph = analysis.campbell_plot()
-# graph.show()
-
+# PLOTS
 plot1 = analysis.plot_flow_rate_tank()
 # plot1.show()
 

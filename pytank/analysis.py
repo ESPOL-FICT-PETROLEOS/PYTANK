@@ -381,30 +381,56 @@ class Analysis(BaseModel):
         return mbal_final_per_tank
 
     # ---------------------- CAMPBELL GRAPH --------------------------------
-    def campbell_plot(self) -> plt.Figure:
+    def campbell_plot(self,
+                      custom_line: bool = False,
+                      x1: float = None,
+                      y1: float = None,
+                      x2: float = None,
+                      y2: float = None) -> plt.Figure:
         """
         Method to graphic the Campbell graph to be able to graphically see
         the energy contribution of the aquifer.
 
+        Parameters
+        -------
+        custom_line (bool) : It can be False if you do not want to draw a line
+        with selected points. In case if it can be True
+        x1 (float) : The x coordinate of the first point
+        y1 (float) : The y coordinate of the first point
+        x2 (float) : The x coordinate of the second point
+        y2 (float) : The y coordinate of the second point
+
         Returns
         -------
-        plt.Figure: A matplotlib Figure object containing the plot.
+        plt.Figure: A matplotlib Figure object containing the plot with the
+        data selected.
         """
         mbal_df = self.mat_bal_df()
         y = mbal_df[UW_COL] / (mbal_df[OIL_EXP] + mbal_df[RES_EXP])
         x = mbal_df[OIL_CUM_TANK]
         data = pd.DataFrame({"Np": x, "F/Eo+Efw": y})
-
-        # Graph
-        slope, intercept, r, p, se = stats.linregress(
-            data["Np"], data["F/Eo+Efw"])
         fig, ax1 = plt.subplots()
         ax1.scatter(x, y)
-        reg_line = (slope * data["Np"]) + intercept
-        ax1.plot(data["Np"],
-                 reg_line,
-                 color="green",
-                 label="Regression line")
+
+        # Graph
+        if custom_line is False:
+            slope, intercept, r, p, se = stats.linregress(
+                data["Np"], data["F/Eo+Efw"])
+            reg_line = (slope * data["Np"]) + intercept
+            ax1.plot(data["Np"],
+                     reg_line,
+                     color="green",
+                     label="Regression line")
+
+        else:
+            slope = (y2 - y1) / (x2 - x1)
+            intercept = y1 - slope * x1
+            x_values = np.linspace(min(data["Np"]), max(data["Np"]), 100)
+            y_values = slope * x_values + intercept
+            ax1.plot(x_values, y_values,
+                     color="red",
+                     label="Custom Line")
+
         ax1.set_xlabel("Np Cumulative Oil Production [MMStb]")
         ax1.set_ylabel("F/Eo+Efw")
         ax1.set_title("Campbell plot of " +
@@ -430,7 +456,7 @@ class Analysis(BaseModel):
         plt.grid(True, linestyle="--", alpha=0.7)
 
         formattery = FuncFormatter(
-            lambda x, pos: "{:.1f}Mm".format(x * 1e-9))
+            lambda x, pos: "{:.1f}KM".format(x * 1e-9))
         ax1.yaxis.set_major_formatter(formattery)
 
         formatterx = FuncFormatter(
@@ -452,9 +478,23 @@ class Analysis(BaseModel):
         return data
 
     # ------------------ HAVLENA AND ODEH METHOD ----------------------------
-    def havlena_odeh_plot(self) -> plt.Figure:
+    def havlena_odeh_plot(self,
+                          custom_line: bool = False,
+                          x1: float = None,
+                          y1: float = None,
+                          x2: float = None,
+                          y2: float = None) -> plt.Figure:
         """
         Calculate results based on Havlena and Odeh Methods and show a graphic.
+
+        Parameters
+        -------
+        custom_line (bool) : It can be False if you do not want to draw a line
+        with selected points. In case if it can be True
+        x1 (float) : The x coordinate of the first point
+        y1 (float) : The y coordinate of the first point
+        x2 (float) : The x coordinate of the second point
+        y2 (float) : The y coordinate of the second point
 
         Returns
         -------
@@ -476,37 +516,66 @@ class Analysis(BaseModel):
         y = mbal_df[UW_COL] - mbal_df[WE]
         x = mbal_df[OIL_EXP] + mbal_df[RES_EXP]
         data = pd.DataFrame({"Eo+Efw": x, "F-We": y})
+        fig, ax2 = plt.subplots()
+        ax2.scatter(data["Eo+Efw"], data["F-We"], color="blue")
+
         slope, intercept, r, p, se = stats.linregress(data["Eo+Efw"],
                                                       data["F-We"])
 
         # Graphic
-        fig, ax2 = plt.subplots()
-        ax2.scatter(data["Eo+Efw"], data["F-We"], color="blue")
-        reg_line = (slope * data["Eo+Efw"]) + intercept
-        ax2.plot(data["Eo+Efw"],
-                 reg_line,
-                 color="red",
-                 label="Regression line")
+        # Without points selected
+        if custom_line is False:
+            reg_line = (slope * data["Eo+Efw"]) + intercept
+            ax2.plot(data["Eo+Efw"],
+                     reg_line,
+                     color="red",
+                     label="Regression line")
+            # Text in the graph
+            textstr = "N [MMStb]: {:.2f}".format(slope / 1000000)
+            props = dict(boxstyle="round", facecolor="yellow", alpha=0.5)
+            ax2.text(
+                0.05,
+                0.95,
+                textstr,
+                transform=ax2.transAxes,
+                fontsize=10,
+                verticalalignment="top",
+                horizontalalignment="left",
+                bbox=props,
+            )
+            ax2.legend(frameon=True, framealpha=0.9, loc="upper right")
+
+        # With points selected
+        else:
+            slope = (y2 - y1) / (x2 - x1)
+            intercept = y1 - slope * x1
+            x_values = np.linspace(min(data["Eo+Efw"]), max(data["Eo+Efw"]),
+                                   100)
+            y_values = slope * x_values + intercept
+            ax2.plot(x_values, y_values,
+                     color="green",
+                     label="Custom Line")
+            # Text in the graph
+            textstr = "N [MMStb]: {:.2f}".format(slope / 1000000)
+            props = dict(boxstyle="round", facecolor="yellow", alpha=0.5)
+            ax2.text(
+                0.05,
+                0.95,
+                textstr,
+                transform=ax2.transAxes,
+                fontsize=10,
+                verticalalignment="top",
+                horizontalalignment="left",
+                bbox=props,
+            )
+            ax2.legend(frameon=True, framealpha=0.9, loc="upper right")
+
         ax2.set_xlabel("Eo+Efw")
         ax2.set_ylabel("F-We")
         ax2.set_title("Havlena y Odeh plot of " +
                       str(self.tank_class.name.
                           replace("_", " ")) + name_aquifer)
 
-        # Text in the graph
-        textstr = "N [MMStb]: {:.2f}".format(slope / 1000000)
-        props = dict(boxstyle="round", facecolor="yellow", alpha=0.5)
-        ax2.text(
-            0.05,
-            0.95,
-            textstr,
-            transform=ax2.transAxes,
-            fontsize=10,
-            verticalalignment="top",
-            horizontalalignment="left",
-            bbox=props,
-        )
-        ax2.legend(frameon=True, framealpha=0.9, loc="upper right")
         plt.grid(True, linestyle="--", alpha=0.7)
 
         # formatter for the axes in M
