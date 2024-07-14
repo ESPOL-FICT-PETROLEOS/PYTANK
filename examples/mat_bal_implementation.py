@@ -78,8 +78,10 @@ tank1 = Tank(name=tank_name,
 frequency = "12M"
 analysis = Analysis(tank_class=tank1,
                     freq=frequency,
-                    position="end", smooth=False)
-
+                    position="end", smooth=True, k=3)
+a = analysis.mat_bal_df()
+print(a.columns)
+print(a[['Eo', 'Eg', 'Efw']])
 "--- P vs T ---"
 plt5 = analysis.plot_press_avg_liq_cum()
 plt5.show()

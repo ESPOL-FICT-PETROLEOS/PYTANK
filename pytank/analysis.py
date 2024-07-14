@@ -352,7 +352,7 @@ class Analysis(BaseModel):
             df_mbal[DATE_COL].diff().iloc[2], unit="D").days)
         df_mbal["Time_Step"] = first_time_lapse.days
         df_mbal["Time_Step"] = df_mbal["Time_Step"].cumsum()
-
+        df_mbal[GAS_FVF_COL] = df_mbal[GAS_FVF_COL].fillna(0.0)
 
         # Calculated values of Eo, Eg, Efw and F columns
         mbal_term = ho_terms_equation(
