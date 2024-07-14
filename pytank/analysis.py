@@ -24,7 +24,7 @@ from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from scipy import stats
 from scipy.interpolate import UnivariateSpline
-from typing import Union, Optional, List
+from typing import Union, Optional
 from pytank.constants.constants import (
     OIL_FVF_COL,
     GAS_FVF_COL,
@@ -143,7 +143,12 @@ class Analysis(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def __init__(self, tank_class, freq: str, position: str, smooth: bool = False, k: int = 2, s: float = 10e5):
+    def __init__(self, tank_class,
+                 freq: str,
+                 position: str,
+                 smooth: bool = False,
+                 k: int = 2,
+                 s: float = 10e5):
 
         """
         Parameters
@@ -161,7 +166,12 @@ class Analysis(BaseModel):
         s : float, optional
             Smoothing factor. Default is 10e6.
         """
-        super().__init__(tank_class=tank_class, freq=freq, position=position, smooth=smooth, k=k, s=s)
+        super().__init__(tank_class=tank_class,
+                         freq=freq,
+                         position=position,
+                         smooth=smooth,
+                         k=k,
+                         s=s)
 
     def _calc_uw(self) -> pd.DataFrame:
         """
@@ -239,12 +249,19 @@ class Analysis(BaseModel):
                 self.position,
             )).reset_index(0))
         if self.smooth is False:
-            df_press_avg[PRESSURE_COL] = df_press_avg[PRESSURE_COL].interpolate(method="linear")
+            df_press_avg[PRESSURE_COL] = (df_press_avg[PRESSURE_COL].
+                                          interpolate(method="linear"))
         else:
-            df_press_avg['DAYS'] = (df_press_avg[DATE_COL] - df_press_avg[DATE_COL].min()).dt.days
+            df_press_avg['DAYS'] = (df_press_avg[DATE_COL] -
+                                    df_press_avg[DATE_COL].min()).dt.days
             valid_data = df_press_avg.dropna(subset=[PRESSURE_COL])
-            spline = UnivariateSpline(valid_data['DAYS'], valid_data[PRESSURE_COL], s=self.s, k=self.k)
-            x_fit = np.linspace(min(df_press_avg["DAYS"]), max(df_press_avg["DAYS"]), len(df_press_avg[DATE_COL]))
+            spline = UnivariateSpline(valid_data['DAYS'],
+                                      valid_data[PRESSURE_COL],
+                                      s=self.s,
+                                      k=self.k)
+            x_fit = np.linspace(min(df_press_avg["DAYS"]),
+                                max(df_press_avg["DAYS"]),
+                                len(df_press_avg[DATE_COL]))
             y_fit = spline(x_fit)
             df_press_avg["AVG_PRESS"] = df_press_avg[PRESSURE_COL]
             df_press_avg[PRESSURE_COL] = y_fit
