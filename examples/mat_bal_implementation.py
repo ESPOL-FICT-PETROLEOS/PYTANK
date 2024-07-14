@@ -78,7 +78,7 @@ tank1 = Tank(name=tank_name,
 frequency = "12M"
 analysis = Analysis(tank_class=tank1,
                     freq=frequency,
-                    position="end", smooth=False)
+                    position="end", smooth=True)
 
 "--- P vs T ---"
 plt5 = analysis.plot_press_avg_liq_cum()
@@ -122,7 +122,7 @@ havlena_custom.show()
 # %%
 "-------------------------- Aquifer Models --------------------------"
 "----- With Aquifer - Fetkovich ------"
-aq_radius = 14000
+"""aq_radius = 14000
 res_radius = 2000
 aq_thickness = 20
 phi = 0.25
@@ -246,3 +246,4 @@ plt8.show()
 
 plt9 = analysis_carter.plot_cum_prod_well()
 plt9.show()
+"""
