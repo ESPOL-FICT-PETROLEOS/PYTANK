@@ -23,8 +23,8 @@ from pandera.typing import Series
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from scipy import stats
-from scipy.interpolate import splrep, BSpline
-from typing import Union
+from scipy.interpolate import splrep, BSpline, UnivariateSpline
+from typing import Union, Optional, List
 from pytank.constants.constants import (
     OIL_FVF_COL,
     GAS_FVF_COL,
@@ -125,19 +125,25 @@ class Analysis(BaseModel):
         Frequency of data for the material balance equation.
     position : str
         Position of the frequency of the date.
-    smooth : bool
-        Determinate if user want to adjust data
+    smooth : bool, optional
+        Determines if the user wants to adjust the data. Default is False.
+    k : int, optional
+        Degree of the cubic spline. Default is 3.
+    s : int, optional
+        Smoothing factor. Default is 10e6.
     """
 
     tank_class: Tank
     freq: str
     position: str
-    smooth: bool
+    smooth: Optional[bool]
+    s: Optional[float]
+    k: Optional[int]
 
     class Config:
         arbitrary_types_allowed = True
 
-    def __init__(self, tank_class, freq, position, smooth):
+    def __init__(self, tank_class, freq: str, position: str, smooth: bool = False, k: int = 2, s: float = 10e5):
 
         """
         Parameters
@@ -148,8 +154,14 @@ class Analysis(BaseModel):
             Frequency of data for the material balance equation.
         position : str
             Position of the frequency of the date.
+        smooth : bool, optional
+            Determines if the user wants to adjust the data. Default is False.
+        k : int, optional
+            Degree of the cubic spline. Default is 3.
+        s : float, optional
+            Smoothing factor. Default is 10e6.
         """
-        super().__init__(tank_class=tank_class, freq=freq, position=position, smooth=smooth)
+        super().__init__(tank_class=tank_class, freq=freq, position=position, smooth=smooth, k=k, s=s)
 
     def _calc_uw(self) -> pd.DataFrame:
         """
@@ -229,15 +241,15 @@ class Analysis(BaseModel):
         if self.smooth is False:
             df_press_avg[PRESSURE_COL] = df_press_avg[PRESSURE_COL].interpolate(method="linear")
         else:
-            df_press_avg['n_date'] = (df_press_avg[DATE_COL] - df_press_avg[DATE_COL].min()) / np.timedelta64(1, 'D')
+            df_press_avg['DAYS'] = (df_press_avg[DATE_COL] - df_press_avg[DATE_COL].min()).dt.days
             valid_data = df_press_avg.dropna(subset=[PRESSURE_COL])
-            t, c, k = splrep(valid_data['n_date'], valid_data[PRESSURE_COL], s=15, k=2)
-            spline = BSpline(t, c, k)
-            x_fit = np.linspace(min(df_press_avg['n_date']), max(df_press_avg['n_date']), len(df_press_avg[PRESSURE_COL]))
+            spline = UnivariateSpline(valid_data['DAYS'], valid_data[PRESSURE_COL], s=self.s, k=self.k)
+            x_fit = np.linspace(min(df_press_avg["DAYS"]), max(df_press_avg["DAYS"]), len(df_press_avg[DATE_COL]))
             y_fit = spline(x_fit)
+            df_press_avg["AVG_PRESS"] = df_press_avg[PRESSURE_COL]
             df_press_avg[PRESSURE_COL] = y_fit
-        return df_press_avg
 
+        return df_press_avg
 
     def mat_bal_df(self) -> pd.DataFrame:
         """
@@ -273,17 +285,6 @@ class Analysis(BaseModel):
             _ProdSchema.validate(self.tank_class.get_production_df()))
 
         # Linear interpolated of average pressure
-        # todo
-        """if self.smooth is False:
-                    avg[PRESSURE_COL] = avg[PRESSURE_COL].interpolate(method="linear")
-                else:
-                    avg['n_date'] = (avg[DATE_COL] - avg[DATE_COL].min()) / np.timedelta64(1, 'D')
-                    valid_data = avg.dropna(subset=[PRESSURE_COL])
-                    t, c, k = splrep(valid_data['n_date'], valid_data[PRESSURE_COL], s=15, k=2)
-                    spline = BSpline(t, c, k)
-                    x_fit = np.linspace(min(avg['n_date']), max(avg['n_date']), len(avg[PRESSURE_COL]))
-                    y_fit = spline(x_fit)
-                    avg[PRESSURE_COL] = y_fit"""
 
         cols_input = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL]
         cols_output = ["oil_vol", "water_vol", "gas_vol"]
@@ -351,7 +352,7 @@ class Analysis(BaseModel):
             df_mbal[DATE_COL].diff().iloc[2], unit="D").days)
         df_mbal["Time_Step"] = first_time_lapse.days
         df_mbal["Time_Step"] = df_mbal["Time_Step"].cumsum()
-        df_mbal = df_mbal.fillna(0.0)
+
 
         # Calculated values of Eo, Eg, Efw and F columns
         mbal_term = ho_terms_equation(
@@ -378,7 +379,7 @@ class Analysis(BaseModel):
                 self.tank_class.pi)),
             self.tank_class.pi,
         )
-        mbal_final_per_tank = mbal_term.fillna(0.0)
+        mbal_final_per_tank = mbal_term
 
         # Creation of WE value according to the aquifer model
         if self.tank_class.aquifer is None:
@@ -1005,13 +1006,26 @@ class Analysis(BaseModel):
         df_press_avg = self.mat_bal_df()
         fig4, ax4 = plt.subplots(figsize=(10, 6))
         color = "red"
-
-        ax4.scatter(
-            df_press_avg[DATE_COL],
-            df_press_avg[PRESSURE_COL],
-            color=color,
-            label=" Avg Pressure",
-        )
+        if self.smooth is True:
+            ax4.scatter(
+                df_press_avg[DATE_COL],
+                df_press_avg["AVG_PRESS"],
+                color=color,
+                label=" Avg Pressure",
+            )
+            ax4.plot(
+                df_press_avg[DATE_COL],
+                df_press_avg[PRESSURE_COL],
+                color="blue",
+                label="Avg Pressure (Smoothed)",
+            )
+        else:
+            ax4.scatter(
+                df_press_avg[DATE_COL],
+                df_press_avg[PRESSURE_COL],
+                color=color,
+                label=" Avg Pressure",
+            )
 
         ax4.set_title(
             "Pressure per Date - " +
