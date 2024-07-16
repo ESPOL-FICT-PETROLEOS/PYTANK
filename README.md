@@ -5,19 +5,31 @@
 
 # PyTank (v0.1.0) ??
 
-**A tool for estimating the original volume of oil in reserves, using an object-oriented programming approach (POO).**
+**A tool for estimating the original volume of oil in reserves by using an object-oriented programming approach (POO).**
 
 ```python
-from pytank.fluid_model.fluid_model import OilModel, WaterModel
-from pytank.tank.tank import Tank
-from pytank.well.well import Wells
-from pytank.analysis.analysis import Analysis
-from pytank.aquifer.aquifer_model import Fetkovich, CarterTracy
+from pytank.fluid_model import OilModel, WaterModel
+from pytank.tank import Tank
+from pytank.analysis import Analysis
+from pytank.aquifer_model import Fetkovich, CarterTracy
+from pytank.functions.helpers import create_wells, search_wells
 
-wells = Wells(df_prod,
-              df_press,
-              freq_prod,
-              freq_press)
+wells = create_wells(df_prod=df_prod,
+                     df_press=df_press,
+                     freq_prod="MS",
+                     freq_press=None)
+
+# List of all wells
+
+# List of wells for user selection
+my_wells = [
+    "A-1-P", "A-10-P", "A-11-P", "A-12-P", "A-13-P", "A-14-P", "A-16-P",
+    "A-17-P", "A-18-P", "A-19-P", "A-21-P", "A-22-P", "A-23-P", "A-24-I",
+    "A-4-P", "A-5-P", "A-6-P", "A-8-P", "A-9-P"
+]
+
+# lis of wells with the pressure and production info for user selection
+wells_info = search_wells(wells, my_wells)
 
 oil_model = OilModel(
  data_pvt,
@@ -36,6 +48,21 @@ tank = Tank(name,
             cw,
             cf,
             aquifer)
+
+"-------------------------- Analysis Module ------------------------"
+frequency = "12M"
+analysis = Analysis(tank_class=tank1,
+                    freq=frequency,
+                    position="end",
+                    smooth=True)
+
+"--- P vs T ---"
+plt5 = analysis.plot_press_avg_liq_cum()
+plt5.show()
+
+plt = analysis.plot_press_avg_time()
+plt.show()
+
 ```
 **PyTank** is a library that implements different scientific 
 scientific modules based on the Object Oriented Programming (OOP) 
