@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pytank"
+name = "Pytank"
 version = "0.1.0"
 description = "Library to calculate POES by material balance equations of sub-saturaded Reservories"
 authors = [
