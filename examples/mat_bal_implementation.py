@@ -11,22 +11,20 @@ from pytank.tank import Tank
 from pytank.analysis import Analysis
 from pytank.aquifer_model import Fetkovich, CarterTracy
 from pytank.functions.helpers import create_wells, search_wells
-# from examples_data.read_data import pvt_data, production_data, pressure_data
 
 # transform the csv to dataframes
+# Here, the user must state the respective route
 df_pvt = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pvt.csv"
+    "C:/Users/user/PycharmProjects/PYTANK/examples_data/pvt.csv"
 )
 df_production = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/production.csv"
+    "C:/Users/user/PycharmProjects/PYTANK/examples_data/production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pressures.csv"
+    "C:/Users/user/PycharmProjects/PYTANK/examples_data/pressures.csv"
 )
 
-"""df_pvt = pvt_data
-df_production = production_data
-df_pressures = pressure_data"""
+
 # %%
 "-------------------------- Well Module----------------------------"
 
