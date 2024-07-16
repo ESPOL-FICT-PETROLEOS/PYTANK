@@ -3,7 +3,7 @@
   <img src="./static/logo.png"><br>
 </div>
 
-# PyTank (v0.1.0) ??
+# PyTank (v0.1.2) 
 
 **A tool for estimating the original volume of oil in reserves by using an object-oriented programming approach (POO).**
 
@@ -14,10 +14,11 @@ from pytank.analysis import Analysis
 from pytank.aquifer_model import Fetkovich, CarterTracy
 from pytank.functions.helpers import create_wells, search_wells
 
-wells = create_wells(df_prod=df_prod,
-                     df_press=df_press,
-                     freq_prod="MS",
-                     freq_press=None)
+"-------------------------- Well Module----------------------------"
+wells = create_wells(df_prod,
+                     df_press,
+                     freq_prod,
+                     freq_press)
 
 # List of all wells
 
@@ -29,7 +30,10 @@ my_wells = [
 ]
 
 # lis of wells with the pressure and production info for user selection
-wells_info = search_wells(wells, my_wells)
+wells_info = search_wells(wells,
+                          my_wells)
+
+"----------------------- Fluid Models Module -----------------------"
 
 oil_model = OilModel(
  data_pvt,
@@ -39,7 +43,8 @@ water_model = WaterModel(salinity,
                          temperature,
                          unit)
 
-tank = Tank(name,
+"---------------------------- Tank Module ---------------------------"
+tank1 = Tank(name,
             wells,
             oil_model,
             water_modell,
@@ -62,6 +67,91 @@ plt5.show()
 
 plt = analysis.plot_press_avg_time()
 plt.show()
+
+# %%
+"Campbell"
+# Plot without points selected
+camp = analysis.campbell_plot(custom_line=False)
+camp.show()
+
+#%%
+# Plot with points selected
+camp_custom = analysis.campbell_plot(
+    custom_line=False,
+    x1,
+    y1,
+    x2,
+    y2,
+)
+camp_custom.show()
+# %%
+"Havlena"
+# Plot without points selected
+havlena_plot = analysis.havlena_odeh_plot()
+havlena_plot.show()
+
+#%%
+# Plot with points selected
+havlena_custom = analysis.havlena_odeh_plot(
+    custom_line=False,
+    x1,
+    y1,
+    x2,
+    y2
+)
+havlena_custom.show()
+#
+
+"-------------------------- Aquifer Models --------------------------"
+"----- With Aquifer - Fetkovich ------"
+
+fet = Fetkovich(
+    aq_radius,
+    res_radius,
+    aq_thickness,
+    aq_por,
+    ct,
+    theta,
+    k,
+    water_visc,
+)
+
+tank_fet = Tank(name,
+                wells,
+                oil_model,
+                water_model,
+                pi,
+                swo,
+                cw,
+                cf,
+                aquifer)
+
+analysis_fet = Analysis(tank_class,
+                        freq,
+                        position,
+                        smooth=True)
+
+"Analytic method"
+analytic_meth_fet = analysis_fet.analytic_method(poes=67e+6, 
+                                                 option="plot")
+analytic_meth_fet.show()
+
+"Havlena Method"
+# Without points selectec
+havlena_fet = analysis_fet.havlena_odeh_plot(
+    custom_line=False,
+)
+havlena_fet.show()
+
+# With points selected
+havlena_fet_custom = analysis_fet.havlena_odeh_plot(
+    custom_line=False,
+    x1,
+    y1,
+    x2,
+    y2,
+)
+havlena_fet_custom.show()
 
 ```
 **PyTank** is a library that implements different scientific 
