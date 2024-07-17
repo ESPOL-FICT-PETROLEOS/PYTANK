@@ -5,6 +5,7 @@ from pytank.functions.helpers import create_wells, search_wells
 from pytank.well import Well
 from pytank.fluid_model import OilModel, WaterModel
 from pytank.tank import Tank
+from pytank.aquifer_model import Fetkovich, CarterTracy
 from pytank.analysis import Analysis
 
 __all__ = [
@@ -17,5 +18,7 @@ __all__ = [
     'OilModel',
     'WaterModel',
     'Tank',
+    'Fetkovich',
+    'CarterTracy',
     'Analysis',
 ]
