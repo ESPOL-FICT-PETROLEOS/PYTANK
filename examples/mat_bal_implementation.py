@@ -15,13 +15,13 @@ from pytank.functions.helpers import create_wells, search_wells
 # transform the csv to dataframes
 # Here, the user must state the respective route
 df_pvt = pd.read_csv(
-    "C:/Users/user/PycharmProjects/PYTANK/examples_data/pvt.csv"
+    "C:/Users/ksls2/PycharmProjects/PYTANK/examples_data/pvt.csv"
 )
 df_production = pd.read_csv(
-    "C:/Users/user/PycharmProjects/PYTANK/examples_data/production.csv"
+    "C:/Users/ksls2/PycharmProjects/PYTANK/examples_data/production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/user/PycharmProjects/PYTANK/examples_data/pressures.csv"
+    "C:/Users/ksls2/PycharmProjects/PYTANK/examples_data/pressures.csv"
 )
 
 
