@@ -1,0 +1,29 @@
+site_name: PyTank
+
+nav:
+    - Home: index.md
+    - Getting Started: nav/Getting-Started.md
+    - Setup:
+      - nav/setup/tank.md
+    - Development:
+      - nav/development/development-guide.md
+      - nav/development/release-notes.md
+
+theme:
+  name: simple-blog
+  favicon: static/Icon.ico
+  logo: static/Icon.png
+  theme_style: light
+  site_name_style: normal
+  title_style: bold
+  colors:
+    text: black
+    title: black
+    primary: black
+    background: white
+  components:
+    site_name: true
+    title: true
+    menu: true
+    preview: true
+    footer: true
