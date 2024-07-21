@@ -1,16 +1,18 @@
 site_name: PyTank
 
 nav:
-    - Home: index.md
-    - Getting Started: nav/Getting-Started.md
-    - Setup:
-      - nav/setup/tank.md
-    - Development:
+  - Home: index.md
+  - Getting Started: nav/Getting-Started.md
+  - User Guide:
+      - nav/setup/user_guide.md
+  - Development:
       - nav/development/development-guide.md
       - nav/development/release-notes.md
+  - API reference:
+      - nav/API/api_reference.md
 
 theme:
-  name: simple-blog
+  name: material
   favicon: static/Icon.ico
   logo: static/Icon.png
   theme_style: light
@@ -23,7 +25,11 @@ theme:
     background: white
   components:
     site_name: true
-    title: true
+    title: false
     menu: true
     preview: true
     footer: true
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
