@@ -30,7 +30,7 @@ class TestFetkovich(unittest.TestCase):
             k=self.k,
             water_visc=self.water_visc,
             pr=self.pr,
-            time_step=self.time_step
+            time_step=self.time_step,
         )
 
         result = fet.we()
@@ -51,36 +51,47 @@ class TestFetkovich(unittest.TestCase):
     def test_negative_pressure(self):
         pr = [2740, 2500, 2290, 2109, -1949]
         time_step = [0, 365, 730, 1095, 1460]
-        with pytest.raises(ValueError, match="Pressure must be greater than zero"):
-            fetkovich = Fetkovich(self.aq_radius, self.res_radius, self.aq_thickness, self.phi,
-                                  self.ct, self.theta, self.k, self.water_visc,
-                                  boundary_type='no_flow', flow_type='radial',
-                                  pr=pr, time_step=time_step,
-                                  )
+        with pytest.raises(ValueError,
+                           match="Pressure must be greater than zero"):
+            fetkovich = Fetkovich(
+                self.aq_radius,
+                self.res_radius,
+                self.aq_thickness,
+                self.phi,
+                self.ct,
+                self.theta,
+                self.k,
+                self.water_visc,
+                boundary_type="no_flow",
+                flow_type="radial",
+                pr=pr,
+                time_step=time_step,
+            )
             results = fetkovich.we()
-
-    """def test_pressure_descendent_order(self):
-        pr = [2408, 2444, 2472, 2490, 2500]
-        time_step = [0, 182.5, 365.0, 547.5, 730.0]
-        with pytest.raises(ValueError, match="Pressure array must be in descendant order"):
-            fetkovich = Fetkovich(self.aq_radius, self.res_radius, self.aq_thickness, self.phi,
-                                  self.ct, self.theta, self.k, self.water_visc,
-                                  boundary_type='no_flow', flow_type='radial',
-                                  pr=pr, time_step=time_step,
-                                  )
-            results = fetkovich.we()"""
 
     def test_pr_and_time_dimension(self):
         pr = [3000, 2800, 2500, 2300, 2000]
         time_step = [365, 730, 1095, 1460]
-        with pytest.raises(ValueError, match="Dimensions of pressure array and time array "
-                                             "should be equal,"
-                                             "please verify your input"):
-            fetkovich = Fetkovich(self.aq_radius, self.res_radius, self.aq_thickness, self.phi,
-                                  self.ct, self.theta, self.k, self.water_visc,
-                                  boundary_type='no_flow', flow_type='radial',
-                                  pr=pr, time_step=time_step,
-                                  )
+        with pytest.raises(
+                ValueError,
+                match="Dimensions of pressure array and time array "
+                      "should be equal,"
+                      "please verify your input",
+        ):
+            fetkovich = Fetkovich(
+                self.aq_radius,
+                self.res_radius,
+                self.aq_thickness,
+                self.phi,
+                self.ct,
+                self.theta,
+                self.k,
+                self.water_visc,
+                boundary_type="no_flow",
+                flow_type="radial",
+                pr=pr,
+                time_step=time_step,
+            )
             results = fetkovich.we()
 
 
@@ -106,7 +117,7 @@ class TestCarterTracy(unittest.TestCase):
             aq_perm=self.aq_perm,
             water_visc=self.water_visc,
             pr=self.pr,
-            time_step=self.time_step
+            time_step=self.time_step,
         )
 
         result = ct.we()
@@ -124,7 +135,8 @@ class TestCarterTracy(unittest.TestCase):
     def test_negative_pressure(self):
         pr = [2740, 2500, 2290, 2109, -1949]
         time_step = [0, 365, 730, 1095, 1460]
-        with pytest.raises(ValueError, match="Pressure must be greater than zero"):
+        with pytest.raises(ValueError,
+                           match="Pressure must be greater than zero"):
             ct = CarterTracy(
                 aq_por=self.aq_por,
                 ct=self.ct,
@@ -134,33 +146,19 @@ class TestCarterTracy(unittest.TestCase):
                 aq_perm=self.aq_perm,
                 water_visc=self.water_visc,
                 pr=pr,
-                time_step=time_step
+                time_step=time_step,
             )
             results = ct.we()
-
-    """def test_pressure_descendent_order(self):
-        pr = [2408, 2444, 2472, 2490, 2500]
-        time_step = [0, 182.5, 365.0, 547.5, 730.0]
-        with pytest.raises(ValueError, match="Pressure array must be in descendant order"):
-            ct = CarterTracy(
-                aq_por=self.aq_por,
-                ct=self.ct,
-                res_radius=self.res_radius,
-                aq_thickness=self.aq_thickness,
-                theta=self.theta,
-                aq_perm=self.aq_perm,
-                water_visc=self.water_visc,
-                pr=pr,
-                time_step=time_step
-            )
-            results = ct.we()"""
 
     def test_pr_and_time_dimension(self):
         pr = [3000, 2800, 2500, 2300, 2000]
         time_step = [365, 730, 1095, 1460]
-        with pytest.raises(ValueError, match="Dimensions of pressure array and time array "
-                                             "should be equal,"
-                                             "please verify your input"):
+        with pytest.raises(
+                ValueError,
+                match="Dimensions of pressure array and time array "
+                      "should be equal,"
+                      "please verify your input",
+        ):
             ct = CarterTracy(
                 aq_por=self.aq_por,
                 ct=self.ct,
@@ -170,10 +168,10 @@ class TestCarterTracy(unittest.TestCase):
                 aq_perm=self.aq_perm,
                 water_visc=self.water_visc,
                 pr=pr,
-                time_step=time_step
+                time_step=time_step,
             )
             results = ct.we()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
