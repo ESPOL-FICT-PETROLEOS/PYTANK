@@ -1,7 +1,7 @@
 """
 mat_bal_implementation.py
 
-This file containing the steps to use the PyTank library .
+This file containing the steps to use the PyTank library.
 """
 
 # %%
@@ -14,32 +14,45 @@ from pytank.functions.helpers import create_wells, search_wells
 
 # transform the csv to dataframes
 # Here, the user must state the respective route
-df_pvt = pd.read_csv(
-    "C:/Users/ksls2/PycharmProjects/PYTANK/examples_data/pvt.csv"
-)
+df_pvt = pd.read_csv("C:/Users/User/PycharmProjects/PYTANK/examples_data/pvt.csv")
 df_production = pd.read_csv(
-    "C:/Users/ksls2/PycharmProjects/PYTANK/examples_data/production.csv"
+    "C:/Users/User/PycharmProjects/PYTANK/examples_data/production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/ksls2/PycharmProjects/PYTANK/examples_data/pressures.csv"
+    "C:/Users/User/PycharmProjects/PYTANK/examples_data/pressures.csv"
 )
 
 
 # %%
 "-------------------------- Well Module----------------------------"
 
-wells = create_wells(df_prod=df_production,
-                     df_press=df_pressures,
-                     freq_prod="MS",
-                     freq_press=None)
+wells = create_wells(
+    df_prod=df_production, df_press=df_pressures, freq_prod="MS", freq_press=None
+)
 
 # List of all wells
 
 # List of wells for user selection
 my_wells = [
-    "A-1-P", "A-10-P", "A-11-P", "A-12-P", "A-13-P", "A-14-P", "A-16-P",
-    "A-17-P", "A-18-P", "A-19-P", "A-21-P", "A-22-P", "A-23-P", "A-24-I",
-    "A-4-P", "A-5-P", "A-6-P", "A-8-P", "A-9-P"
+    "A-1-P",
+    "A-10-P",
+    "A-11-P",
+    "A-12-P",
+    "A-13-P",
+    "A-14-P",
+    "A-16-P",
+    "A-17-P",
+    "A-18-P",
+    "A-19-P",
+    "A-21-P",
+    "A-22-P",
+    "A-23-P",
+    "A-24-I",
+    "A-4-P",
+    "A-5-P",
+    "A-6-P",
+    "A-8-P",
+    "A-9-P",
 ]
 
 # lis of wells with the pressure and production info for user selection
@@ -52,32 +65,29 @@ oil_model = OilModel(
     temperature=25,
 )
 
-water_model = WaterModel(salinity=3000,
-                         temperature=200,
-                         unit=1)
+water_model = WaterModel(salinity=3000, temperature=200, unit=1)
 
 # %%
 "---------------------------- Tank Module ---------------------------"
 tank_name = "Zone_B"
 pi = 3700
-tank1 = Tank(name=tank_name,
-             wells=wells_info,
-             oil_model=oil_model,
-             water_model=water_model,
-             pi=pi,
-             swo=0.25,
-             cw=3.5e-6,
-             cf=4.6e-6,
-             aquifer=None)
+tank1 = Tank(
+    name=tank_name,
+    wells=wells_info,
+    oil_model=oil_model,
+    water_model=water_model,
+    pi=pi,
+    swo=0.25,
+    cw=3.5e-6,
+    cf=4.6e-6,
+    aquifer=None,
+)
 
 
 # %%
 "-------------------------- Analysis Module ------------------------"
 frequency = "12M"
-analysis = Analysis(tank_class=tank1,
-                    freq=frequency,
-                    position="end",
-                    smooth=True)
+analysis = Analysis(tank_class=tank1, freq=frequency, position="end")
 
 "--- P vs T ---"
 plt5 = analysis.plot_press_avg_liq_cum()
@@ -92,7 +102,7 @@ plt.show()
 camp = analysis.campbell_plot(custom_line=False)
 camp.show()
 
-#%%
+# %%
 # Plot with points selected
 camp_custom = analysis.campbell_plot(
     custom_line=False,
@@ -108,7 +118,7 @@ camp_custom.show()
 havlena_plot = analysis.havlena_odeh_plot()
 havlena_plot.show()
 
-#%%
+# %%
 # Plot with points selected
 havlena_custom = analysis.havlena_odeh_plot(
     custom_line=False,
@@ -141,23 +151,24 @@ fet = Fetkovich(
     water_visc=water_visc,
 )
 
-tank_fet = Tank(name=tank_name,
-                wells=wells_info,
-                oil_model=oil_model,
-                water_model=water_model,
-                pi=pi,
-                swo=0.25,
-                cw=3.5e-6,
-                cf=4.6e-6,
-                aquifer=fet)
+tank_fet = Tank(
+    name=tank_name,
+    wells=wells_info,
+    oil_model=oil_model,
+    water_model=water_model,
+    pi=pi,
+    swo=0.25,
+    cw=3.5e-6,
+    cf=4.6e-6,
+    aquifer=fet,
+)
 
-analysis_fet = Analysis(tank_class=tank_fet,
-                        freq=frequency,
-                        position="end",
-                        smooth=True)
+analysis_fet = Analysis(
+    tank_class=tank_fet, freq=frequency, position="end", smooth=True
+)
 
 "Analytic method"
-analytic_meth_fet = analysis_fet.analytic_method(poes=67e+6, option="plot")
+analytic_meth_fet = analysis_fet.analytic_method(poes=67e6, option="plot")
 analytic_meth_fet.show()
 
 "Havlena Method"
@@ -193,25 +204,25 @@ carter = CarterTracy(
     theta=theta,
     aq_perm=k,
     water_visc=water_visc,
-
 )
 
-tank_carter = Tank(name=tank_name,
-                   wells=wells_info,
-                   oil_model=oil_model,
-                   water_model=water_model,
-                   pi=pi,
-                   swo=0.25,
-                   cw=3.5e-6,
-                   cf=4.6e-6,
-                   aquifer=carter)
+tank_carter = Tank(
+    name=tank_name,
+    wells=wells_info,
+    oil_model=oil_model,
+    water_model=water_model,
+    pi=pi,
+    swo=0.25,
+    cw=3.5e-6,
+    cf=4.6e-6,
+    aquifer=carter,
+)
 
-analysis_carter = Analysis(tank_class=tank_carter,
-                           freq=frequency,
-                           position="end",
-                           smooth=True)
+analysis_carter = Analysis(
+    tank_class=tank_carter, freq=frequency, position="end", smooth=True
+)
 "Analytic method"
-analytic_meth_car = analysis_carter.analytic_method(poes=67e+6, option="plot")
+analytic_meth_car = analysis_carter.analytic_method(poes=67e6, option="plot")
 analytic_meth_car.show()
 
 "Havlena Method"
@@ -221,11 +232,7 @@ havlena_car = analysis_carter.havlena_odeh_plot(
 havlena_car.show()
 
 havlena_car_custom = analysis_carter.havlena_odeh_plot(
-    custom_line=True,
-    x1=0.01,
-    y1=1700000,
-    x2=0.045,
-    y2=3500000
+    custom_line=True, x1=0.01, y1=1700000, x2=0.045, y2=3500000
 )
 havlena_car_custom.show()
 # %%

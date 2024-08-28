@@ -9,16 +9,16 @@ from pytank.aquifer_model import Fetkovich, CarterTracy
 from pytank.analysis import Analysis
 
 __all__ = [
-    'ProdVector',
-    'PressVector',
-    'normalize_date_freq',
-    'create_wells',
-    'search_wells',
-    'Well',
-    'OilModel',
-    'WaterModel',
-    'Tank',
-    'Fetkovich',
-    'CarterTracy',
-    'Analysis',
+    "ProdVector",
+    "PressVector",
+    "normalize_date_freq",
+    "create_wells",
+    "search_wells",
+    "Well",
+    "OilModel",
+    "WaterModel",
+    "Tank",
+    "Fetkovich",
+    "CarterTracy",
+    "Analysis",
 ]
