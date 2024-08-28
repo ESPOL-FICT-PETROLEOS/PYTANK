@@ -5,14 +5,12 @@ from pytank.fluid_model import OilModel, WaterModel
 
 class TestOilModel(unittest.TestCase):
     def setUp(self):
-        self.df_pvt = pd.DataFrame(
-            {
-                "Pressure": [100, 200, 300],
-                "Bo": [1.2, 1.1, 1.0],
-                "Bg": [0.01, 0.02, 0.03],
-                "GOR": [50, 60, 70],
-            }
-        )
+        self.df_pvt = pd.DataFrame({
+            'Pressure': [100, 200, 300],
+            'Bo': [1.2, 1.1, 1.0],
+            'Bg': [0.01, 0.02, 0.03],
+            'GOR': [50, 60, 70]
+        })
         self.oil_model = OilModel(data_pvt=self.df_pvt, temperature=25)
 
     def test_get_bo_at_press(self):
@@ -45,5 +43,5 @@ class TestWaterModel(unittest.TestCase):
         self.assertGreater(actual_rs, 0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

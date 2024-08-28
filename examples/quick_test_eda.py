@@ -1,21 +1,21 @@
 from pytank.tank import Tank
 from pytank.analysis import Analysis
-from quick_test_tank import wells_info, oil_model, water_model
+from quick_test_tank import (wells_info,
+                             oil_model,
+                             water_model)
 
 # Quicktest
 tank_name = "tank_center"
 
-tank1 = Tank(
-    name=tank_name,
-    wells=wells_info,
-    oil_model=oil_model,
-    water_model=water_model,
-    pi=3700,
-    swo=0.15,
-    cw=3.5e-6,
-    cf=3.6e-6,
-    aquifer=None,
-)
+tank1 = Tank(name=tank_name,
+             wells=wells_info,
+             oil_model=oil_model,
+             water_model=water_model,
+             pi=3700,
+             swo=0.15,
+             cw=3.5e-6,
+             cf=3.6e-6,
+             aquifer=None)
 
 analysis = Analysis(tank_class=tank1, freq="12MS", position="end")
 
