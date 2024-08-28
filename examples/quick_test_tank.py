@@ -11,31 +11,16 @@ freq = "MS"
 
 tank_name = "Zone_B"
 
-wells = create_wells(
-    df_prod=df_production, df_press=df_pressures, freq_prod=freq, freq_press=None
-)
+wells = create_wells(df_prod=df_production,
+                     df_press=df_pressures,
+                     freq_prod=freq,
+                     freq_press=None)
 
 # List of wells for user selection
 my_wells = [
-    "A-1-P",
-    "A-10-P",
-    "A-11-P",
-    "A-12-P",
-    "A-13-P",
-    "A-14-P",
-    "A-16-P",
-    "A-17-P",
-    "A-18-P",
-    "A-19-P",
-    "A-21-P",
-    "A-22-P",
-    "A-23-P",
-    "A-24-I",
-    "A-4-P",
-    "A-5-P",
-    "A-6-P",
-    "A-8-P",
-    "A-9-P",
+    "A-1-P", "A-10-P", "A-11-P", "A-12-P", "A-13-P", "A-14-P", "A-16-P",
+    "A-17-P", "A-18-P", "A-19-P", "A-21-P", "A-22-P", "A-23-P", "A-24-I",
+    "A-4-P", "A-5-P", "A-6-P", "A-8-P", "A-9-P"
 ]
 
 # lis of wells with the pressure and production info for user selection
@@ -49,17 +34,15 @@ oil_model = OilModel(
 
 water_model = WaterModel(salinity=3000, temperature=200, unit=1)
 
-tank1 = Tank(
-    name=tank_name,
-    wells=wells_info,
-    oil_model=oil_model,
-    water_model=water_model,
-    pi=3700,
-    swo=0.15,
-    cw=3.5e-6,
-    cf=3.6e-6,
-    aquifer=None,
-)
+tank1 = Tank(name=tank_name,
+             wells=wells_info,
+             oil_model=oil_model,
+             water_model=water_model,
+             pi=3700,
+             swo=0.15,
+             cw=3.5e-6,
+             cf=3.6e-6,
+             aquifer=None)
 
 # Its only a test, this method is PRIVATE
 df_press = tank1.get_pressure_df()

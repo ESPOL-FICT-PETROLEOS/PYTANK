@@ -1,23 +1,14 @@
 """
 tank.py
 
-Defines the Tank class for processing reservoir data internally.
+This module defines the Tank CLass is to process data internally.
 
-This module provides the Tank class, which serves as a container for
-reservoir properties and manages associated well data. The Tank class
-includes methods for handling pressure and production data, allowing
-for efficient calculations and data management within reservoir
-simulations.
+Also, it works as a container for the reservoir properties.
 
-The main methods of the Tank class are:
-    - get_pressure_df: Returns a DataFrame with pressure data and PVT
-    properties.
-    - get_production_df: Returns a DataFrame with cumulative production data.
-
-Libraries used:
-    - pandas: For data manipulation and analysis.
-    - pydantic: For data validation and settings management.
-    - typing: For type hinting and annotations.
+libraries:
+    - pandas
+    - pydantic
+    - typing
 """
 
 import pandas as pd
@@ -44,14 +35,8 @@ from pytank.aquifer_model import Fetkovich, CarterTracy
 
 class Tank(BaseModel):
     """
-    Represents a reservoir tank with associated properties and methods.
-
-    This class serves as a container for the reservoir (tank) properties and
-    provides methods to manage pressure and production data. It inherits from
-    the BaseModel class, which provides data validation and serialization
-    functionality.
+    Class that functions as a container for the reservoir (tank) properties.
     """
-
     name: str
     wells: list
     oil_model: OilModel
@@ -65,54 +50,41 @@ class Tank(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def __init__(
-        self,
-        name: str,
-        wells: list,
-        oil_model: OilModel,
-        water_model: WaterModel,
-        pi: float,
-        swo: float,
-        cw: float,
-        cf: float,
-        aquifer: Optional[Union[None, Fetkovich, CarterTracy]],
-    ):
-        """Initializes a Tank instance with the given parameters.
-
-        Args:
-            name (str): The name of the tank (reservoir).
-            wells (list): A list of Well instances associated with the tank.
-            oil_model (BaseModel): An instance of the OilModel class for the
-                tank.
-            water_model (BaseModel): An instance of the WaterModel class for the
-                tank.
-            pi (float): The initial pressure of the tank [Psi].
-            swo (float): The initial water saturation of the tank [decimal].
-            cw (float): The water compressibility of the tank.
-            cf (float): The total compressibility of the tank.
-            aquifer (Optional[Union[None, Fetkovich, CarterTracy]]): An instance
-                of an aquifer class (Fetkovich or CarterTracy) or None.
+    def __init__(self, name: str, wells: list, oil_model: OilModel,
+                 water_model: WaterModel, pi: float, swo: float, cw: float,
+                 cf: float, aquifer: Optional[Union[None, Fetkovich,
+                                                    CarterTracy]]):
         """
-        super().__init__(
-            name=name,
-            wells=wells,
-            oil_model=oil_model,
-            water_model=water_model,
-            pi=pi,
-            swo=swo,
-            cw=cw,
-            cf=cf,
-            aquifer=aquifer,
-        )
+        Init Method
+        :param
+            - name: Name of tank (reservoir)
+            - wells: Instance of Well Class (list)
+            - oil_model: Instance of OilModel Class
+            - water_model: Instance of WaterModel CLass
+            - pi: Initial Pressure [Psi]
+            - swo: Water initial saturation [decimal]
+            - cw: Water compressibility
+            - cf: Total compressibility
+            - aquifer: Instance of Aquifer Class
+        """
+        super().__init__(name=name,
+                         wells=wells,
+                         oil_model=oil_model,
+                         water_model=water_model,
+                         pi=pi,
+                         swo=swo,
+                         cw=cw,
+                         cf=cf,
+                         aquifer=aquifer)
 
     def _press_df_internal(self) -> pd.DataFrame:
-        """Internally manages the pressure vector for use in the UW method.
+        """
+        Private method that internally manages the pressure vector for use in
+        the UW method.
 
-        This is a private method that creates a DataFrame containing pressure
-        data and associated PVT properties for each well in the tank.
-
-        Returns:
-            df_press: A DataFrame with pressure data and PVT properties.
+        :return:
+            - pd.Dataframe: A pressure DataFrame with properties PVT of oil
+             and water
         """
         df_press = pd.DataFrame()
         for well in self.wells:
@@ -123,27 +95,20 @@ class Tank(BaseModel):
 
                 well_date = press_vector.data.index
                 well_oil_fvf = self.oil_model.get_bo_at_press(
-                    press_vector.data[PRESSURE_COL]
-                )
+                    press_vector.data[PRESSURE_COL])
                 well_gas_fvf = self.oil_model.get_bg_at_press(
-                    press_vector.data[PRESSURE_COL]
-                )
+                    press_vector.data[PRESSURE_COL])
                 well_rs = self.oil_model.get_rs_at_press(
-                    press_vector.data[PRESSURE_COL]
-                )
+                    press_vector.data[PRESSURE_COL])
 
                 # In case properties are calculated using correlations
-                if (
-                    self.water_model.salinity is not None
-                    and self.water_model.temperature is not None
-                    and self.water_model.unit is not None
-                ):
+                if (self.water_model.salinity is not None
+                        and self.water_model.temperature is not None
+                        and self.water_model.unit is not None):
                     well_bw = self.water_model.get_bw_at_press(
-                        press_vector.data[PRESSURE_COL]
-                    )
+                        press_vector.data[PRESSURE_COL])
                     well_rs_w = self.water_model.get_rs_at_press(
-                        press_vector.data[PRESSURE_COL]
-                    )
+                        press_vector.data[PRESSURE_COL])
 
                     # In case there are default values for Bw and Rs_w
                 else:
@@ -168,24 +133,24 @@ class Tank(BaseModel):
         return df_press
 
     def get_pressure_df(self) -> pd.DataFrame:
-        """Gets a DataFrame with pressure data using the private
-        _press_df_internal method.
+        """
+        Gets a DatFrame with pressure data using the private _press_df_internal
+        method
+        THIS METHOD IS MARKED PRIVATE FOR INTERNAL USE ONLY.
 
-        This method is marked private for internal use only.
-
-        Returns:
-            df_press: A DataFrame with pressure data and PVT properties.
+        :return:
+            pd.Dataframe: DataFrame with PVT properties.
         """
         return self._press_df_internal()
 
     def _prod_df_internal(self) -> pd.DataFrame:
-        """Internally manages the production vector for use in the UW method.
+        """
+        Private method that internally manages production vector for use
+        in the UW method.
 
-        This is a private method that creates a DataFrame containing production
-        data for each well in the tank.
+        :return:
+            - pd.Dataframe: A production DataFrame
 
-        Returns:
-            df_prod: A DataFrame with production data.
         """
         df_prod = pd.DataFrame()
         for well in self.wells:
@@ -214,13 +179,13 @@ class Tank(BaseModel):
                                     ignore_index=True)
         return df_prod
 
-    def get_production_df(self) -> pd.DataFrame:
-        """Gets a DataFrame with production data using the private
-        _prod_df_internal method.
+    def get_production_df(self):
+        """
+        Gets a DataFrame with production data using the private
+        _prod_df_internal method
+        THIS METHOD IS MARKED PRIVATE FOR INTERNAL USE ONLY.
 
-        This method is marked private for internal use only.
-
-        Returns:
-            df_prod: A DataFrame with cumulative production data.
+        :return:
+            pd.DataFrame: A DataFrame with cumulative production
         """
         return self._prod_df_internal()

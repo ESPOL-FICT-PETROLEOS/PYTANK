@@ -1,10 +1,16 @@
-from quick_test_tank import tank1, wells_info, tank_name, oil_model, water_model
+from quick_test_tank import (tank1,
+                             wells_info,
+                             tank_name,
+                             oil_model,
+                             water_model)
 from pytank.aquifer_model import Fetkovich
 from pytank.analysis import Analysis
 from pytank.tank import Tank
 
 # No Aquifer Case
-analysis1 = Analysis(tank_class=tank1, freq="12MS", position="end")
+analysis1 = Analysis(tank_class=tank1,
+                     freq="12MS",
+                     position="end")
 
 # With Fetkovich
 aq_radius = 14000
@@ -27,19 +33,20 @@ fet = Fetkovich(
     water_visc=water_visc,
 )
 
-tank_fet = Tank(
-    name=tank_name,
-    wells=wells_info,
-    oil_model=oil_model,
-    water_model=water_model,
-    pi=3700,
-    swo=0.25,
-    cw=3.5e-6,
-    cf=4.5e-6,
-    aquifer=fet,
-)
+tank_fet = Tank(name=tank_name,
+                wells=wells_info,
+                oil_model=oil_model,
+                water_model=water_model,
+                pi=3700,
+                swo=0.25,
+                cw=3.5e-6,
+                cf=4.5e-6,
+                aquifer=fet)
 
-analysis_aquifer = Analysis(tank_class=tank_fet, freq="12MS", position="end")
+analysis_aquifer = Analysis(
+    tank_class=tank_fet,
+    freq="12MS",
+    position="end")
 
 # analytic = analysis_aquifer.analytic_method(72e+6, "plot")
 # analytic.show()

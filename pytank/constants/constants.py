@@ -7,7 +7,6 @@ and classes in the library
 libraries:
     - pandera
 """
-
 from pandera import Column, Check, DataFrameSchema
 
 # Constants of DataFrames
@@ -50,11 +49,16 @@ _VECTOR_VALIDATION = Column(
     nullable=False,
 )
 
-_PRESSURE_VALIDATION = Column(
-    float, Check(lambda s: s >= 0), coerce=True, nullable=False, required=False
-)
+_PRESSURE_VALIDATION = Column(float,
+                              Check(lambda s: s >= 0),
+                              coerce=True,
+                              nullable=False,
+                              required=False)
 
-_STR_VALIDATION = Column(str, Check(lambda s: s == s), coerce=True, nullable=False)
+_STR_VALIDATION = Column(str,
+                         Check(lambda s: s == s),
+                         coerce=True,
+                         nullable=False)
 
 # SCHEMAS DICTIONARIES:
 _PROD_SCHEMA_DICT = {
