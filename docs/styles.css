@@ -1,0 +1,34 @@
+/* Estilos para el contenedor de tarjetas */
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px; /* Aumentar el espacio entre tarjetas */
+    margin-top: 30px; /* Aumentar el espacio superior */
+    justify-content: center; /* Centrar horizontalmente las tarjetas */
+}
+
+/* Estilos para las tarjetas */
+.card {
+    flex: 1 1 250px; /* Reducir el tamaño mínimo de la tarjeta a 250px */
+    border: 2px solid #007BFF; /* Cambiar el color del borde */
+    padding: 25px; /* Aumentar el espaciado interno */
+    border-radius: 12px; /* Aumentar el radio de los bordes redondeados */
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s; /* Aumentar la duración de la transición */
+    background-color: #f8f9fa; /* Cambiar el color de fondo */
+}
+
+/* Efecto hover para las tarjetas */
+.card:hover {
+    transform: scale(1.05) translateY(-5px); /* Aumentar el tamaño y mover hacia arriba al pasar el ratón */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Aumentar el tamaño de la sombra */
+}
+
+/* Estilos para los enlaces dentro de las tarjetas */
+.card h3 a {
+    color: #007BFF; /* Cambiar el color del enlace */
+}
+
+.card h3 a:hover {
+    color: #0056b3; /* Cambiar el color del enlace al pasar el ratón */
+}
