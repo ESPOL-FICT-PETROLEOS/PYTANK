@@ -1,15 +1,17 @@
 """
 aquifer_model.py
 
-This module defines the Fetkovich and CarterTracy Class to calculate
-cumulative influx of water.
+This module provides the Fetkovich and CarterTracy classes, which are
+designed to calculate the cumulative influx of water into a reservoir. These
+classes implement specific methodologies for modeling water influx based on
+reservoir characteristics and pressure conditions.
 
-The logic is structured using classes and method
-
-libraries:
-    - pandas
-    - math
-    - numpy
+Libraries used:
+    - pandas: For data manipulation and analysis.
+    - numpy: For numerical operations and array handling.
+    - math: For mathematical functions and constants.
+    - datetime: For handling date and time operations.
+    - typing: For type hinting and annotations.
 """
 
 import pandas as pd
@@ -22,45 +24,10 @@ from typing import Optional
 
 # Fetkovich
 class Fetkovich:
-    """
-    To estimate water influx using the Fetkovich's method we need to estimate:
-    Wi, Wei and J.
-    Parameters
-    ----------
-    aq_radius : float
-        Radius of the aquifer, ft.
-    res_radius : float
-        Radius of the reservoir, ft.
-    aq_thickness : float
-        Thickness of the aquifer, ft.
-    aq_por : float
-        Porosity of the aquifer.
-    ct : float
-        Total compressibility coefficient, psi^-1.
-    theta : float
-        Encroachment angle.
-    k : float
-        Permeability of the aquifer, md.
-    water_visc : float
-        Viscosity of water, cp.
-    boundary_type : str, optional
-        Type of aquifer boundary, default is 'no_flow'. Options are 'no_flow',
-        'constant_pressure', 'infinite'.
-    flow_type : str, optional
-        Type of flow, default is 'radial'. Options are 'radial', 'linear'.
-    pr : list or numpy array, optional
-        Measured reservoir pressure, psi.
-    time_step : list or numpy array, optional
-        Time step, days.
-    width : float, optional
-        Width of the linear aquifer, ft. Required only for linear flow.
-    length : float, optional
-        Length of the linear aquifer, ft. Required only for linear flow.
-
-    Returns
-    -------
-    pandas.DataFrame
-        Containing the cumulative water influx, bbl.
+    """This class implements Fetkovich's method for calculating water influx
+    into a reservoir. It requires the estimation of initial water volume (Wi),
+    maximum water influx (Wei), and the productivity index (J) based on
+    reservoir and aquifer properties.
     """
 
     def __init__(
@@ -80,40 +47,28 @@ class Fetkovich:
             width: float = None,
             length: float = None,
     ):
-        """
-        Initializes the attributes of the Fetkovich's class.
+        """Initializes the attributes of the Fetkovich's class.
 
-    Parameters
-    ----------
-    aq_radius : float
-        Radius of the aquifer, ft.
-    res_radius : float
-        Radius of the reservoir, ft.
-    aq_thickness : float
-        Thickness of the aquifer, ft.
-    aq_por : float
-        Porosity of the aquifer.
-    ct : float
-        Total compressibility coefficient, psi^-1.
-    theta : float
-        Encroachment angle.
-    k : float
-        Permeability of the aquifer, md.
-    water_visc : float
-        Viscosity of water, cp.
-    boundary_type : str, optional
-        Type of aquifer boundary, default is 'no_flow'. Options are 'no_flow',
-         'constant_pressure', 'infinite'.
-    flow_type : str, optional
-        Type of flow, default is 'radial'. Options are 'radial', 'linear'.
-    pr : list or numpy array, optional
-        Measured reservoir pressure, psi.
-    time_step : list or numpy array, optional
-        Time step, days.
-    width : float, optional
-        Width of the linear aquifer, ft. Required only for linear flow.
-    length : float, optional
-        Length of the linear aquifer, ft. Required only for linear flow.
+        Args:
+            aq_radius (float): Radius of the aquifer [ft].
+            res_radius (float): Radius of the reservoir [ft].
+            aq_thickness (float): Thickness of the aquifer [ft].
+            aq_por (float): Porosity of the aquifer.
+            ct (float): Total compressibility coefficient [psi^-1].
+            theta (float): Encroachment angle [degrees].
+            k (float): Permeability of the aquifer [md].
+            water_visc (float): Viscosity of water [cp].
+            boundary_type (Optional[str]): Type of aquifer boundary, default is
+                'no_flow'. Options are 'no_flow', 'constant_pressure',
+                'infinite'.
+            flow_type (Optional[str]): Type of flow, default is 'radial'.
+                Options are 'radial', 'linear'.
+            pr (Optional[list, numpy array]): Measured reservoir pressure [Psi].
+            time_step (Optional[list, numpy array]): Time step [days].
+            width (Optional[float]): Width of the linear aquifer [ft]. Required
+                only for linear flow.
+            length (Optional[float]): Length of the linear aquifer [ft].
+                Required only for linear flow.
         """
         self.aq_radius = aq_radius
         self.res_radius = res_radius
@@ -131,12 +86,15 @@ class Fetkovich:
         self.length = length
 
     def _set_pr_and_time_step(self, pr, time_step):
-        """
-        Private method to assign value o the pr and time_step properties of
-        the aquifer Fetkovich
-        :param
-        pr: List of Measured reservoir pressure, psi.
-        time_step: List of Time lapses, days.
+        """Assigns values to the pr and time_step properties of the Fetkovich
+        aquifer.
+
+        This is a private method used internally to set the reservoir pressure
+        and time step values for the Fetkovich aquifer model.
+
+        Args:
+            pr (list): A list of measured reservoir pressure values in psi.
+            time_step (list): A list of time-lapse values in days.
         """
 
         self.pr = pr
@@ -169,13 +127,24 @@ class Fetkovich:
         self.we()
 
     def we(self) -> pd.DataFrame:
-        """
-        Method to calculate cumulative influx of water and gets the values -
-        in a DataFrame.
+        """Calculates cumulative influx of water and returns the values in a
+        DataFrame.
 
-        :return:
-        pd.Dataframe: DataFrame wit the delta WE, Cumulative WE and time
-         lapses columns.
+        This method computes the cumulative influx of water into the aquifer
+        based on the specified flow type and boundary conditions. It generates
+        a DataFrame containing the delta water influx ('We'), cumulative water
+        influx, and elapsed time for each time step.
+
+        Raises:
+            ValueError: If using linear flow without specified width and length.
+            ValueError: If the pressure array is not in descending order.
+            ValueError: If any pressure value is less than or equal to zero.
+            ValueError: If the dimensions of the pressure array and time array
+                are not equal.
+
+        Returns:
+            df: A DataFrame with columns for delta We, cumulative We,
+                and elapsed time.
         """
         if self.flow_type == "linear" and (self.width is None
                                            or self.length is None):
@@ -279,11 +248,15 @@ class Fetkovich:
         return df
 
     def get_we(self) -> pd.Series:
-        """
-        Method than encapsulated a DataFrame to gets an only column
-        of Cumulative We.
-        :return:
-        pd.Series: A column of values of Cumulative We.
+        """Encapsulates the DataFrame to return only the cumulative water
+        influx.
+
+        This method retrieves the cumulative water influx (Cumulative We) from
+        the DataFrame generated by the `we` method and returns it as a Series.
+
+        Returns:
+            We: A Series containing the values of cumulative water
+                influx (Cumulative We).
         """
         # Encapsulation of DataFrame using method We.
         we = self.we()
@@ -291,35 +264,9 @@ class Fetkovich:
 
 
 class CarterTracy:
-    """
-    Class to calculate the cumulative influx of water through Carter Tracy
-    aquifer model.
-
-    Parameters
-    ----------
-    aq_por : float
-        Porosity of the aquifer (decimal).
-    ct : float
-        Total compressibility, psi^-1.
-    res_radius : float
-        Radius of the reservoir, ft.
-    aq_thickness : float
-        Thickness of the aquifer, ft.
-    theta : float
-        Encroachment angle, degrees.
-    aq_perm : float
-        Permeability of the aquifer, md.
-    water_visc : float
-        Viscosity of water, cp.
-    pr : list, optional
-        List of Measured reservoir pressure, psi.
-    time_step : list, optional
-        Time lapses, days.
-
-    Returns
-    -------
-    pandas.DataFrame
-        Containing the cumulative water influx, bbl.
+    """This class implements the Carter-Tracy method for modeling water influx
+    into a reservoir. It calculates the cumulative water influx based on the
+    aquifer's properties and reservoir conditions.
     """
 
     def __init__(
@@ -334,29 +281,18 @@ class CarterTracy:
             pr: Optional[list] = None,
             time_step: Optional[list] = None,
     ):
-        """
-        Initializes the attributes of the CarterTracy class.
+        """Initializes the attributes of the CarterTracy class.
 
-        Parameters
-        ----------
-        aq_por : float
-            Porosity of the aquifer (decimal).
-        ct : float
-            Total compressibility, psi^-1.
-        res_radius : float
-            Radius of the reservoir, ft.
-        aq_thickness : float
-            Thickness of the aquifer, ft.
-        theta : float
-            Encroachment angle, degrees.
-        aq_perm : float
-            Permeability of the aquifer, md.
-        water_visc : float
-            Viscosity of water, cp.
-        pr : list, optional
-            Measured reservoir pressure, psi.
-        time_step : list, optional
-            Time lapses, days.
+        Args:
+            aq_por (float): Porosity of the aquifer [decimal].
+            ct (float): Total compressibility [psi^-1].
+            res_radius (float): Radius of the reservoir [ft].
+            aq_thickness (float): Thickness of the aquifer [ft].
+            theta (float): Encroachment angle [degrees].
+            aq_perm (float): Permeability of the aquifer [md].
+            water_visc (float): Viscosity of water [cp].
+            pr (Optional[list]): Measured reservoir pressure [Psi].
+            time_step (Optional[list]): Time lapses [days].
         """
         self.aq_por = aq_por
         self.ct = ct
@@ -369,12 +305,15 @@ class CarterTracy:
         self.pr = pr
 
     def _set_pr_and_time_step(self, pr, time_step):
-        """
-        Private method to assign value to the pr and time_step
-        properties of the aquifer Carter Tracy
-        :param
-        pr: List of Measured reservoir pressure, psi.
-        time_step: List of Time lapses, days.
+        """Assigns values to the pr and time_step properties of the Carter-Tracy
+        aquifer.
+
+        This is a private method used internally to set the reservoir pressure
+        and time step values for the Carter-Tracy aquifer model.
+
+        Args:
+            pr (list): A list of measured reservoir pressure values in psi.
+            time_step (list): A list of time-lapse values in days.
         """
 
         self.pr = pr
@@ -404,15 +343,23 @@ class CarterTracy:
         self.we()
 
     def we(self) -> pd.DataFrame:
-        """
-        Method to calculate cumulative influx of water and gets the values -
-        in a DataFrame.
+        """Calculates cumulative influx of water and returns the values in a
+        DataFrame.
 
-        :return:
-        pd.Dataframe: DataFrame wit the delta WE, Cumulative WE and time
-        lapses columns.
-        """
+        This method computes the cumulative influx of water into the aquifer
+        based on the specified parameters and conditions. It generates a
+        DataFrame containing the cumulative water influx and elapsed time for
+        each time step.
 
+        Raises:
+            ValueError: If any pressure value is less than or equal to zero.
+            ValueError: If the dimensions of the pressure array and time array
+                are not equal.
+
+        Returns:
+            df: A DataFrame with columns for cumulative water influx
+                (Cumulative We) and elapsed time (Elapsed time, days).
+        """
         # Check if pressure and time are arrays, lists or floats
         pr_array = variable_type(self.pr)
         t_array = variable_type(self.time)
@@ -488,12 +435,15 @@ class CarterTracy:
         return df
 
     def get_we(self) -> pd.Series:
-        """
-        Method than encapsulated a DataFrame to gets an only column of
-        Cumulative We.
+        """Encapsulates the DataFrame to return only the cumulative water
+        influx.
 
-        :return:
-        pd.Series: A column of values of Cumulative We
+        This method retrieves the cumulative water influx (Cumulative We) from
+        the DataFrame generated by the `we` method and returns it as a Series.
+
+        Returns:
+            We: A Series containing the values of cumulative water
+                influx (Cumulative We).
         """
         we = self.we()
         return we["Cumulative We"]
