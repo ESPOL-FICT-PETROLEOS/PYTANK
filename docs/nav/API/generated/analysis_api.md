@@ -1,2 +1,0 @@
-# **Analysis Module**
-::: pytank.analysis

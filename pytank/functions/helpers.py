@@ -170,7 +170,7 @@ def create_wells(
             press_vector = PressVector(freq=freq_press, data=group_press)
 
         # Create well lists
-        info_well = Well(name=name, prod_data=prod_vector,
+        info_well = Well(name_well=name, prod_data=prod_vector,
                          press_data=press_vector)
 
         # Add wells list to tanks dict
@@ -199,10 +199,10 @@ def search_wells(wells: List[Well], well_names: List[str]) -> List[Well]:
         Warning:If any of the specified well names are not found in the list of
             wells.
     """
-    result = [well for well in wells if well.name in well_names]
+    result = [well for well in wells if well.name_well in well_names]
 
     # Well no found
-    found_well_names = [well.name for well in result]
+    found_well_names = [well.name_well for well in result]
     not_found_wells = [name for name in well_names if
                        name not in found_well_names]
     # Warning

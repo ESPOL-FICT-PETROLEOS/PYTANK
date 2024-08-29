@@ -498,7 +498,7 @@ class Analysis(BaseModel):
 
         ax1.set_xlabel("Np Cumulative Oil Production [MMStb]")
         ax1.set_ylabel("F/Eo+Efw")
-        ax1.set_title("Campbell plot of " + str(self.tank_class.name.
+        ax1.set_title("Campbell plot of " + str(self.tank_class.name_tank.
                                                 replace("_", " ")))
         textstr = (
             "Graph that gives an "
@@ -649,7 +649,7 @@ class Analysis(BaseModel):
         ax2.set_ylabel("F-We")
         ax2.set_title(
             "Havlena y Odeh plot of "
-            + str(self.tank_class.name.replace("_", " "))
+            + str(self.tank_class.name_tank.replace("_", " "))
             + name_aquifer
         )
 
@@ -715,7 +715,7 @@ class Analysis(BaseModel):
         df = self.mat_bal_df()
         press_calc = []
 
-        # name of aquifer model:
+        # name_tank of aquifer model:
         model_aq_name = ""
         # Fetkovich Aquifer Model
         if isinstance(self.tank_class.aquifer, Fetkovich):
@@ -852,7 +852,7 @@ class Analysis(BaseModel):
 
         ax.set_title(
             "Cumulative Production per Well - "
-            + str(self.tank_class.name.replace("_", " ").upper()),
+            + str(self.tank_class.name_tank.replace("_", " ").upper()),
             fontsize=16,
         )
         ax.set_xlabel("Well", fontsize=14)
@@ -914,7 +914,7 @@ class Analysis(BaseModel):
                      color=colors(i))
             ax1.set_title(
                 "Oil Flow Rate vs Time by Well - " +
-                str(self.tank_class.name.replace("_", " ").upper()),
+                str(self.tank_class.name_tank.replace("_", " ").upper()),
                 fontsize=16,
             )
             ax1.set_ylabel("Flow Rate [Stb/year]", fontsize=14)
@@ -926,7 +926,7 @@ class Analysis(BaseModel):
                      color=colors(i))
             ax2.set_title(
                 "Water Flow Rate vs Time by Well - " +
-                str(self.tank_class.name.replace("_", " ").upper()),
+                str(self.tank_class.name_tank.replace("_", " ").upper()),
                 fontsize=16,
             )
             ax2.set_ylabel("Flow Rate [Stb/year]", fontsize=14)
@@ -981,7 +981,7 @@ class Analysis(BaseModel):
 
         ax1.set_title(
             "Cumulative Production per Date - "
-            + str(self.tank_class.name.replace("_", " ").upper()),
+            + str(self.tank_class.name_tank.replace("_", " ").upper()),
             fontsize=16,
         )
         ax1.set_xlabel("Date", fontsize=14)
@@ -1021,7 +1021,7 @@ class Analysis(BaseModel):
 
         ax2.set_title(
             "Cumulative Total Liquid Production per Date - "
-            + str(self.tank_class.name.replace("_", " ").upper()),
+            + str(self.tank_class.name_tank.replace("_", " ").upper()),
             fontsize=16,
         )
         ax2.set_xlabel("Date", fontsize=14)
@@ -1110,7 +1110,7 @@ class Analysis(BaseModel):
 
         ax4.set_title(
             "Pressure per Date - "
-            + str(self.tank_class.name.replace("_", " ").upper()),
+            + str(self.tank_class.name_tank.replace("_", " ").upper()),
             fontsize=16,
         )
         ax4.set_xlabel("Date", fontsize=14)
@@ -1152,7 +1152,7 @@ class Analysis(BaseModel):
 
         ax6.set_title(
             "Pressure vs Cumulative Production - "
-            + str(self.tank_class.name.replace("_", " ").upper()),
+            + str(self.tank_class.name_tank.replace("_", " ").upper()),
             fontsize=16,
         )
         ax6.set_xlabel("Pressure", fontsize=14)
@@ -1198,7 +1198,7 @@ class Analysis(BaseModel):
 
         ax7.set_title(
             "Average Pressure vs Cumulative Production - "
-            + str(self.tank_class.name.replace("_", " ").upper()),
+            + str(self.tank_class.name_tank.replace("_", " ").upper()),
             fontsize=16,
         )
         ax7.set_xlabel("Average Pressure", fontsize=14)
@@ -1248,7 +1248,7 @@ class Analysis(BaseModel):
         )
         ax1.set_title(
             "Oil Flow Rate vs Time by "
-            + str(self.tank_class.name.replace("_", " ").upper()),
+            + str(self.tank_class.name_tank.replace("_", " ").upper()),
             fontsize=16,
         )
         ax1.set_ylabel("Flow Rate [Stb/year]", fontsize=14)
@@ -1264,7 +1264,7 @@ class Analysis(BaseModel):
         )
         ax2.set_title(
             "Water Flow Rate vs Time by "
-            + str(self.tank_class.name.replace("_", " ").upper()),
+            + str(self.tank_class.name_tank.replace("_", " ").upper()),
             fontsize=16,
         )
         ax2.set_ylabel("Flow Rate [Stb/year]", fontsize=14)

@@ -113,15 +113,15 @@ def interp_dates_row(
     Parameters:
         row (pd.Series): A row from the DataFrame, usually used with apply
             method, axis=1.
-        x_result_col (str): The x value column name to interpolate in the target
+        x_result_col (str): The x value column name_tank to interpolate in the target
             row.
         df_input (pd.DataFrame): The input DataFrame that will be used for
             regression.
-        x_input_col (str): The x column name in the input DataFrame.
-        y_input_col (str): The y column name in the input DataFrame.
-        input_cond_col_name (str): The condition column name in the input
+        x_input_col (str): The x column name_tank in the input DataFrame.
+        y_input_col (str): The y column name_tank in the input DataFrame.
+        input_cond_col_name (str): The condition column name_tank in the input
             DataFrame.
-        result_cond_col_name (str): The condition column name in the result
+        result_cond_col_name (str): The condition column name_tank in the result
             DataFrame.
         left (optional, float): Value to return for x < x_dates[0], default is
             y_values[0].
@@ -132,7 +132,7 @@ def interp_dates_row(
         dates_row (float): Returns an interpolated value of float type.
     """
 
-    # Filter the input data frame according to group name
+    # Filter the input data frame according to group name_tank
     df_input_filt = df_input.loc[
         df_input[input_cond_col_name] == row[result_cond_col_name]
     ]

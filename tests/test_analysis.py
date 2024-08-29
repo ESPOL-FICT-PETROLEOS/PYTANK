@@ -11,7 +11,7 @@ class TestAnalysis(unittest.TestCase):
     def setUp(self):
         # Create sample data for wells
         well1 = Well(
-            name="A-1-P",
+            name_well="A-1-P",
             prod_data=ProdVector(
                 freq="MS",
                 data=pd.DataFrame(
@@ -38,7 +38,7 @@ class TestAnalysis(unittest.TestCase):
         )
 
         well2 = Well(
-            name="A-2-P",
+            name_well="A-2-P",
             prod_data=ProdVector(
                 freq="MS",
                 data=pd.DataFrame(
@@ -103,7 +103,7 @@ class TestAnalysis(unittest.TestCase):
 
         # Create the Tank object with the sample data
         self.tank1 = Tank(
-            name="tank_center",
+            name_tank="tank_center",
             wells=[well1, well2],
             oil_model=self.oil_model,
             water_model=self.water_model,

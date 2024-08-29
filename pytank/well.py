@@ -27,13 +27,13 @@ class Well(BaseModel):
     serialization functionality.
 
     Attributes:
-        name (str): The name of the well.
+        name_well (str): The name_tank of the well.
         prod_data (Optional[ProdVector]): The production data vector for the
             well. Defaults to None.
         press_data (Optional[PressVector]): The pressure data vector for the
             well. Defaults to None.
     """
 
-    name: str
+    name_well: str
     prod_data: Optional[ProdVector] = None
     press_data: Optional[PressVector] = None

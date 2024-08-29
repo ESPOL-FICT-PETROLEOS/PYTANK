@@ -28,7 +28,7 @@ def test_create_wells_with_valid_data():
     wells = create_wells(df_prod, df_press, freq_prod="MS", freq_press=None)
 
     assert len(wells) == 1
-    assert wells[0].name == "Well1"
+    assert wells[0].name_well == "Well1"
     assert isinstance(wells[0].prod_data, ProdVector)
     assert isinstance(wells[0].press_data, PressVector)
 
@@ -55,7 +55,7 @@ def test_create_wells_with_missing_data():
     wells = create_wells(df_prod, df_press, freq_prod="MS")
 
     assert len(wells) == 1
-    assert wells[0].name == "Well1"
+    assert wells[0].name_well == "Well1"
     assert isinstance(wells[0].prod_data, ProdVector)
     assert isinstance(wells[0].press_data, PressVector)
 
@@ -96,8 +96,8 @@ def test_create_wells_with_multiple_wells():
     wells = create_wells(df_prod, df_press, freq_prod="MS")
 
     assert len(wells) == 2
-    assert "Well1" in [well.name for well in wells]
-    assert "Well2" in [well.name for well in wells]
+    assert "Well1" in [well.name_well for well in wells]
+    assert "Well2" in [well.name_well for well in wells]
     for well in wells:
         assert isinstance(well.prod_data, ProdVector)
         assert isinstance(well.press_data, PressVector)
@@ -106,23 +106,23 @@ def test_create_wells_with_multiple_wells():
 # Test function search wells
 def test_search_wells_found():
     wells = [
-        Well(name="Well1", prod_data=None, press_data=None),
-        Well(name="Well2", prod_data=None, press_data=None),
-        Well(name="Well3", prod_data=None, press_data=None),
+        Well(name_well="Well1", prod_data=None, press_data=None),
+        Well(name_well="Well2", prod_data=None, press_data=None),
+        Well(name_well="Well3", prod_data=None, press_data=None),
     ]
     well_names = ["Well1", "Well3"]
 
     result = search_wells(wells, well_names)
 
     assert len(result) == 2
-    assert all(well.name in well_names for well in result)
+    assert all(well.name_well in well_names for well in result)
 
 
 def test_search_wells_not_found():
     wells = [
-        Well(name="Well1", prod_data=None, press_data=None),
-        Well(name="Well2", prod_data=None, press_data=None),
-        Well(name="Well3", prod_data=None, press_data=None),
+        Well(name_well="Well1", prod_data=None, press_data=None),
+        Well(name_well="Well2", prod_data=None, press_data=None),
+        Well(name_well="Well3", prod_data=None, press_data=None),
     ]
     well_names = ["Well1", "Well4", "Well3"]
 
@@ -130,7 +130,7 @@ def test_search_wells_not_found():
         result = search_wells(wells, well_names)
 
     assert len(result) == 2
-    assert all(well.name in ["Well1", "Well3"] for well in result)
+    assert all(well.name_well in ["Well1", "Well3"] for well in result)
     assert len(record) == 1
     assert "Well4" in str(record[0].message)
 

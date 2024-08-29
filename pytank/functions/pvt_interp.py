@@ -29,9 +29,9 @@ def interp_pvt_matbal(
         pvt (pd.DataFrame):
             DataFrame containing PVT data.
         press_col_name (str):
-            String indicating the column name of pressure values.
+            String indicating the column name_tank of pressure values.
         prop_col_name (str):
-            String indicating the column name of PVT property values to be
+            String indicating the column name_tank of PVT property values to be
             interpolated.
         press_target (float):
             Numeric value indicating the reservoir pressure target to

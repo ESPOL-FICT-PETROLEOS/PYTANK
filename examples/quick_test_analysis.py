@@ -28,7 +28,7 @@ fet = Fetkovich(
 )
 
 tank_fet = Tank(
-    name=tank_name,
+    name_tank=tank_name,
     wells=wells_info,
     oil_model=oil_model,
     water_model=water_model,

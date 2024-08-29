@@ -50,7 +50,7 @@ oil_model = OilModel(
 water_model = WaterModel(salinity=3000, temperature=200, unit=1)
 
 tank1 = Tank(
-    name=tank_name,
+    name_tank=tank_name,
     wells=wells_info,
     oil_model=oil_model,
     water_model=water_model,

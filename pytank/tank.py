@@ -52,7 +52,7 @@ class Tank(BaseModel):
     functionality.
     """
 
-    name: str
+    name_tank: str
     wells: list
     oil_model: OilModel
     water_model: WaterModel
@@ -67,7 +67,7 @@ class Tank(BaseModel):
 
     def __init__(
         self,
-        name: str,
+        name_tank: str,
         wells: list,
         oil_model: OilModel,
         water_model: WaterModel,
@@ -80,7 +80,7 @@ class Tank(BaseModel):
         """Initializes a Tank instance with the given parameters.
 
         Args:
-            name (str): The name of the tank (reservoir).
+            name_tank (str): The name_well of the tank (reservoir).
             wells (list): A list of Well instances associated with the tank.
             oil_model (BaseModel): An instance of the OilModel class for the
                 tank.
@@ -94,7 +94,7 @@ class Tank(BaseModel):
                 of an aquifer class (Fetkovich or CarterTracy) or None.
         """
         super().__init__(
-            name=name,
+            name_tank=name_tank,
             wells=wells,
             oil_model=oil_model,
             water_model=water_model,
@@ -117,8 +117,8 @@ class Tank(BaseModel):
         df_press = pd.DataFrame()
         for well in self.wells:
             press_vector = well.press_data
-            well_name = well.name
-            tank_name = self.name
+            well_name = well.name_well
+            tank_name = self.name_tank
             if press_vector is not None:
 
                 well_date = press_vector.data.index
@@ -190,8 +190,8 @@ class Tank(BaseModel):
         df_prod = pd.DataFrame()
         for well in self.wells:
             prod_vector = well.prod_data
-            well_name = well.name
-            tank_name = self.name
+            well_name = well.name_well
+            tank_name = self.name_tank
             if prod_vector is not None:
                 well_date = prod_vector.data.index
                 well_oil_cum = prod_vector.data[OIL_CUM_COL]

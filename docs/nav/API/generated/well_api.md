@@ -1,2 +1,0 @@
-# **Well Module**
-::: pytank.well

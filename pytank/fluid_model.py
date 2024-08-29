@@ -83,7 +83,7 @@ class OilModel(BaseModel):
         """Interpolates a PVT property column at the given pressure.
 
         Args:
-            column_name (str): The name of the PVT property column.
+            column_name (str): The name_tank of the PVT property column.
             pressure (float): The pressure value at which to interpolate.
 
         Returns:

@@ -6,7 +6,7 @@ from quick_test_tank import wells_info, oil_model, water_model
 tank_name = "tank_center"
 
 tank1 = Tank(
-    name=tank_name,
+    name_tank=tank_name,
     wells=wells_info,
     oil_model=oil_model,
     water_model=water_model,

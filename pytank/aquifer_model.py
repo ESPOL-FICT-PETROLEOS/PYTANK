@@ -21,7 +21,6 @@ from pytank.functions.utilities import variable_type
 from datetime import datetime
 from typing import Optional
 
-
 # Fetkovich
 class Fetkovich:
     """This class implements Fetkovich's method for calculating water influx

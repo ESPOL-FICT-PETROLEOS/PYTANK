@@ -168,12 +168,12 @@ def pressure_vol_avg(
             If nan values are present in the UW columns, they will be replaced
             by zero. The last case is assuming that the recorded pressures were
             obtained without significant underground withdrawal.
-        entity_col (str): The column name where the entities are defined,
+        entity_col (str): The column name_tank where the entities are defined,
             i.e: wells
-        date_col (str): The column name where the pressure dates are defined.
-        press_col (str): The column name where the pressure information is
+        date_col (str): The column name_tank where the pressure dates are defined.
+        press_col (str): The column name_tank where the pressure information is
             defined.
-        uw_col (str): The column name where the underground withdrawal
+        uw_col (str): The column name_tank where the underground withdrawal
             information.
         avg_freq (str): The time frequency at which the pressure volumetric
             average is required.
@@ -1005,8 +1005,8 @@ def fetkovich_press(
         sw0 (float): Initial water saturation [%].
         poes (float): Inferred POES (Petroleum-in-Place) [bbl].
         boi (float): Initial oil formation volume factor [rb/stb].
-        ppvt_col (str): Column name for pressure in the PVT data frame.
-        oil_fvf_col (str): Column name for oil formation volume factor in the
+        ppvt_col (str): Column name_tank for pressure in the PVT data frame.
+        oil_fvf_col (str): Column name_tank for oil formation volume factor in the
             PVT data frame.
 
     Returns:
@@ -1080,8 +1080,8 @@ def calculated_pressure_fetkovich(
         pi (float): Initial reservoir pressure [psi].
         sw0 (float): Initial water saturation [%].
         poes (float): Inferred POES (Petroleum-in-Place) [bbl].
-        ppvt_col (str): Column name for pressure in the PVT data frame.
-        oil_fvf_col (str): Column name for oil formation volume factor in the
+        ppvt_col (str): Column name_tank for pressure in the PVT data frame.
+        oil_fvf_col (str): Column name_tank for oil formation volume factor in the
             PVT data frame.
 
     Returns:
@@ -1272,8 +1272,8 @@ def carter_tracy_press(
         sw0 (float): Initial water saturation [%].
         poes (float): Estimated Original Oil in Place (OOIP) [bbl].
         boi (float): Initial oil formation volume factor [rb/stb].
-        ppvt_col (str): Column name for pressure in the PVT data frame.
-        oil_fvf_col (str): Column name for oil formation volume factor in the
+        ppvt_col (str): Column name_tank for pressure in the PVT data frame.
+        oil_fvf_col (str): Column name_tank for oil formation volume factor in the
             PVT data frame.
 
     Returns:
@@ -1347,8 +1347,8 @@ def calculate_pressure_with_carter_tracy(
         pi (float): Initial reservoir pressure [psi].
         sw0 (float): Initial water saturation [%].
         poes (float): Inferred original petroleum in situ [bbl].
-        ppvt_col (str): Column name for pressure in the PVT data frame.
-        oil_fvf_col (str): Column name for oil formation volume factor in the
+        ppvt_col (str): Column name_tank for pressure in the PVT data frame.
+        oil_fvf_col (str): Column name_tank for oil formation volume factor in the
             PVT data frame.
 
     Returns:

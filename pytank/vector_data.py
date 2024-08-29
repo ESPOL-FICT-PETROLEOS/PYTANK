@@ -37,7 +37,6 @@ from pytank.constants.constants import (
     INJ_SCHEMA,
 )
 
-
 class VectorData(BaseModel):
     """Handles vector data with a specific validation scheme and date index.
 
