@@ -1,15 +1,22 @@
 """
-material_balance_functions.py
+material_balance.py
 
-This module contains the necessary functions to calculate the poes of graphic
-and analytical way.
+This module contains the necessary functions to calculate the properties of
+graphic and analytical methods.
 
 Libraries:
-    - pandas
-    - numpy
-    - matplotlib
-    - math
-    - scipy
+    - pandas: For data manipulation and analysis.
+    - numpy: For numerical operations and handling arrays.
+    - matplotlib: For creating static, animated, and interactive visualizations.
+    - math: Provides access to mathematical functions.
+    - scipy: For scientific and technical computing.
+    - warnings: To issue warning messages to the user.
+
+Note:
+    Ensure that all required libraries are installed in your environment
+    before using this module. You can install missing libraries using
+    pip, for example:
+        pip install pandas numpy matplotlib scipy
 """
 
 import pandas as pd
@@ -17,12 +24,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from scipy import stats
+from typing import Optional, Union, Tuple
 import warnings
 from scipy.optimize import fsolve
 from pytank.functions.pvt_correlations import Bo_bw, comp_bw_nogas
 from pytank.functions.pvt_interp import interp_pvt_matbal
-from pytank.functions.utilities import (material_bal_var_type,
-                                        material_bal_numerical_data)
+from pytank.functions.utilities import (
+    material_bal_var_type,
+    material_bal_numerical_data,
+)
 
 
 # This part of this module contains functions that are used to calculate the
@@ -34,53 +44,49 @@ def underground_withdrawal(
         oil_cum_col: str,
         water_cum_col: str,
         gas_cum_col: str,
-        oil_fvf,
-        water_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        gas_water_rs,
+        oil_fvf: Optional[Union[str, float]] = None,
+        water_fvf: Optional[Union[str, float]] = None,
+        gas_fvf: Optional[Union[str, float]] = None,
+        gas_oil_rs: Optional[Union[str, float]] = None,
+        gas_water_rs: Optional[Union[str, float]] = None,
 ) -> np.array:
     """
     Calculates the total underground withdrawal of a well using its cumulative
-    production information and fluid properties
+    production information and fluid properties.
 
-    Parameters
-    ----------
-    data: Pandas Dataframe
-        Contains the production information for a single entity
-    oil_cum_col: str
-        Name of oil cumulative column in the data (stb)
-    water_cum_col: str
-        Name of water cumulative column in the data (stb)
-    gas_cum_col: str
-        Name of the gas cumulative column in the data (scf)
-    oil_fvf: str or float
-        Oil formation volume factor column in DataFrame or numeric value
-        (rb/stb)
-    water_fvf: str or float
-        Water formation volume factor in DataFrame or numeric value  (rb/stb)
-    gas_fvf: str or float
-        Gas formation volume factor in DataFrame or numeric value (rb/scf)
-    gas_oil_rs: str or float
-        Solution gas-oil ratio in DataFrame or numeric value (scf/stb)
-    gas_water_rs: str or float
-        Solution gas-water ratio in DataFrame or numeric value (scf/stb)
+    This function computes the total underground withdrawal based on the
+    cumulative production data for oil, water, and gas, along with the relevant
+    fluid properties.
 
-    Returns
-    ------
-    Numpy Array:
-        Returns numpy array with the total underground withdrawal
+    Args:
+        data (DataFrame): A pandas DataFrame containing the production
+            information for a single entity.
+        oil_cum_col (str): Name of the oil cumulative production column in the
+            data [stb].
+        water_cum_col (str): Name of the water cumulative production column in
+            the data [stb].
+        gas_cum_col (str): Name of the gas cumulative production column in the
+            data [scf].
+        oil_fvf (Optional[Union[str, float]]): Oil formation volume factor
+            column in DataFrame or numeric value [rb/stb].
+        water_fvf (Optional[Union[str, float]]): Water formation volume factor
+            in DataFrame or numeric value [rb/stb].
+        gas_fvf (Optional[Union[str, float]]): Gas formation volume factor in
+            DataFrame or numeric value [rb/scf].
+        gas_oil_rs (Optional[Union[str, float]]): Solution gas-oil ratio in
+            DataFrame or numeric value [scf/stb].
+        gas_water_rs (Optional[Union[str, float]]): Solution gas-water ratio in
+            DataFrame or numeric value [scf/stb].
 
-    Raises
-    ------
-    TypeError:
-        When the input data is not a pandas DataFrame or the required numeric
-        arguments
-        are not numeric.
+    Returns:
+        uw_array: Returns numpy array with the total underground withdrawal
 
-    ArithmeticError:
-        If the free gas calculation results in a negative value.
+    Raises:
+        TypeError: When the input data is not a pandas DataFrame or the
+            required numeric arguments are not numeric.
 
+        ArithmeticError: If the free gas calculation results in a negative
+            value.
     """
 
     if not isinstance(data, pd.DataFrame):
@@ -121,76 +127,77 @@ def underground_withdrawal(
     df[cols_output] = df[cols_input].diff().fillna(data[cols_input])
 
     # Calculate gas withdrawal
-    gas_withdrawal = (df[gas_vol_col] - df[oil_vol_col] * df[rs_col] -
-                      df[water_vol_col] * df[rsw_col]) * df[gas_fvf_col]
+    gas_withdrawal = (
+                             df[gas_vol_col] - df[oil_vol_col] * df[rs_col] -
+                             df[water_vol_col] * df[rsw_col]
+                     ) * df[gas_fvf_col]
 
     if sum(gas_withdrawal < 0) > 0:
         raise ArithmeticError(
             "Gas withdrawal results in negative values. Consider "
             "adjusting solution gas-oil/water ratio to reflect "
-            "consistent gas production")
+            "consistent gas production"
+        )
 
     gas_withdrawal.fillna(0, inplace=True)
 
-    uw = (df[oil_vol_col] * df[oil_fvf_col] +
-          df[water_vol_col] * df[water_fvf_col] + gas_withdrawal)
+    uw = (
+            df[oil_vol_col] * df[oil_fvf_col]
+            + df[water_vol_col] * df[water_fvf_col]
+            + gas_withdrawal
+    )
 
     return uw.cumsum().values
 
 
 def pressure_vol_avg(
-    data: pd.DataFrame,
-    entity_col,
-    date_col,
-    press_col,
-    uw_col,
-    avg_freq="1MS",
-    position="begin",
+        data: pd.DataFrame,
+        entity_col,
+        date_col,
+        press_col,
+        uw_col,
+        avg_freq="1MS",
+        position="begin",
 ) -> pd.DataFrame:
     """
-    Parameters
-    ----------
-    data: pandas DataFrame
-        The pressure information containing pressure data, the dates and
-        the underground withdrawal for each well. If there are nan values in
-        thepressure column these rows will be deleted from the DataFrame.
-        If nan values are present in the UW columns, they will be replaced
-        by zero. The last case is assuming that the recorded pressures were
-        obtained without significant underground withdrawal
-    entity_col: str
-        The column name where the entities are defined, i.e: wells
-    date_col: str
-        The column name where the pressure dates are defined
-    press_col: str
-        The column name where the pressure information is defined
-    uw_col: str
-        The column name where the underground withdrawal information is defined
-    avg_freq: str
-        The time frequency at which the pressure volumetric average is required
-    position: str
-        The position of the grouped date within its interval. Accepted
-        values are:
-        "begin": dates start at the beginning of the grouped interval
-        "middle": dates start in the middle of the grouped interval
-        "end": dates start at the end of the grouped interval
+    Args:
+        data (DataFrame): The pressure information containing pressure data,
+            the dates and the underground withdrawal for each well. If there are
+            *nan* values in the pressure column these rows will be deleted from
+            the DataFrame.
+            If nan values are present in the UW columns, they will be replaced
+            by zero. The last case is assuming that the recorded pressures were
+            obtained without significant underground withdrawal.
+        entity_col (str): The column name_tank where the entities are defined,
+            i.e: wells
+        date_col (str): The column name_tank where the pressure dates are defined.
+        press_col (str): The column name_tank where the pressure information is
+            defined.
+        uw_col (str): The column name_tank where the underground withdrawal
+            information.
+        avg_freq (str): The time frequency at which the pressure volumetric
+            average is required.
+        position (str):
+            - "begin": dates start at the beginning of the grouped interval
+            - "middle": dates start in the middle of the grouped interval
+            - "end": dates start at the end of the grouped interval
 
-    Returns
-    -------
-    pandas Dataframe
-        A DataFrame with the grouped dates and pressure volumetric averages
+    Returns:
+        press_df (DataFrame): A DataFrame with the grouped dates and pressure
+            volumetric averages.
 
-    Raises
-    ------
-    ValueError
-        If there are underground withdrawal values that are not monotonically
-        increasing
+
+    Raises:
+        ValueError: If there are underground withdrawal values that are not
+            monotonically increasing.
     """
     # Avoid warnings
     warnings.filterwarnings(
         "ignore",
         category=FutureWarning,
         message="'M' is deprecated and will be removed in a future version,"
-                " please use 'ME' instead.")
+                " please use 'ME' instead.",
+    )
 
     df = data.copy()
 
@@ -206,23 +213,27 @@ def pressure_vol_avg(
         if not mono:
             raise ValueError(
                 f"Well {well} contains underground withdrawal values that "
-                f"are not increasing with time")
+                f"are not increasing with time"
+            )
 
     pos = ["begin", "middle", "end"]
 
     # Check if position argument has the correct values
     if position not in pos:
-        raise ValueError(f"{position} is not an accepted value for 'position' "
-                         f"argument. Use any of {pos} instead.")
+        raise ValueError(
+            f"{position} is not an accepted value for 'position' "
+            f"argument. Use any of {pos} instead."
+        )
 
     # Calculate the differences in pressure and underground withdrawal per well
     delta_uw_col = "delta_uw"
     delta_press_col = "delta_press"
 
-    df[[delta_uw_col, delta_press_col
-        ]] = (df.groupby(entity_col)[[uw_col, press_col
-                                      ]].diff().fillna(df[[uw_col,
-                                                           press_col]]))
+    df[[delta_uw_col, delta_press_col]] = (
+        df.groupby(entity_col)[[uw_col, press_col]]
+        .diff()
+        .fillna(df[[uw_col, press_col]])
+    )
 
     gr_press = df.groupby(pd.Grouper(key=date_col, freq=avg_freq))
     result_avg_press = {date_col: [], press_col: []}
@@ -240,9 +251,10 @@ def pressure_vol_avg(
         # defined equation
         g_1 = group[cond]
         if len(g_1) > 0:
-            avg_1 = (g_1[press_col] * g_1[delta_uw_col] /
-                     g_1[delta_press_col]).sum() / (
-                         g_1[delta_uw_col] / g_1[delta_press_col]).sum()
+            avg_1 = (
+                            g_1[press_col] * g_1[delta_uw_col] / g_1[
+                        delta_press_col]
+                    ).sum() / (g_1[delta_uw_col] / g_1[delta_press_col]).sum()
 
         # This group has no UW and pressure changes, the average of these
         # values will be processed normally
@@ -284,40 +296,43 @@ def pressure_vol_avg(
     return result
 
 
-def oil_expansion(data: pd.DataFrame, oil_fvf, gas_fvf, gas_oil_rs,
-                  gas_oil_rs_init, oil_fvf_init) -> pd.Series:
-    """
-    Calculates the oil expansion using its cumulative production
-    information and fluid properties
+def oil_expansion(
+        data: pd.DataFrame,
+        oil_fvf: Optional[Union[str, float]] = None,
+        gas_fvf: Optional[Union[str, float]] = None,
+        gas_oil_rs: Optional[Union[str, float]] = None,
+        gas_oil_rs_init: Optional[Union[int, float]] = None,
+        oil_fvf_init: Optional[Union[int, float]] = None
+) -> pd.Series:
+    """Calculates the oil expansion using its cumulative production information
+    and fluid properties.
 
-    Parameters
-    ----------
-    data: Pandas Dataframe
-        Contains the production information for a single entity
-    oil_fvf: str or float
-        Oil formation volume factor column in DataFrame or numeric value
-        (rb/stb)
-    gas_fvf: str or float
-        Gas formation volume factor column in DataFrame or numeric value
-        (rb/scf)
-    gas_oil_rs: str or float
-        Solution gas-oil ratio column in DataFrame or numeric value (scf/stb)
-    gas_oil_rs_init: int or float
-        Initial solution gas-oil ratio (scf/stb)
-    oil_fvf_init: int or float
-        Initial oil formation volume factor (rb/stb)
+    This function computes the oil expansion based on the provided production
+    data and fluid properties. It requires a pandas DataFrame containing the
+    production information and optional parameters for the oil formation volume
+    factor, gas formation volume factor, solution gas-oil ratio, initial
+    solution gas-oil ratio, and initial oil formation volume factor.
 
-    Returns
-    -------
-    Pandas Series:
-        Returns Pandas Series with the oil expansion
+    Args:
+        data (pd.DataFrame): A pandas DataFrame containing the production
+            information for a single entity.
+        oil_fvf (Optional[Union[str, float]]): The oil formation volume factor
+            column in the DataFrame or a numeric value [rb/stb].
+        gas_fvf (Optional[Union[str, float]]): The gas formation volume factor
+            column in the DataFrame or a numeric value [rb/scf].
+        gas_oil_rs (Optional[Union[str, float]]): The solution gas-oil ratio
+            column in the DataFrame or a numeric value [scf/stb].
+        gas_oil_rs_init (Optional[Union[int, float]]): The initial solution
+            gas-oil ratio [scf/stb].
+        oil_fvf_init (Optional[Union[int, float]]): The initial oil formation
+            volume factor [rb/stb].
 
-    Raises
-    ------
-    TypeError:
-        When the input data is not a pandas DataFrame or the required numeric
-         arguments
-        are not numeric.
+    Returns:
+        Oil_Exp: Returns Pandas Series with the oil expansion.
+
+    Raises:
+        TypeError: When the input data is not a pandas DataFrame or the required
+            numeric arguments are not numeric.
     """
 
     # Define internal names for column in the DataFrame
@@ -347,37 +362,40 @@ def oil_expansion(data: pd.DataFrame, oil_fvf, gas_fvf, gas_oil_rs,
 
 
 # %%
-def gas_expansion(data: pd.DataFrame, oil_fvf, gas_fvf, gas_fvf_init,
-                  tot_fvf_init) -> pd.Series:
-    """
-    Calculates the gas expansion using its cumulative production
-    information and fluid properties
+def gas_expansion(
+        data: pd.DataFrame,
+        oil_fvf: Optional[Union[str, float]],
+        gas_fvf: Optional[Union[str, float]],
+        gas_fvf_init: Optional[Union[int, float]],
+        tot_fvf_init: Optional[Union[int, float]]
+) -> pd.Series:
+    """Calculates the gas expansion using its cumulative production information
+    and fluid properties.
 
-    Parameters
-    ----------
-    data: Pandas Dataframe
-        Contains the production information for a single entity
-    oil_fvf: str or float
-        Oil formation volume factor column in DataFrame or numeric value
-         (rb/stb)
-    gas_fvf: str or float
-        Gas formation volume factor in DataFrame or numeric value (rb/scf)
-    tot_fvf_init: int or float
-        Initial total volume factor of 2 phases (scf/stb)
-    gas_fvf_init: int or float
-        Initial gas formation volume factor (rb/scf)
+    This function computes the gas expansion based on the provided production
+    data and fluid properties. It requires a pandas DataFrame containing the
+    production information and parameters for the oil formation volume factor,
+    gas formation volume factor, initial gas formation volume factor, and
+    initial total volume factor of 2 phases.
 
-     Returns
-    -------
-    Pandas Series:
-        Returns Pandas series with the gas expansion
+    Parameters:
+        data (DataFrame): A pandas DataFrame containing the production
+            information for a single entity.
+        oil_fvf (Optional[Union[str, float]]): The oil formation volume factor
+            column in the DataFrame or a numeric value [rb/stb].
+        gas_fvf (Optional[Union[str, float]]): The gas formation volume factor
+            column in the DataFrame or a numeric value [rb/scf].
+        gas_fvf_init (Optional[Union[int, float]]): The initial gas formation
+            volume factor [rb/scf].
+        tot_fvf_init (Optional[Union[int, float]]): The initial total volume
+            factor of 2 phases [scf/stb].
 
-    Raises
-    ------
-    TypeError:
-        When the input data is not a pandas DataFrame or the required numeric
-         arguments
-        are not numeric.
+    Returns:
+        Gas_Exp: A pandas Series containing the calculated gas expansion.
+
+    Raises:
+        TypeError: If the input data is not a pandas DataFrame or the required
+            numeric arguments are not numeric.
     """
 
     # Define internal names for column in the DataFrame
@@ -405,50 +423,37 @@ def gas_expansion(data: pd.DataFrame, oil_fvf, gas_fvf, gas_fvf_init,
 
 def fw_expansion(
         data: pd.DataFrame,
-        oil_fvf,
+        oil_fvf: Union[str, float],
         p_col: str,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        pressure_init,
+        water_sat: Union[int, float],
+        water_comp: Union[int, float],
+        rock_comp: Union[int, float],
+        oil_fvf_init: Union[int, float],
+        pressure_init: Union[int, float]
 ) -> pd.Series:
-    """
-    Calculates the expansion of connate water and rock(formation) using its
-    cumulative
-    production information and fluid properties
+    """Calculates the expansion of connate water and rock(formation) using its
+    cumulative production information and fluid properties.
 
-    Parameters
-        ----------
-    data: Pandas Dataframe
-        Contains the production information for a single entity
-    oil_fvf: str or float
-        Oil formation volume factor column in DataFrame or numeric value
-        (rb/stb)
-    p_col: str
-        Name of the pressure column in the data (psi)
-    water_sat: int or float
-        Initial water saturation (%)
-    water_comp: int or float
-        Water compressibility (psi^-1)
-    rock_comp: int or float
-        Formation (rock) compressibility (psi^-1)
-    oil_fvf_init: int or float
-        Initial oil formation volume factor (rb/stb)
-    pressure_init: int or float
-        Initial reservoir pressure (psi)
+    Parameters:
+        data (pd.DataFrame): A pandas DataFrame containing the production
+            information for a single entity.
+        oil_fvf (Union[str, float]): Oil formation volume factor column in
+            DataFrame or numeric value [rb/stb].
+        p_col (str): Name of the pressure column in the data [psi].
+        water_sat (Union[int, float]): Initial water saturation [%].
+        water_comp (Union[int, float]): Water compressibility [psi⁻¹].
+        rock_comp (Union[int, float]): Formation (rock) compressibility [psi⁻¹].
+        oil_fvf_init (Union[int, float]): Initial oil formation volume factor
+            [rb/stb].
+        pressure_init (Union[int, float]): Initial reservoir pressure [psi].
 
-    Returns
-    -------
-    Pandas Series:
-        Returns Pandas series with the expansion of connate water and
-        rock(formation)
+    Returns:
+        Fw_Exp: A pandas Series containing the calculated expansion of
+            connate water and rock(formation).
 
-    Raises
-    ------
-    TypeError:
-        When the input data is not a pandas DataFrame or the required numeric
-        arguments are not numeric.
+    Raises:
+        TypeError: If the input data is not a pandas DataFrame or the required
+            numeric arguments are not numeric.
     """
 
     # Define internal names for column in the DataFrame
@@ -465,8 +470,10 @@ def fw_expansion(
     num_arg = [water_sat, water_comp, rock_comp, oil_fvf_init, pressure_init]
     material_bal_numerical_data(num_arg)
 
-    efw = (oil_fvf_init * ((water_comp * water_sat + rock_comp) /
-                           (1 - water_sat))) * (pressure_init - df[p_col])
+    efw = (oil_fvf_init * (
+            (water_comp * water_sat + rock_comp) / (1 - water_sat))) * (
+                  pressure_init - df[p_col]
+          )
 
     return efw
 
@@ -491,55 +498,54 @@ def ho_terms_equation(
         gas_oil_rs_init,
         pressure_init,
 ) -> pd.DataFrame:
+    """Calculates the terms of the Havlena and Odeh equation using the
+    cumulative production information and fluid properties of some wells and
+    reservoirs.
+
+    This function computes the terms of the Havlena and Odeh equation based on
+    the provided production data, fluid properties, and reservoir
+    characteristics. It requires a pandas DataFrame containing the production
+    information, pressure data, and various parameters related to oil, water,
+    and gas properties, as well as initial reservoir conditions.
+
+    Parameters:
+        data (pd.DataFrame): A pandas DataFrame containing the production
+            information for a single entity.
+        oil_cum_col (str): Name of the oil cumulative production column in the
+            data [stb].
+        water_cum_col (str): Name of the water cumulative production column in
+            the data [stb].
+        gas_cum_col (str): Name of the gas cumulative production column in the
+            data [scf].
+        p_col (str): Name of the pressure column in the data [Psi].
+        oil_fvf (Optional[Union[str, float]]): The oil formation volume factor
+            column in the DataFrame or a numeric value [rb/stb].
+        water_fvf (Optional[Union[str, float]]): The water formation volume
+            factor column in the DataFrame or a numeric value [rb/stb].
+        gas_fvf (Optional[Union[str, float]]): The gas formation volume factor
+            column in the DataFrame or a numeric value [rb/scf].
+        gas_oil_rs (Optional[Union[str, float]]): The solution gas-oil ratio
+            column in the DataFrame or a numeric value [scf/stb].
+        gas_water_rs (Optional[Union[str, float]]): The solution gas-water ratio
+            column in the DataFrame or a numeric value [scf/stb].
+        water_sat (Union[int, float]): The initial water saturation [%].
+        water_comp (Union[int, float]): The water compressibility [Psi⁻¹].
+        rock_comp (Union[int, float]): The formation (rock) compressibility
+            [Psi⁻¹].
+        oil_fvf_init (Optional[Union[int, float]]): The initial oil formation
+            volume factor [rb/stb].
+        gas_oil_rs_init (Optional[Union[int, float]]): The initial solution
+            gas-oil ratio [scf/stb].
+        gas_fvf_init (Optional[Union[int, float]]): The initial gas formation
+            volume factor [rb/scf].
+        tot_fvf_init (Optional[Union[int, float]]): The initial total volume
+            factor of 2 phases [scf/stb].
+        pressure_init (Union[int, float]): The initial reservoir pressure [Psi].
+
+    Returns:
+        Ho_df: A pandas DataFrame containing the calculated terms of the
+            Havlena and Odeh equation.
     """
-    Calculates the terms of the Havlena and Odeh equation using the cumulative
-    production information and fluid properties of some wells and reservoirs
-
-    Parameters
-    ----------
-    data: Pandas Dataframe
-        Contains the production information for a single entity
-    oil_cum_col: str
-        Name of oil cumulative column in the data (stb)
-    water_cum_col: str
-        Name of water cumulative column in the data (stb)
-    gas_cum_col: str
-        Name of the gas cumulative column in the data (scf)
-    oil_fvf: str or float
-        Oil formation volume factor column in DataFrame or numeric value \
-        (rb/stb)
-    water_fvf: str or float
-        Water formation volume factor in DataFrame or numeric value  (rb/stb)
-    gas_fvf: str or float
-        Gas formation volume factor in DataFrame or numeric value (rb/scf)
-    gas_oil_rs : str or float
-        Solution gas-oil ratio in DataFrame or numeric value (scf/stb)
-    gas_water_rs : str or float
-        Solution gas-water ratio in DataFrame or numeric value (scf/stb)
-    p_col: str
-        Name of the pressure column in the data (psi)
-    water_sat: int or float
-        Initial water saturation (%)
-    water_comp: int or float
-        Water compressibility (psi^-1)
-    rock_comp: int or float
-        Formation (rock) compressibility (psi^-1)
-    oil_fvf_init: int or float
-        Initial oil formation volume factor (rb/stb)
-    gas_oil_rs_init: int or float
-        Initial solution gas-oil ratio (scf/stb)
-    gas_fvf_init: int or float
-        Initial gas formation volume factor (rb/scf)
-    tot_fvf_init: int or float
-        Initial total volume factor of 2 phases (scf/stb)
-    pressure_init: int or float
-        Initial reservoir pressure (psi)
-
-    Returns
-    -------
-    Pandas Dataframe:
-        Returns a pandas concatenated Dataframe with the terms of the Havlena
-        and Odeh equation"""
 
     # Check the data type of numerical arguments
     num_arg = [
@@ -569,8 +575,9 @@ def ho_terms_equation(
 
     eg = gas_expansion(data, oil_fvf, gas_fvf, gas_fvf_init, tot_fvf_init)
 
-    eo = oil_expansion(data, oil_fvf, gas_fvf, gas_oil_rs, gas_oil_rs_init,
-                       oil_fvf_init)
+    eo = oil_expansion(
+        data, oil_fvf, gas_fvf, gas_oil_rs, gas_oil_rs_init, oil_fvf_init
+    )
 
     efw = fw_expansion(
         data,
@@ -600,74 +607,69 @@ def campbell_function(
         uw_col: str,
         eo_col: str,
         efw_col: str,
-        oil_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        water_fvf,
-        gas_water_rs,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        gas_fvf_init,
-        tot_fvf_init,
-        gas_oil_rs_init,
-        pressure_init,
+        oil_fvf: Optional[Union[str, float]],
+        water_fvf: Optional[Union[str, float]],
+        gas_fvf: Optional[Union[str, float]],
+        gas_oil_rs: Optional[Union[str, float]],
+        gas_water_rs: Optional[Union[str, float]],
+        water_sat: Union[int, float],
+        water_comp: Union[int, float],
+        rock_comp: Union[int, float],
+        oil_fvf_init: Optional[Union[int, float]],
+        gas_fvf_init: Optional[Union[int, float]],
+        tot_fvf_init: Optional[Union[int, float]],
+        gas_oil_rs_init: Optional[Union[int, float]],
+        pressure_init: Union[int, float]
 ):
+    """This function is able to plot the Campbell plot for a required reservoir.
+
+    This function plots the Campbell plot based on the provided production data,
+    fluid properties, and reservoir characteristics. It requires a pandas
+    DataFrame containing the production information, pressure data, and various
+    parameters related to oil, water, and gas properties, as well as initial
+    reservoir conditions.
+
+    Parameters:
+        data (pd.DataFrame): A pandas DataFrame containing the production
+            information for a single entity.
+        oil_cum_col (str): Name of the oil cumulative production column in the
+            data [stb].
+        water_cum_col (str): Name of the water cumulative production column in
+            the data [stb].
+        gas_cum_col (str): Name of the gas cumulative production column in the
+            data [scf].
+        p_col (str): Name of the pressure column in the data (psi).
+        uw_col (str): Name of the underground withdrawals fluids produced column
+            in the data.
+        eo_col (str): Name of the oil expansion column in the data.
+        efw_col (str): Name of the column referencing the expansion of the
+            connate water and rock in the data.
+        oil_fvf (Optional[Union[str, float]]): The oil formation volume factor
+            column in the DataFrame or a numeric value [rb/stb].
+        water_fvf (Optional[Union[str, float]]): The water formation volume
+            factor column in the DataFrame or a numeric value [rb/stb].
+        gas_fvf (Optional[Union[str, float]]): The gas formation volume factor
+            column in the DataFrame or a numeric value [rb/scf].
+        gas_oil_rs (Optional[Union[str, float]]): The solution gas-oil ratio
+            column in the DataFrame or a numeric value [scf/stb].
+        gas_water_rs (Optional[Union[str, float]]): The solution gas-water ratio
+            column in the DataFrame or a numeric value [scf/stb].
+        water_sat (Union[int, float]): The initial water saturation [%].
+        water_comp (Union[int, float]): The water compressibility [psi⁻¹].
+        rock_comp (Union[int, float]): The formation (rock) compressibility
+            [psi⁻¹].
+        oil_fvf_init (Optional[Union[int, float]]): The initial oil formation
+            volume factor [rb/stb].
+        gas_fvf_init (Optional[Union[int, float]]): The initial gas formation
+            volume factor [rb/scf].
+        tot_fvf_init (Optional[Union[int, float]]): The initial total volume
+            factor of 2 phases [scf/stb].
+        gas_oil_rs_init (Optional[Union[int, float]]): The initial solution
+            gas-oil ratio [scf/stb].
+        pressure_init (Union[int, float]): The initial reservoir pressure [Psi].
+
+
     """
-    This function is able to plot the campbell plot for a required reservoir
-
-    Parameters
-    ----------
-    data: Pandas Dataframe
-        Contains the production information for a single entity
-    oil_cum_col: str
-        Name of oil cumulative column in the data (stb)
-    water_cum_col: str
-        Name of water cumulative column in the data (stb)
-    gas_cum_col: str
-        Name of the gas cumulative column in the data (scf)
-    uw_col: str
-        Name of the underground withdrawals fluids produced column in the data
-    eo_col: str
-        Name of the oil expansion column in the data
-    efw_col: str
-        Name of the column referencing the expansion of the connate water and
-         rock in the data
-    oil_fvf: str or float
-        Oil formation volume factor column in DataFrame or numeric value
-        (rb/stb)
-    water_fvf: str or float
-        Water formation volume factor in DataFrame or numeric value  (rb/stb)
-    gas_fvf: str or float
-        Gas formation volume factor in DataFrame or numeric value (rb/scf)
-    gas_oil_rs : str or float
-        Solution gas-oil ratio in DataFrame or numeric value (scf/stb)
-    gas_water_rs : str or float
-        Solution gas-water ratio in DataFrame or numeric value (scf/stb)
-    p_col: str
-        Name of the pressure column in the data (psi)
-    water_sat: int or float
-        Initial water saturation (%)
-    water_comp: int or float
-        Water compressibility (psi^-1)
-    rock_comp: int or float
-        Formation (rock) compressibility (psi^-1)
-    oil_fvf_init: int or float
-        Initial oil formation volume factor (rb/stb)
-    tot_fvf_init: int or float
-        Initial total volume factor of 2 phases (scf/stb)
-    gas_oil_rs_init: int or float
-        Initial solution gas-oil ratio (scf/stb)
-    gas_fvf_init: int or float
-        Initial gas formation volume factor (rb/scf)
-    pressure_init: int or float
-        Initial reservoir pressure (psi)
-
-    Returns
-    -------
-    Matplotlib plot:
-        Returns a Matplotlib plot of F/Eo+Efw vs  Np (Campbell plot)"""
 
     # Check the data type of numerical arguments
     num_arg = [
@@ -724,76 +726,70 @@ def havlena_and_odeh(
         uw_col: str,
         eo_col: str,
         eg_col: str,
-        oil_fvf,
-        gas_fvf,
-        gas_oil_rs,
-        water_fvf,
-        gas_water_rs,
-        water_sat,
-        water_comp,
-        rock_comp,
-        oil_fvf_init,
-        gas_fvf_init,
-        tot_fvf_init,
-        gas_oil_rs_init,
-        pressure_init,
+        oil_fvf: Optional[Union[str, float]],
+        gas_fvf: Optional[Union[str, float]],
+        gas_oil_rs: Optional[Union[str, float]],
+        water_fvf: Optional[Union[str, float]],
+        gas_water_rs: Optional[Union[str, float]],
+        water_sat: Union[int, float],
+        water_comp: Union[int, float],
+        rock_comp: Union[int, float],
+        oil_fvf_init: Optional[Union[int, float]],
+        gas_fvf_init: Optional[Union[int, float]],
+        tot_fvf_init: Optional[Union[int, float]],
+        gas_oil_rs_init: Optional[Union[int, float]],
+        pressure_init: Union[int, float]
 ):
+    """This function is able to plot the Havlena and Odeh straight line, which
+    is useful to determine the OOIP and GIIP of a reservoir. This function
+    assumes that the reservoir contains a gas cap and neglects the expansion of
+    the connate water and rock.
+
+    This function plots the Havlena and Odeh straight line based on the provided
+    production data, fluid properties, and reservoir characteristics. It
+    requires a pandas DataFrame containing the production information, pressure
+    data, and various parameters related to oil, water, and gas properties, as
+    well as initial reservoir conditions.
+
+    Parameters:
+        data (DataFrame): A pandas DataFrame containing the production
+            information for a single entity.
+        oil_cum_col (str): Name of the oil cumulative production column in the
+            data [stb].
+        water_cum_col (str): Name of the water cumulative production column in
+            the data [stb].
+        gas_cum_col (str): Name of the gas cumulative production column in the
+            data [scf].
+        p_col (str): Name of the pressure column in the data [psi].
+        uw_col (str): Name of the underground withdrawals fluids produced column
+            in the data.
+        eo_col (str): Name of the oil expansion column in the data.
+        eg_col (str): Name of the gas expansion column in the data.
+        oil_fvf (Optional[Union[str, float]]): The oil formation volume factor
+            column in the DataFrame or a numeric value [rb/stb].
+        gas_fvf (Optional[Union[str, float]]): The gas formation volume factor
+            column in the DataFrame or a numeric value [rb/scf].
+        gas_oil_rs (Optional[Union[str, float]]): The solution gas-oil ratio
+            column in the DataFrame or a numeric value [scf/stb].
+        water_fvf (Optional[Union[str, float]]): The water formation volume
+            factor column in the DataFrame or a numeric value [rb/stb].
+        gas_water_rs (Optional[Union[str, float]]): The solution gas-water ratio
+            column in the DataFrame or a numeric value [scf/stb].
+        water_sat (Union[int, float]): The initial water saturation [%].
+        water_comp (Union[int, float]): The water compressibility [psi⁻¹].
+        rock_comp (Union[int, float]): The formation (rock) compressibility
+            [psi⁻¹].
+        oil_fvf_init (Optional[Union[int, float]]): The initial oil formation
+            volume factor [rb/stb].
+        gas_fvf_init (Optional[Union[int, float]]): The initial gas formation
+            volume factor [rb/scf].
+        tot_fvf_init (Optional[Union[int, float]]): The initial total volume
+            factor of 2 phases [scf/stb].
+        gas_oil_rs_init (Optional[Union[int, float]]): The initial solution
+            gas-oil ratio [scf/stb].
+        pressure_init (Union[int, float]): The initial reservoir pressure [psi].
+
     """
-    This function is able to plot the Havlena and Odeh straight line,
-    which is useful to determine the OOIP and GIIP of a reservoir. This
-    function assumes, that the reservoir contains gas cap and neglect the
-    expansion of the connate water and rock
-
-    Parameters
-    ----------
-    data: Pandas Dataframe
-        Contains the production information for a single entity
-    oil_cum_col: str
-        Name of oil cumulative column in the data (stb)
-    water_cum_col: str
-        Name of water cumulative column in the data (stb)
-    gas_cum_col: str
-        Name of the gas cumulative column in the data (scf)
-    uw_col: str
-        Name of the underground withdrawals fluids produced column in the data
-    eo_col: str
-        Name of the oil expansion column in the data
-    eg_col: str
-        Name of the gas expansion column in the data
-    oil_fvf: str or float
-        Oil formation volume factor column in DataFrame or numeric value
-        (rb/stb)
-    water_fvf: str or float
-        Water formation volume factor in DataFrame or numeric value  (rb/stb)
-    gas_fvf: str or float
-        Gas formation volume factor in DataFrame or numeric value (rb/scf)
-    tot_fvf_init: int or float
-        Initial total volume factor of 2 phases (scf/stb)
-    gas_oil_rs : str or float
-        Solution gas-oil ratio in DataFrame or numeric value (scf/stb)
-    gas_water_rs : str or float
-        Solution gas-water ratio in DataFrame or numeric value (scf/stb)
-    p_col: str
-        Name of the pressure column in the data (psi)
-    water_sat: int or float
-        Initial water saturation (%)
-    water_comp: int or float
-        Water compressibility (psi^-1)
-    rock_comp: int or float
-        Formation (rock) compressibility (psi^-1)
-    oil_fvf_init: int or float
-        Initial oil formation volume factor (rb/stb)
-    gas_oil_rs_init: int or float
-        Initial solution gas-oil ratio (scf/stb)
-    gas_fvf_init: int or float
-        Initial gas formation volume factor (rb/scf)
-    pressure_init: int or float
-        Initial reservoir pressure (psi)
-
-    Returns
-    -------
-        Returns a Matplotlib plot of F/Eo vs Eg/Eo (Havlena and Odeh Straight
-        line)"""
 
     # Check the data type of numerical arguments
     num_arg = [
@@ -833,7 +829,8 @@ def havlena_and_odeh(
     # Linear regression to calculate the slope and intercept of this
     # straight line
     slope, intercept, r_value, p_value, std_err = stats.linregress(
-        df[uw_col] / df[eo_col], df[eg_col] / df[eo_col])
+        df[uw_col] / df[eo_col], df[eg_col] / df[eo_col]
+    )
 
     # Equation of the fitted line using the slope and intercept from
     # linear regression
@@ -860,43 +857,42 @@ def havlena_and_odeh(
 # This part of this module contains functions that are used to calculate the
 # poes through the analytical method
 
-def ebm(p: float, pi: float, n_p: float, wp: float, bo: float, cf: float,
-        cw: float, sw0: float, boi: float, poes: float, we: float,
-        bw) -> float:
-    """
-    Calculates the function for the Energy Balance Method (EBM).
 
-    Parameters
-    ----------
-    p : float
-        Current reservoir pressure.
-    pi : float
-        Initial reservoir pressure.
-    n_p : float
-        Cumulative oil production.
-    wp : float
-        Cumulative water production.
-    bo : float
-        Oil formation volume factor.
-    cf : float
-        Total compressibility.
-    cw : float
-        Water compressibility.
-    sw0 : float
-        Initial water saturation.
-    boi : float
-        Initial oil formation volume factor.
-    poes : float
-        Inferred Petroleum-in-Place (POES).
-    we : float
-        Influx of water.
-    bw : float
-        Water formation volume factor.
+def ebm(
+        p: float,
+        pi: float,
+        n_p: float,
+        wp: float,
+        bo: float,
+        cf: float,
+        cw: float,
+        sw0: float,
+        boi: float,
+        poes: float,
+        we: float,
+        bw,
+) -> float:
+    """Calculates the function for the Energy Balance Method (EBM).
 
-    Returns
-    -------
-    float
-        The value of the EBM function.
+    This function computes the value of the EBM function based on the provided
+    reservoir parameters and production data.
+
+    Parameters:
+        p (float): Current reservoir pressure [psi].
+        pi (float): Initial reservoir pressure [psi].
+        n_p (float): Cumulative oil production [stb].
+        wp (float): Cumulative water production [bbl].
+        bo (float): Oil formation volume factor [rb/stb].
+        cf (float): Total compressibility [psi⁻¹].
+        cw (float): Water compressibility [psi⁻¹].
+        sw0 (float): Initial water saturation [%].
+        boi (float): Initial oil formation volume factor [rb/stb].
+        poes (float): Inferred Petroleum-in-Place (POES) [bbl].
+        we (float): Influx of water [bbl].
+        bw (float): Water formation volume factor [rb/bbl].
+
+    Returns:
+        ebm: The value of the EBM function.
     """
     eo = bo - boi
     efw = boi * (((cw * sw0) + cf) / (1 - sw0)) * (pi - p)
@@ -905,57 +901,55 @@ def ebm(p: float, pi: float, n_p: float, wp: float, bo: float, cf: float,
     return func_p
 
 
-def aquifer_fetkovich(aq_radius: float, res_radius: float, aq_thickness: float,
-                      aq_por: float, ct: float, p: float, theta: float,
-                      k: float, water_visc: float, last_press: float,
-                      cum: float, pi: float) -> float:
-    """
-    Calculates the accumulated influx of water using a simplified version of
+def aquifer_fetkovich(
+        aq_radius: float,
+        res_radius: float,
+        aq_thickness: float,
+        aq_por: float,
+        ct: float,
+        p: float,
+        theta: float,
+        k: float,
+        water_visc: float,
+        last_press: float,
+        cum: float,
+        pi: float,
+) -> float:
+    """Calculates the accumulated influx of water using a simplified version of
     the Fetkovich class.
 
-    Parameters
-    ----------
-    aq_radius : float
-        Aquifer radius value, ft.
-    res_radius : float
-        Reservoir radius value, ft.
-    aq_thickness : float
-        Aquifer thickness, ft.
-    aq_por : float
-        Aquifer porosity (decimal).
-    ct : float
-        Total compressibility, psi^-1.
-    p : float
-        Current reservoir pressure, psi.
-    theta : float
-        Aquifer angle, degrees.
-    k : float
-        Permeability value, md.
-    water_visc : float
-        Viscosity value, cp.
-    last_press : float
-        Previous reservoir pressure, psi.
-    cum : float
-        Cumulative influx of water, bbl.
-    pi : float
-        Initial reservoir pressure, psi.
+    This function computes the cumulative influx of water based on the provided
+    aquifer and reservoir parameters using a simplified version of the Fetkovich
+    class.
 
-    Returns
-    -------
-    float
-        Cumulative influx of water, bbl.
+    Parameters:
+        aq_radius (float): Aquifer radius value [ft].
+        res_radius (float): Reservoir radius value [ft].
+        aq_thickness (float): Aquifer thickness [ft].
+        aq_por (float): Aquifer porosity (decimal).
+        ct (float): Total compressibility [psi⁻¹].
+        p (float): Current reservoir pressure [psi].
+        theta (float): Aquifer angle [degrees].
+        k (float): Permeability value [md].
+        water_visc (float): Viscosity value [cp].
+        last_press (float): Previous reservoir pressure [psi].
+        cum (float): Cumulative influx of water [bbl].
+        pi (float): Initial reservoir pressure [psi].
+
+    Returns:
+        aq_fet: Cumulative influx of water [bbl].
     """
     delta_t = 365
-    wi = (math.pi / 5.615) * (aq_radius ** 2 -
-                              res_radius ** 2) * aq_thickness * aq_por
+    wi = (math.pi / 5.615) * (
+            aq_radius ** 2 - res_radius ** 2) * aq_thickness * aq_por
     f = theta / 360
     wei = ct * wi * pi * f
     rd = aq_radius / res_radius
     j = (0.00708 * k * aq_thickness * f) / (water_visc * (math.log(abs(rd))))
     pa = pi * (1 - (cum / wei))
     pr_avg = (last_press + p) / 2
-    we = (wei / pi) * (1 - np.exp(
-        (-1 * j * pi * delta_t) / wei)) * (pa - pr_avg)
+    we = (wei / pi) * (1 - np.exp((-1 * j * pi * delta_t) / wei)) * (
+            pa - pr_avg)
     cum_water_influx = cum + we
     return cum_water_influx
 
@@ -983,62 +977,40 @@ def fetkovich_press(
         boi: float,
         ppvt_col: str,
         oil_fvf_col: str,
-):
-    """
-    Calculates the reservoir pressure based on oil properties, oil and water
+) -> float:
+    """Calculates the reservoir pressure based on oil properties, oil and water
     production, and aquifer influence.
 
-    Parameters
-    ----------
-    p : float
-        Current reservoir pressure.
-    np : float
-        Cumulative oil production.
-    wp : float
-        Cumulative water production.
-    cf : float
-        Total compressibility.
-    t : float
-        Temperature.
-    salinity : float
-        Salinity value.
-    df_pvt : pandas.DataFrame
-        PVT data frame.
-    aq_radius : float
-        Aquifer radius.
-    res_radius : float
-        Reservoir radius.
-    aq_thickness : float
-        Aquifer thickness.
-    aq_por : float
-        Aquifer porosity.
-    theta : float
-        Angle of the aquifer.
-    k : float
-        Permeability.
-    water_visc : float
-        Water viscosity.
-    p_anterior : float
-        Previous reservoir pressure.
-    cum : float
-        Cumulative influx of water.
-    pi : float
-        Initial reservoir pressure.
-    sw0 : float
-        Initial water saturation.
-    poes : float
-        Inferred POES (Petroleum-in-Place).
-    boi : float
-        Initial oil formation volume factor.
-    ppvt_col : str
-        Column name for pressure in the PVT data frame.
-    oil_fvf_col : str
-        Column name for oil formation volume factor in the PVT data frame.
+    This function computes the reservoir pressure considering the effects of oil
+    and water production, aquifer characteristics, and fluid properties.
 
-    Returns
-    -------
-    float
-        The calculated reservoir pressure.
+    Parameters:
+        p (float): Current reservoir pressure [psi].
+        np (float): Cumulative oil production [stb].
+        wp (float): Cumulative water production [bbl].
+        cf (float): Total compressibility [psi⁻¹].
+        t (float): Temperature [°F or °C].
+        salinity (float): Salinity value [ppm].
+        df_pvt (pd.DataFrame): PVT data frame containing fluid properties.
+        aq_radius (float): Aquifer radius [ft].
+        res_radius (float): Reservoir radius [ft].
+        aq_thickness (float): Aquifer thickness [ft].
+        aq_por (float): Aquifer porosity [decimal].
+        theta (float): Angle of the aquifer [degrees].
+        k (float): Permeability [md].
+        water_visc (float): Water viscosity [cP].
+        p_anterior (float): Previous reservoir pressure [psi].
+        cum (float): Cumulative influx of water [bbl].
+        pi (float): Initial reservoir pressure [psi].
+        sw0 (float): Initial water saturation [%].
+        poes (float): Inferred POES (Petroleum-in-Place) [bbl].
+        boi (float): Initial oil formation volume factor [rb/stb].
+        ppvt_col (str): Column name_tank for pressure in the PVT data frame.
+        oil_fvf_col (str): Column name_tank for oil formation volume factor in the
+            PVT data frame.
+
+    Returns:
+        fet_press: The calculated reservoir pressure [psi].
     """
     # Parameters that depend on pressure
     bo = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, p)
@@ -1082,54 +1054,38 @@ def calculated_pressure_fetkovich(
         ppvt_col: str,
         oil_fvf_col: str,
 ) -> list:
-    """
-    Calculates the reservoir pressure for each record in the df_ta2
-    dataframe using scipy's fsolve function to solve the material balance
-    equations iteratively.
+    """Calculates the reservoir pressure for each record in the df_ta2 dataframe
+    using scipy's fsolve function to solve the material balance equations
+    iteratively.
 
-    Parameters
-    ----------
-    np_frame : pandas.Series
-        Column of oil cumulative production.
-    wp_frame : pandas.Series
-        Column of water cumulative production.
-    cf : float
-        Total compressibility.
-    t : float
-        Temperature.
-    salinity : float
-        Salinity value.
-    df_pvt : pandas.DataFrame
-        PVT data frame.
-    aq_radius : float
-        Aquifer radius.
-    res_radius : float
-        Reservoir radius.
-    aq_thickness : float
-        Aquifer thickness.
-    aq_por : float
-        Aquifer porosity.
-    theta : float
-        Angle of the aquifer.
-    k : float
-        Permeability.
-    water_visc : float
-        Water viscosity.
-    pi : float
-        Initial reservoir pressure.
-    sw0 : float
-        Initial water saturation.
-    poes : float
-        Inferred POES (Petroleum-in-Place).
-    ppvt_col : str
-        Column name for pressure in the PVT data frame.
-    oil_fvf_col : str
-        Column name for oil formation volume factor in the PVT data frame.
+    This function computes the reservoir pressure for each record in the df_ta2
+    dataframe by iteratively solving the material balance equations using
+    scipy's fsolve function. It considers the effects of oil and water
+    production, aquifer characteristics, and fluid properties.
 
-    Returns
-    -------
-    List [float]
-        List containing the calculated reservoir pressure.
+    Parameters:
+        np_frame (pd.Series): Column of oil cumulative production [stb].
+        wp_frame (pd.Series): Column of water cumulative production [bbl].
+        cf (float): Total compressibility [psi⁻¹].
+        t (float): Temperature [°F or °C].
+        salinity (float): Salinity value [ppm].
+        df_pvt (pd.DataFrame): PVT data frame containing fluid properties.
+        aq_radius (float): Aquifer radius [ft].
+        res_radius (float): Reservoir radius [ft].
+        aq_thickness (float): Aquifer thickness [ft].
+        aq_por (float): Aquifer porosity [decimal].
+        theta (float): Angle of the aquifer [degrees].
+        k (float): Permeability [md].
+        water_visc (float): Water viscosity [cP].
+        pi (float): Initial reservoir pressure [psi].
+        sw0 (float): Initial water saturation [%].
+        poes (float): Inferred POES (Petroleum-in-Place) [bbl].
+        ppvt_col (str): Column name_tank for pressure in the PVT data frame.
+        oil_fvf_col (str): Column name_tank for oil formation volume factor in the
+            PVT data frame.
+
+    Returns:
+        calc_press: List containing the calculated reservoir pressure [psi].
     """
     # initial values
     boi = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, pi)
@@ -1171,7 +1127,8 @@ def calculated_pressure_fetkovich(
                     ppvt_col,
                     oil_fvf_col,
                 ),
-            )[0])
+            )[0]
+        )
         x0 = pressure
         calculated_p.append(pressure)
         cw = comp_bw_nogas(pressure, t, salinity, unit=1)
@@ -1207,41 +1164,29 @@ def aquifer_carter_tracy(
         we: float,
         pi: float,
 ) -> float:
-    """
-    Calculates the accumulated influx of water using a simplified version of
+    """Calculates the accumulated influx of water using a simplified version of
     the Carter-Tracy class.
 
-    Parameters
-    ----------
-    aq_por : float
-        Aquifer porosity (decimal).
-    ct : float
-        Total compressibility, psi^-1.
-    res_radius : float
-        Reservoir radius, ft.
-    aq_thickness : float
-        Aquifer thickness, ft.
-    theta : float
-        Aquifer angle, degrees.
-    k : float
-        Permeability, md.
-    water_visc : float
-        Water viscosity, cp.
-    pr : float
-        Current reservoir pressure, psi.
-    time : float
-        Current time.
-    past_time : float
-        Previous time.
-    we : float
-        Cumulative water influx, bbl.
-    pi : float
-        Initial reservoir pressure, psi.
+    This function computes the cumulative influx of water based on the provided
+    aquifer and reservoir parameters using a simplified version of the
+    Carter-Tracy class.
 
-    Returns
-    -------
-    float
-        Cumulative influx of water, bbl.
+    Parameters:
+        aq_por (float): Aquifer porosity [decimal].
+        ct (float): Total compressibility [psi⁻¹].
+        res_radius (float): Reservoir radius [ft].
+        aq_thickness (float): Aquifer thickness [ft].
+        theta (float): Aquifer angle [degrees].
+        k (float): Permeability [md].
+        water_visc (float): Water viscosity [cP].
+        pr (float): Current reservoir pressure [psi].
+        time (float): Current time [days].
+        past_time (float): Previous time [days].
+        we (float): Cumulative water influx [bbl].
+        pi (float): Initial reservoir pressure [psi].
+
+    Returns:
+        aq_ct: Cumulative influx of water [bbl].
     """
     pr_array = pr
 
@@ -1276,68 +1221,63 @@ def aquifer_carter_tracy(
     return we
 
 
-def carter_tracy_press(p: float, np: float, wp: float, cf: float, t: float,
-                       salinity: float, df_pvt: pd.DataFrame,
-                       res_radius: float, aq_thickness: float, aq_por: float,
-                       theta: float, k: float, water_visc: float, time: float,
-                       past_time: float, we: float, pi: float, sw0: float,
-                       poes: float, boi: float, ppvt_col: str,
-                       oil_fvf_col: str):
-    """
-    Calculates the reservoir pressure based on oil properties, oil and water
+def carter_tracy_press(
+        p: float,
+        np: float,
+        wp: float,
+        cf: float,
+        t: float,
+        salinity: float,
+        df_pvt: pd.DataFrame,
+        res_radius: float,
+        aq_thickness: float,
+        aq_por: float,
+        theta: float,
+        k: float,
+        water_visc: float,
+        time: float,
+        past_time: float,
+        we: float,
+        pi: float,
+        sw0: float,
+        poes: float,
+        boi: float,
+        ppvt_col: str,
+        oil_fvf_col: str,
+) -> float:
+    """Calculates the reservoir pressure based on oil properties, oil and water
     production, and aquifer influence.
 
-    Parameters
-    ----------
-    p : float
-        Current reservoir pressure.
-    np : float
-        Cumulative oil production.
-    wp : float
-        Cumulative water production.
-    cf : float
-        Formation compressibility.
-    t : float
-        Temperature.
-    salinity : float
-        Salinity.
-    df_pvt : pandas.DataFrame
-        PVT data frame.
-    res_radius : float
-        Reservoir radius.
-    aq_thickness : float
-        Aquifer thickness.
-    aq_por : float
-        Aquifer porosity.
-    theta : float
-        Aquifer angle in degrees.
-    k : float
-        Permeability.
-    water_visc : float
-        Water viscosity.
-    time : float
-        Current time.
-    past_time : float
-        Previous time.
-    we : float
-        Cumulative water influx.
-    pi : float
-        Initial pressure.
-    sw0 : float
-        Initial water saturation.
-    poes : float
-        Estimated Original Oil in Place (OOIP).
-    boi : float
-        Initial oil formation volume factor.
-    ppvt_col : str
-        Column name for pressure in the PVT data frame.
-    oil_fvf_col : str
-        Column name for oil formation volume factor in the PVT data frame.
+    This function computes the reservoir pressure considering the effects of oil
+    and water production, aquifer characteristics, and fluid properties.
 
-    Returns
-    -------
-    float
-        The calculated reservoir pressure.
+    Parameters:
+        p (float): Current reservoir pressure [psi].
+        np (float): Cumulative oil production [stb].
+        wp (float): Cumulative water production [bbl].
+        cf (float): Formation compressibility [psi⁻¹].
+        t (float): Temperature [°F or °C].
+        salinity (float): Salinity [ppm].
+        df_pvt (pd.DataFrame): PVT data frame containing fluid properties.
+        res_radius (float): Reservoir radius [ft].
+        aq_thickness (float): Aquifer thickness [ft].
+        aq_por (float): Aquifer porosity [decimal].
+        theta (float): Aquifer angle [degrees].
+        k (float): Permeability [md].
+        water_visc (float): Water viscosity [cP].
+        time (float): Current time [days].
+        past_time (float): Previous time [days].
+        we (float): Cumulative water influx [bbl].
+        pi (float): Initial reservoir pressure [psi].
+        sw0 (float): Initial water saturation [%].
+        poes (float): Estimated Original Oil in Place (OOIP) [bbl].
+        boi (float): Initial oil formation volume factor [rb/stb].
+        ppvt_col (str): Column name_tank for pressure in the PVT data frame.
+        oil_fvf_col (str): Column name_tank for oil formation volume factor in the
+            PVT data frame.
+
+    Returns:
+        ct_press: The calculated reservoir pressure [psi].
     """
     bo = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, p)
 
@@ -1361,66 +1301,58 @@ def carter_tracy_press(p: float, np: float, wp: float, cf: float, t: float,
     return ebm(p, pi, np, wp, bo, cf, cw, sw0, boi, poes, we, bw)
 
 
-def calculate_pressure_with_carter_tracy(np_frame: pd.Series,
-                                         wp_frame: pd.Series, cf: float,
-                                         t: float, salinity: float,
-                                         df_pvt: pd.DataFrame,
-                                         res_radius: float,
-                                         aq_thickness: float, aq_por: float,
-                                         theta: float, k: float,
-                                         water_visc: float,
-                                         time_frame: pd.Series, pi: float,
-                                         sw0: float, poes: float,
-                                         ppvt_col: str,
-                                         oil_fvf_col: str) -> list:
-    """
-    Calculates the reservoir pressure for each record in the df_ta2
-    dataframe using scipy's fsolve function to solve the material balance
-    equations iteratively.
+def calculate_pressure_with_carter_tracy(
+        np_frame: pd.Series,
+        wp_frame: pd.Series,
+        cf: float,
+        t: float,
+        salinity: float,
+        df_pvt: pd.DataFrame,
+        res_radius: float,
+        aq_thickness: float,
+        aq_por: float,
+        theta: float,
+        k: float,
+        water_visc: float,
+        time_frame: pd.Series,
+        pi: float,
+        sw0: float,
+        poes: float,
+        ppvt_col: str,
+        oil_fvf_col: str,
+) -> list:
+    """Calculates the reservoir pressure for each record in the df_ta2 dataframe
+    using scipy's fsolve function to solve the material balance equations
+    iteratively.
 
-    Parameters
-    ----------
-    np_frame : pandas.Series
-        Column of oil cumulative production.
-    wp_frame : pandas.Series
-        Column of water cumulative production.
-    cf : float
-        Total compressibility.
-    t : float
-        Temperature.
-    salinity : float
-        Salinity value.
-    df_pvt : pandas.DataFrame
-        PVT data frame.
-    res_radius : float
-        Reservoir radius.
-    aq_thickness : float
-        Aquifer thickness.
-    aq_por : float
-        Aquifer porosity.
-    theta : float
-        Angle of the aquifer.
-    k : float
-        Permeability.
-    water_visc : float
-        Water viscosity.
-    time_frame : pandas.Series
-        Column of time steps.
-    pi : float
-        Initial reservoir pressure.
-    sw0 : float
-        Initial water saturation.
-    poes : float
-        Inferred original petroleum in situ.
-    ppvt_col : str
-        Column name for pressure in the PVT data frame.
-    oil_fvf_col : str
-        Column name for oil formation volume factor in the PVT data frame.
+    This function computes the reservoir pressure for each record in the df_ta2
+    dataframe by iteratively solving the material balance equations using
+    scipy's fsolve function. It considers the effects of oil and water
+    production, aquifer characteristics, and fluid properties.
 
-    Returns
-    -------
-    List[float]
-        List containing the calculated reservoir pressure.
+    Parameters:
+        np_frame (pd.Series): Column of oil cumulative production [stb].
+        wp_frame (pd.Series): Column of water cumulative production [bbl].
+        cf (float): Total compressibility [psi⁻¹].
+        t (float): Temperature [°F or °C].
+        salinity (float): Salinity value [ppm].
+        df_pvt (pd.DataFrame): PVT data frame containing fluid properties.
+        res_radius (float): Reservoir radius [ft].
+        aq_thickness (float): Aquifer thickness [ft].
+        aq_por (float): Aquifer porosity [decimal].
+        theta (float): Angle of the aquifer [degrees].
+        k (float): Permeability [md].
+        water_visc (float): Water viscosity [cP].
+        time_frame (pd.Series): Column of time steps [days].
+        pi (float): Initial reservoir pressure [psi].
+        sw0 (float): Initial water saturation [%].
+        poes (float): Inferred original petroleum in situ [bbl].
+        ppvt_col (str): Column name_tank for pressure in the PVT data frame.
+        oil_fvf_col (str): Column name_tank for oil formation volume factor in the
+            PVT data frame.
+
+    Returns:
+        calc_press: List containing the calculated reservoir pressure [psi].
     """
     boi = interp_pvt_matbal(df_pvt, ppvt_col, oil_fvf_col, pi)
     cum = 0
@@ -1435,11 +1367,31 @@ def calculate_pressure_with_carter_tracy(np_frame: pd.Series,
             fsolve(
                 carter_tracy_press,
                 x0,
-                args=(np, wp, cf, t, salinity, df_pvt, res_radius,
-                      aq_thickness, aq_por, theta, k, water_visc, time,
-                      past_time, cum, pi, sw0, poes, boi, ppvt_col,
-                      oil_fvf_col),
-            )[0])
+                args=(
+                    np,
+                    wp,
+                    cf,
+                    t,
+                    salinity,
+                    df_pvt,
+                    res_radius,
+                    aq_thickness,
+                    aq_por,
+                    theta,
+                    k,
+                    water_visc,
+                    time,
+                    past_time,
+                    cum,
+                    pi,
+                    sw0,
+                    poes,
+                    boi,
+                    ppvt_col,
+                    oil_fvf_col,
+                ),
+            )[0]
+        )
         x0 = pressure
         calculated_p.append(pressure)
         cw = comp_bw_nogas(pressure, t, salinity, unit=1)

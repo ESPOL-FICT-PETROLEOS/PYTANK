@@ -13,6 +13,7 @@ THE LOGIC OF THESE FUNCTIONS HAS NOT YET BEEN IMPLEMENTED TO THE LIBRARY.
 SO ITS USE IS IN FUTURE DEVELOPMENT
 
 """
+
 from pytank.functions import pvt_correlations as pvt
 import pandas as pd
 import numpy as np
@@ -22,17 +23,9 @@ import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
-def pvt_table1(p_sep,
-               t_sep,
-               api,
-               rsp,
-               sg_sep,
-               tres,
-               den_sto,
-               p_res,
-               salinity,
-               jump,
-               units=1) -> pd.DataFrame:
+def pvt_table1(
+    p_sep, t_sep, api, rsp, sg_sep, tres, den_sto, p_res, salinity, jump, units=1
+) -> pd.DataFrame:
     """The pvt_table data frame is a table that has a size of the length of
     Pres(it is printed regarding a range) vs 6 columns, where within the
     first column are shown the pressure values (from 0 to Pres) whereas
@@ -110,63 +103,74 @@ def pvt_table1(p_sep,
         # Condition when pressure is less than the bubble point pressure
         if 0 < p < pb:
 
-            gor_velarde2 = pvt.Solution_GOR_Velarde2(sg_sep, api, tres, p,
-                                                     p_sep, t_sep, rsp, units)
-            den_underpb = pvt.Den_underPb(sg_sep, tres, p, api, p_sep, t_sep,
-                                          rsp, units)
-            fvf_underpb = pvt.FVF_underPb(den_sto, p_sep, t_sep, api, rsp,
-                                          sg_sep, tres, p, units)
+            gor_velarde2 = pvt.Solution_GOR_Velarde2(
+                sg_sep, api, tres, p, p_sep, t_sep, rsp, units
+            )
+            den_underpb = pvt.Den_underPb(
+                sg_sep, tres, p, api, p_sep, t_sep, rsp, units
+            )
+            fvf_underpb = pvt.FVF_underPb(
+                den_sto, p_sep, t_sep, api, rsp, sg_sep, tres, p, units
+            )
             rsw_under = pvt.RS_bw(p, tres, salinity, units)
             water_fvf_under = pvt.Bo_bw(p, tres, salinity, units)
             water_comp_under = pvt.comp_bw_nogas(p, tres, salinity, units)
             p_under = p
 
-            array_under.append([
-                p_under,
-                gor_velarde2,
-                den_underpb,
-                fvf_underpb,
-                rsw_under,
-                water_fvf_under,
-                water_comp_under,
-            ])
+            array_under.append(
+                [
+                    p_under,
+                    gor_velarde2,
+                    den_underpb,
+                    fvf_underpb,
+                    rsw_under,
+                    water_fvf_under,
+                    water_comp_under,
+                ]
+            )
 
         # Condition when pressures is equal to the bubble point pressure
         elif p == pb:
-            array_pb.append([
-                p,
-                pvt.Solution_GOR_Pb_ValkoMcCain(p_sep, t_sep, api, rsp, units),
-                pvt.Den_Pb(sg_sep, tres, p_sep, t_sep, api, rsp, units),
-                pvt.FVF_Pb(den_sto, p_sep, t_sep, api, rsp, sg_sep, tres,
-                           units),
-                pvt.RS_bw(p, tres, salinity, units),
-                pvt.Bo_bw(p, tres, salinity, units),
-                pvt.comp_bw_nogas(p, tres, salinity, units),
-            ])
+            array_pb.append(
+                [
+                    p,
+                    pvt.Solution_GOR_Pb_ValkoMcCain(p_sep, t_sep, api, rsp, units),
+                    pvt.Den_Pb(sg_sep, tres, p_sep, t_sep, api, rsp, units),
+                    pvt.FVF_Pb(den_sto, p_sep, t_sep, api, rsp, sg_sep, tres, units),
+                    pvt.RS_bw(p, tres, salinity, units),
+                    pvt.Bo_bw(p, tres, salinity, units),
+                    pvt.comp_bw_nogas(p, tres, salinity, units),
+                ]
+            )
 
         # Condition when pressure is greater than the bubble point pressure
         elif pb < p <= p_res:
 
-            den_abovepb = pvt.Den_abovePb(p, sg_sep, tres, p_sep, t_sep, api,
-                                          rsp, p_res, units)
+            den_abovepb = pvt.Den_abovePb(
+                p, sg_sep, tres, p_sep, t_sep, api, rsp, p_res, units
+            )
             gor_velarde2_above = pvt.Solution_GOR_Pb_ValkoMcCain(
-                p_sep, t_sep, api, rsp, units)
-            fvf_abovepb = pvt.FVF_abovePb(p, den_sto, p_sep, t_sep, api, rsp,
-                                          sg_sep, tres, p_res, units)
+                p_sep, t_sep, api, rsp, units
+            )
+            fvf_abovepb = pvt.FVF_abovePb(
+                p, den_sto, p_sep, t_sep, api, rsp, sg_sep, tres, p_res, units
+            )
             rsw_above = pvt.RS_bw(p, tres, salinity, units)
             water_fvf_above = pvt.Bo_bw(p, tres, salinity, units)
             water_comp_above = pvt.comp_bw_nogas(p, tres, salinity, units)
             p_above = p
 
-            array_above.append([
-                p_above,
-                gor_velarde2_above,
-                den_abovepb,
-                fvf_abovepb,
-                rsw_above,
-                water_fvf_above,
-                water_comp_above,
-            ])
+            array_above.append(
+                [
+                    p_above,
+                    gor_velarde2_above,
+                    den_abovepb,
+                    fvf_abovepb,
+                    rsw_above,
+                    water_fvf_above,
+                    water_comp_above,
+                ]
+            )
 
     # Concatenation of the pvt dataframes regarding their relationship
     # to the bubble
@@ -181,26 +185,16 @@ def pvt_table1(p_sep,
     df_under = pd.DataFrame(array_under)
 
     # Concatenate DataFrames
-    pvt_dataframe = pd.concat([df_above, df_pb, df_under],
-                              ignore_index=False,
-                              axis=0)
+    pvt_dataframe = pd.concat([df_above, df_pb, df_under], ignore_index=False, axis=0)
     pvt_dataframe.columns = columns
 
     # Return the result
     return pvt_dataframe
 
 
-def pvt_table2(p_sep,
-               t_sep,
-               api,
-               rsp,
-               sg_sep,
-               tres,
-               den_sto,
-               p_res,
-               salinity,
-               jump,
-               units=1) -> pd.DataFrame:
+def pvt_table2(
+    p_sep, t_sep, api, rsp, sg_sep, tres, den_sto, p_res, salinity, jump, units=1
+) -> pd.DataFrame:
     """The pvt_table data frame is a table that has a size of the length of
     Pres(it is printed regarding a range) vs 6 columns, where within the
     first column are shown the pressure values (from 0 to Pres) whereas
@@ -279,63 +273,74 @@ def pvt_table2(p_sep,
         # Condition when pressure is less than the bubble point pressure
         if (p > 0) and (p < pb):
 
-            gor_velarde2 = pvt.Solution_GOR_Velarde2(sg_sep, api, tres, p,
-                                                     p_sep, t_sep, rsp, units)
-            den_underpb = pvt.Den_underPb(sg_sep, tres, p, api, p_sep, t_sep,
-                                          rsp, units)
-            fvf_underpb = pvt.FVF_underPb(den_sto, p_sep, t_sep, api, rsp,
-                                          sg_sep, tres, p, units)
+            gor_velarde2 = pvt.Solution_GOR_Velarde2(
+                sg_sep, api, tres, p, p_sep, t_sep, rsp, units
+            )
+            den_underpb = pvt.Den_underPb(
+                sg_sep, tres, p, api, p_sep, t_sep, rsp, units
+            )
+            fvf_underpb = pvt.FVF_underPb(
+                den_sto, p_sep, t_sep, api, rsp, sg_sep, tres, p, units
+            )
             rsw_under = pvt.RS_bw(p, tres, salinity, units)
             water_fvf_under = pvt.Bo_bw(p, tres, salinity, units)
             water_comp_under = pvt.comp_bw_nogas(p, tres, salinity, units)
             p_under = p
 
-            data_under.append([
-                p_under,
-                gor_velarde2,
-                den_underpb,
-                fvf_underpb,
-                rsw_under,
-                water_fvf_under,
-                water_comp_under,
-            ])
+            data_under.append(
+                [
+                    p_under,
+                    gor_velarde2,
+                    den_underpb,
+                    fvf_underpb,
+                    rsw_under,
+                    water_fvf_under,
+                    water_comp_under,
+                ]
+            )
 
         # Condition when pressures is equal to the bubble point pressure
         elif p == pb:
-            data_pb.append([
-                p,
-                pvt.Solution_GOR_Pb_ValkoMcCain(p_sep, t_sep, api, rsp, units),
-                pvt.Den_Pb(sg_sep, tres, p_sep, t_sep, api, rsp, units),
-                pvt.FVF_Pb(den_sto, p_sep, t_sep, api, rsp, sg_sep, tres,
-                           units),
-                pvt.RS_bw(p, tres, salinity, units),
-                pvt.Bo_bw(p, tres, salinity, units),
-                pvt.comp_bw_nogas(p, tres, salinity, units),
-            ])
+            data_pb.append(
+                [
+                    p,
+                    pvt.Solution_GOR_Pb_ValkoMcCain(p_sep, t_sep, api, rsp, units),
+                    pvt.Den_Pb(sg_sep, tres, p_sep, t_sep, api, rsp, units),
+                    pvt.FVF_Pb(den_sto, p_sep, t_sep, api, rsp, sg_sep, tres, units),
+                    pvt.RS_bw(p, tres, salinity, units),
+                    pvt.Bo_bw(p, tres, salinity, units),
+                    pvt.comp_bw_nogas(p, tres, salinity, units),
+                ]
+            )
 
         # Condition when pressure is greater than the bubble point pressure
         elif (p > pb) and (p <= p_res):
 
-            den_abovepb = pvt.Den_abovePb(p, sg_sep, tres, p_sep, t_sep, api,
-                                          rsp, p_res, units)
+            den_abovepb = pvt.Den_abovePb(
+                p, sg_sep, tres, p_sep, t_sep, api, rsp, p_res, units
+            )
             gor_velarde2_above = pvt.Solution_GOR_Pb_ValkoMcCain(
-                p_sep, t_sep, api, rsp, units)
-            fvf_abovepb = pvt.FVF_abovePb(p, den_sto, p_sep, t_sep, api, rsp,
-                                          sg_sep, tres, p_res, units)
+                p_sep, t_sep, api, rsp, units
+            )
+            fvf_abovepb = pvt.FVF_abovePb(
+                p, den_sto, p_sep, t_sep, api, rsp, sg_sep, tres, p_res, units
+            )
             rsw_above = pvt.RS_bw(p, tres, salinity, units)
             water_fvf_above = pvt.Bo_bw(p, tres, salinity, units)
             water_comp_above = pvt.comp_bw_nogas(p, tres, salinity, units)
             p_above = p
 
-            data_above.append([
-                p_above,
-                gor_velarde2_above,
-                den_abovepb,
-                fvf_abovepb,
-                rsw_above,
-                water_fvf_above,
-                water_comp_above,
-            ])
+            data_above.append(
+                [
+                    p_above,
+                    gor_velarde2_above,
+                    den_abovepb,
+                    fvf_abovepb,
+                    rsw_above,
+                    water_fvf_above,
+                    water_comp_above,
+                ]
+            )
     # Empty dataframes
     df_under = pd.DataFrame(data_under, columns=columns)
     df_pb = pd.DataFrame(data_pb, columns=columns)
@@ -343,9 +348,7 @@ def pvt_table2(p_sep,
 
     # Concatenation of the pvt dataframes regarding their relationship
     # to the bubble point pressure
-    pvt_dataframe = pd.concat([df_under, df_pb, df_above],
-                              ignore_index=True,
-                              axis=0)
+    pvt_dataframe = pd.concat([df_under, df_pb, df_above], ignore_index=True, axis=0)
 
     return pvt_dataframe
 
@@ -363,5 +366,6 @@ salinity = 500  # Water Salinity [ppm]
 jump = 100  # step size of the iteration over the pressure
 
 # Call the function with these example values
-result_df = pvt_table2(p_sep, t_sep, api, rsp, sg_sep, tres, den_sto, p_res,
-                       salinity, jump)
+result_df = pvt_table2(
+    p_sep, t_sep, api, rsp, sg_sep, tres, den_sto, p_res, salinity, jump
+)
