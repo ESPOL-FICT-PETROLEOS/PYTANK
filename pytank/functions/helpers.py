@@ -18,7 +18,8 @@ Libraries used:
 Main Functions are:
     - create_wells: Creates a list of Well objects from production and pressure
     data.
-    - search_wells: Searches for wells in the list based on provided well names.
+    - search_wells: Searches for wells in the list based on provided well
+     names.
 """
 import pandas as pd
 from typing import Optional, List
@@ -29,6 +30,7 @@ from pytank.constants.constants import (
     LIQ_CUM,
     PRESSURE_COL,
     DATE_COL,
+    WELL_COL,
 )
 from pytank.vector_data import ProdVector, PressVector
 from pandera.errors import SchemaError
@@ -51,9 +53,11 @@ def create_wells(
 
     Args:
         df_prod (pd.DataFrame): A DataFrame containing the production data,
-            which should include relevant columns such as cumulative oil, water,
+            which should include relevant columns such as cumulative oil,
+             water,
             and gas production.
-        df_press (pd.DataFrame): A DataFrame containing the pressure data, which
+        df_press (pd.DataFrame): A DataFrame containing the pressure data,
+         which
             should include relevant pressure measurements.
         freq_prod (Optional[str]): Frequency of the production data
             (e.g., 'D' for daily). Can be None if the frequency is already
@@ -91,8 +95,8 @@ def create_wells(
 
         Returns:
             Tuple_prod_press: :
-                - pd.DataFrame: The processed production DataFrame with dates as
-                the index.
+                - pd.DataFrame: The processed production DataFrame with dates
+                as the index.
                 - pd.DataFrame: The processed pressure DataFrame with dates as
                 the index.
         """
@@ -101,22 +105,21 @@ def create_wells(
         prod_data.set_index(prod_data[DATE_COL], inplace=True)
 
         press_data = df_press
-        press_data[DATE_COL] = pd.to_datetime(press_data["DATE"])
-        press_data = press_data.drop("DATE", axis=1)
+        press_data[DATE_COL] = pd.to_datetime(press_data[DATE_COL])
 
         return prod_data, press_data
 
     prod_data, press_data = _process_data(df_prod, df_press)
     cols_fills_na = [OIL_CUM_COL, WATER_CUM_COL, GAS_CUM_COL, LIQ_CUM]
-    all_wells = set(prod_data["ITEM_NAME"]).union(press_data["WELLBORE"])
+    all_wells = set(prod_data[WELL_COL]).union(press_data[WELL_COL])
     list_wells = []
 
     for name in all_wells:
         prod_vector = None
         press_vector = None
 
-        if name in prod_data["ITEM_NAME"].unique():
-            group_prod = prod_data[prod_data["ITEM_NAME"] == name]
+        if name in prod_data[WELL_COL].unique():
+            group_prod = prod_data[prod_data[WELL_COL] == name]
 
             group_prod = group_prod.rename(
                 columns={
@@ -156,8 +159,8 @@ def create_wells(
             else:
                 prod_vector = ProdVector(freq=freq_prod, data=group_prod)
 
-        if name in press_data["WELLBORE"].unique():
-            group_press = press_data[press_data["WELLBORE"] == name]
+        if name in press_data[WELL_COL].unique():
+            group_press = press_data[press_data[WELL_COL] == name]
 
             group_press = group_press.rename(
                 columns={

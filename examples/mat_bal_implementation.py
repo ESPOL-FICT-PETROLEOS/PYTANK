@@ -14,12 +14,12 @@ from pytank.functions.helpers import create_wells, search_wells
 
 # transform the csv to dataframes
 # Here, the user must state the respective route
-df_pvt = pd.read_csv("C:/Users/User/PycharmProjects/PYTANK/examples_data/pvt.csv")
+df_pvt = pd.read_csv("C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pvt.csv")
 df_production = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/examples_data/production.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/User/PycharmProjects/PYTANK/examples_data/pressures.csv"
+    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pressures.csv"
 )
 
 
@@ -27,7 +27,10 @@ df_pressures = pd.read_csv(
 "-------------------------- Well Module----------------------------"
 
 wells = create_wells(
-    df_prod=df_production, df_press=df_pressures, freq_prod="MS", freq_press=None
+    df_prod=df_production,
+    df_press=df_pressures,
+    freq_prod="MS",
+    freq_press=None
 )
 
 # List of all wells
@@ -62,10 +65,12 @@ wells_info = search_wells(wells, my_wells)
 "----------------------- Fluid Models Module -----------------------"
 oil_model = OilModel(
     data_pvt=df_pvt,
-    temperature=25,
 )
 
-water_model = WaterModel(salinity=3000, temperature=200, unit=1)
+water_model = WaterModel(
+    salinity=3000,
+    temperature=200,
+    unit=1)
 
 # %%
 "---------------------------- Tank Module ---------------------------"

@@ -68,11 +68,9 @@ class OilModel(BaseModel):
     Attributes:
         data_pvt (DataFrame[_PVTSchema]): A DataFrame containing validated
             oil PVT data.
-        temperature (float): The temperature value in degrees Fahrenheit.
     """
 
     data_pvt: DataFrame[_PVTSchema]
-    temperature: float
 
     class Config:
         arbitrary_types_allowed = True

@@ -72,8 +72,8 @@ class _PressSchema(pa.DataFrameModel):
     """
 
     PRESSURE_DATUM: Series[float] = pa.Field(nullable=False)
-    WELL_BORE: Series[str] = pa.Field(nullable=False)
-    START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
+    WELL: Series[str] = pa.Field(nullable=False)
+    DATE: Series[pd.Timestamp] = pa.Field(nullable=False)
     Bo: Series[float] = pa.Field(nullable=False)
     Bg: Series[float] = pa.Field(nullable=True)
     GOR: Series[float] = pa.Field(nullable=False)
@@ -95,14 +95,14 @@ class _ProdSchema(pa.DataFrameModel):
     WATER_CUM: Series[float] = pa.Field(nullable=False)
     GAS_CUM: Series[float] = pa.Field(nullable=False)
     LIQ_CUM: Series[float] = pa.Field(nullable=False)
-    WELL_BORE: Series[str] = pa.Field(nullable=False)
-    START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
+    WELL: Series[str] = pa.Field(nullable=False)
+    DATE: Series[pd.Timestamp] = pa.Field(nullable=False)
     Tank: Series[str] = pa.Field(nullable=False)
 
 
 class _DFMbalSchema(pa.DataFrameModel):
     Tank: Series[str] = pa.Field(nullable=False)
-    START_DATETIME: Series[pd.Timestamp] = pa.Field(nullable=False)
+    DATE: Series[pd.Timestamp] = pa.Field(nullable=False)
     PRESSURE_DATUM: Series[float] = pa.Field(nullable=False)
     OIL_CUM_TANK: Series[float] = pa.Field(nullable=False)
     WATER_CUM_TANK: Series[float] = pa.Field(nullable=False)

@@ -11,11 +11,11 @@ libraries:
 from pandera import Column, Check, DataFrameSchema
 
 # Constants of DataFrames
-DATE_COL = "START_DATETIME"
+DATE_COL = "DATE"
 PRESSURE_COL = "PRESSURE_DATUM"
 PRESSURE_PVT_COL = "Pressure"
 TANK_COL = "Tank"
-WELL_COL = "WELL_BORE"
+WELL_COL = "WELL"
 OIL_CUM_COL = "OIL_CUM"
 OIL_VOL_COL = "OIL_VOL"
 WATER_CUM_COL = "WATER_CUM"
