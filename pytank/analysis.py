@@ -478,8 +478,8 @@ class Analysis(BaseModel):
         y = mbal_df[UW_COL] / (mbal_df[OIL_EXP] + mbal_df[RES_EXP])
         x = mbal_df[OIL_CUM_TANK]
         data = pd.DataFrame({"Np": x, "F/Eo+Efw": y})
-        fig, ax1 = plt.subplots()
-        ax1.scatter(x, y)
+        fig, ax1 = plt.subplots(figsize=(8, 5))
+        ax1.scatter(x, y, label="Data Points", color="blue")
 
         # Graph
         if custom_line is False:
@@ -498,16 +498,16 @@ class Analysis(BaseModel):
 
         ax1.set_xlabel("Np Cumulative Oil Production [MMStb]")
         ax1.set_ylabel("F/Eo+Efw")
-        ax1.set_title("Campbell plot of " + str(self.tank_class.name_tank.
+        """ax1.set_title("Campbell plot of " + str(self.tank_class.name_tank.
                                                 replace("_", " ")))
         textstr = (
             "Graph that gives an "
             "\nidea of the energy "
             "\ncontribution of an aquifer"
         )
-        props = dict(boxstyle="round", facecolor="grey", alpha=0.5)
+        props = dict(boxstyle="round", facecolor="white", alpha=0.3)
         ax1.text(
-            0.05,
+            0.1,
             0.95,
             textstr,
             transform=ax1.transAxes,
@@ -515,7 +515,7 @@ class Analysis(BaseModel):
             verticalalignment="top",
             horizontalalignment="left",
             bbox=props,
-        )
+        )"""
         ax1.legend(frameon=True, framealpha=0.9, loc="upper right")
         plt.grid(True, linestyle="--", alpha=0.7)
 
@@ -594,8 +594,9 @@ class Analysis(BaseModel):
         y = mbal_df[UW_COL] - mbal_df[WE]
         x = mbal_df[OIL_EXP] + mbal_df[RES_EXP]
         data = pd.DataFrame({"Eo+Efw": x, "F-We": y})
-        fig, ax2 = plt.subplots()
-        ax2.scatter(data["Eo+Efw"], data["F-We"], color="blue")
+        fig, ax2 = plt.subplots(figsize=(8, 5))
+        ax2.scatter(data["Eo+Efw"], data["F-We"], label="Data Points",
+                    color="blue")
 
         slope, intercept, r, p, se = stats.linregress(data["Eo+Efw"],
                                                       data["F-We"])
@@ -614,7 +615,7 @@ class Analysis(BaseModel):
                 0.95,
                 textstr,
                 transform=ax2.transAxes,
-                fontsize=10,
+                fontsize=12,
                 verticalalignment="top",
                 horizontalalignment="left",
                 bbox=props,
@@ -638,7 +639,7 @@ class Analysis(BaseModel):
                 0.95,
                 textstr,
                 transform=ax2.transAxes,
-                fontsize=10,
+                fontsize=12,
                 verticalalignment="top",
                 horizontalalignment="left",
                 bbox=props,
@@ -647,11 +648,11 @@ class Analysis(BaseModel):
 
         ax2.set_xlabel("Eo+Efw")
         ax2.set_ylabel("F-We")
-        ax2.set_title(
+        """ax2.set_title(
             "Havlena y Odeh plot of "
             + str(self.tank_class.name_tank.replace("_", " "))
             + name_aquifer
-        )
+        )"""
 
         plt.grid(True, linestyle="--", alpha=0.7)
 
@@ -780,7 +781,7 @@ class Analysis(BaseModel):
             return data[[DATE_COL, PRESSURE_COL, "PRESS_CALC"]]
 
         elif option == "plot":
-            fig8, ax8 = plt.subplots(figsize=(15, 10))
+            fig8, ax8 = plt.subplots(figsize=(12, 8))
             ax8.scatter(
                 data[DATE_COL].dt.year, data[PRESSURE_COL],
                 label="Observed Pressure"
@@ -789,8 +790,8 @@ class Analysis(BaseModel):
                 data[DATE_COL].dt.year, press_calc, c="g",
                 label="Calculated Pressure"
             )
-            plt.title(f"Pressure vs Time with {model_aq_name}",
-                      fontsize=25)
+            """plt.title(f"Pressure vs Time with {model_aq_name}",
+                      fontsize=25)"""
             plt.xlabel("Time (Years)", fontsize=17)
             plt.ylabel("Pressure (PSI)", fontsize=17)
             ax8.set_ylim(0, 4000)
@@ -799,7 +800,7 @@ class Analysis(BaseModel):
             ax8.grid(axis="both", color="lightgray", linestyle="dashed")
             plt.legend(fontsize=15)
             plt.gcf().autofmt_xdate()
-            fig8.suptitle("ANALYTIC METHOD", fontsize=22)
+            #fig8.suptitle("ANALYTIC METHOD", fontsize=22)
             return fig8
 
         else:
