@@ -14,12 +14,12 @@ from pytank.functions.helpers import create_wells, search_wells
 
 # transform the csv to dataframes
 # Here, the user must state the respective route
-df_pvt = pd.read_csv("C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pvt.csv")
+df_pvt = pd.read_csv("C:/Users/User/PycharmProjects/PYTANK/examples_data/pvt.csv")
 df_production = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/production.csv"
+    "C:/Users/User/PycharmProjects/PYTANK/examples_data/production.csv"
 )
 df_pressures = pd.read_csv(
-    "C:/Users/CompuMundo/PycharmProjects/PYTANK/examples_data/pressures.csv"
+    "C:/Users/User/PycharmProjects/PYTANK/examples_data/pressures.csv"
 )
 
 
@@ -32,7 +32,6 @@ wells = create_wells(
     freq_prod="MS",
     freq_press=None
 )
-
 # List of all wells
 
 # List of wells for user selection
@@ -94,45 +93,26 @@ tank1 = Tank(
 frequency = "12M"
 analysis = Analysis(tank_class=tank1, freq=frequency, position="end")
 
-"--- P vs T ---"
-plt5 = analysis.plot_press_avg_liq_cum()
-plt5.show()
-
-plt = analysis.plot_press_avg_time()
-plt.show()
-
 # %%
 "Campbell"
 # Plot without points selected
-camp = analysis.campbell_plot(custom_line=False)
+camp = analysis.campbell_plot()
 camp.show()
+camp.savefig("campbell_plot.jpg", format="jpg", dpi=300, bbox_inches="tight")
 
 # %%
 # Plot with points selected
-camp_custom = analysis.campbell_plot(
-    custom_line=False,
-    # x1=4000000,
-    # y1=200000000,
-    # x2=7000000,
-    # y2=400000000,
-)
-camp_custom.show()
+
+#camp_custom.show()
 # %%
 "Havlena"
 # Plot without points selected
 havlena_plot = analysis.havlena_odeh_plot()
 havlena_plot.show()
+havlena_plot.savefig("havlena_plot.jpg", format="jpg", dpi=300, bbox_inches="tight")
 
 # %%
-# Plot with points selected
-havlena_custom = analysis.havlena_odeh_plot(
-    custom_line=False,
-    # x1=0.0025,
-    # y1=1500000,
-    # x2=0.018,
-    # y2=4000000
-)
-havlena_custom.show()
+
 # %%
 "-------------------------- Aquifer Models --------------------------"
 "----- With Aquifer - Fetkovich ------"
@@ -169,29 +149,24 @@ tank_fet = Tank(
 )
 
 analysis_fet = Analysis(
-    tank_class=tank_fet, freq=frequency, position="end", smooth=True
+    tank_class=tank_fet, freq=frequency, position="end", smooth=False
 )
 
 "Analytic method"
 analytic_meth_fet = analysis_fet.analytic_method(poes=67e6, option="plot")
 analytic_meth_fet.show()
+analytic_meth_fet.savefig("amf_plot.jpg", format="jpg", dpi=300, bbox_inches="tight")
+
 
 "Havlena Method"
 havlena_fet = analysis_fet.havlena_odeh_plot(
     custom_line=False,
 )
 havlena_fet.show()
+havlena_fet.savefig("havlena_fet.jpg", format="jpg", dpi=300, bbox_inches="tight")
 
-havlena_fet_custom = analysis_fet.havlena_odeh_plot(
-    custom_line=False,
-    # x1=0.02,
-    # y1=100000,
-    # x2=0.045,
-    # y2=4500000
-)
-havlena_fet_custom.show()
 
-# %%
+"""# %%
 "------ With Aquifer - Carter Tracy-------"
 res_radius = 2000
 aq_thickness = 13
@@ -240,25 +215,4 @@ havlena_car_custom = analysis_carter.havlena_odeh_plot(
     custom_line=True, x1=0.01, y1=1700000, x2=0.045, y2=3500000
 )
 havlena_car_custom.show()
-# %%
-"----GRAPHS---"
-plot1 = analysis_carter.plot_flow_rate_tank()
-plot1.show()
-
-plot2 = analysis_carter.plot_press_time()
-plot2.show()
-
-plot4 = analysis_carter.plot_press_liq_cum()
-plot4.show()
-
-plt6 = analysis_carter.plot_cum_prod_time()
-plt6.show()
-
-plt7 = analysis_carter.plot_cum_prod_tot_time()
-plt7.show()
-
-plt8 = analysis_carter.plot_flow_rate_well()
-plt8.show()
-
-plt9 = analysis_carter.plot_cum_prod_well()
-plt9.show()
+"""
